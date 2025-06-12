@@ -1,15 +1,10 @@
-import sys
-import os
-
-
 def remove_user_role(userId, roleId, dev):
     userId, roleId = int(userId), int(roleId)
     print(f"remove_user_role {userId=} {roleId=} {dev=}")
-    add_root_to_path()
     from bafser import db_session, Role
     from bafser.data.user import get_user_table
 
-    db_session.global_init("dev" in sys.argv)
+    db_session.global_init(dev)
     db_sess = db_session.create_session()
     User = get_user_table()
     user_admin = User.get_admin(db_sess)
@@ -31,13 +26,8 @@ def remove_user_role(userId, roleId, dev):
     print(f"Role [{role.name}] removed from User [{user.login}]")
 
 
-def add_root_to_path():
-    current = os.path.dirname(os.path.realpath(__file__))
-    root = os.path.dirname(os.path.dirname(current))
-    sys.path.append(root)
-
-
-if not (len(sys.argv) == 3 or (len(sys.argv) == 4 and sys.argv[-1] == "dev")):
-    print("remove_user_role: userId roleId [dev]")
-else:
-    remove_user_role(sys.argv[1], sys.argv[2], sys.argv[-1] == "dev")
+def run(args):
+    if not (len(args) == 2 or (len(args) == 3 and args[-1] == "dev")):
+        print("remove_user_role: userId roleId [dev]")
+    else:
+        remove_user_role(args[0], args[1], args[-1] == "dev")

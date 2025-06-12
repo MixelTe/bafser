@@ -1,15 +1,10 @@
-import sys
-import os
-
-
 def add_user(login, password, name, roleId, dev):
     roleId = int(roleId)
     print(f"add_user {login=} {password=} {name=} {roleId=} {dev=}")
-    add_root_to_path()
     from bafser import db_session, Role
     from bafser.data.user import get_user_table
 
-    db_session.global_init("dev" in sys.argv)
+    db_session.global_init(dev)
     db_sess = db_session.create_session()
     User = get_user_table()
     user_admin = User.get_admin(db_sess)
@@ -27,13 +22,8 @@ def add_user(login, password, name, roleId, dev):
     print("User added")
 
 
-def add_root_to_path():
-    current = os.path.dirname(os.path.realpath(__file__))
-    root = os.path.dirname(os.path.dirname(current))
-    sys.path.append(root)
-
-
-if not (len(sys.argv) == 5 or (len(sys.argv) == 6 and sys.argv[-1] == "dev")):
-    print("add_user: login password name roleId [dev]")
-else:
-    add_user(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[-1] == "dev")
+def run(args):
+    if not (len(args) == 4 or (len(args) == 5 and args[-1] == "dev")):
+        print("add_user: login password name roleId [dev]")
+    else:
+        add_user(args[0], args[1], args[2], args[3], args[-1] == "dev")

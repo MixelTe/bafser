@@ -1,5 +1,5 @@
 db_dev_path = "db/dev.db"
-db_path = "ticketsystem:UR2hqJDbSfQ@ticketsystem.mysql.pythonanywhere-services.com/ticketsystem$default"
+db_path = "username:UR2hqJDbSfQ@username.mysql.pythonanywhere-services.com/username$default"
 sql_echo = False
 
 log_info_path = "logs/log_info.csv"
