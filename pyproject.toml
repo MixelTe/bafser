@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bafser"
+version = "1.0.1"
+authors = [
+	{ name = "Mixel Te" },
+]
+description = "Base for flask server"
+readme = "README.md"
+requires-python = "== 3.9.*"
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+	"flask == 2.1.2",
+	"sqlalchemy == 2.0.19",
+	"werkzeug == 2.3.6",
+	"sqlalchemy_serializer == 1.4.1",
+	"pyjwt < 2.10",
+	"flask_jwt_extended == 4.5.2",
+	"PyMySQL == 1.1.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/MixelTe/bafser"
+Issues = "https://github.com/MixelTe/bafser/issues"
