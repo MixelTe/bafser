@@ -152,7 +152,7 @@ def setLogging():
     logger_frontend = get_logger_frontend()
     logger_frontend.setLevel(logging.DEBUG)
     formatter_frontend = RequestFormatter("[%(asctime)s] %(ip_emoji)s (uid=%(uid)s):\n%(json)s\n%(message)s\n")
-    formatter_frontend.max_json_len = -1
+    formatter_frontend.max_json_len = 8192
     formatter_frontend.json_indent = 4
     file_handler_frontend = RotatingFileHandler(
         bfs_config.log_frontend_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
