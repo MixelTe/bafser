@@ -15,7 +15,7 @@ from bafser.scripts.init_db_values import init_db_values
 from . import db_session
 from .logger import get_logger_requests, setLogging
 from .utils import get_json, get_secret_key, get_secret_key_rnd, randstr, register_blueprints, response_msg
-import bfs_config
+import bafser_config
 
 
 class AppConfig():
@@ -69,7 +69,7 @@ def create_app(import_name: str, config: AppConfig):
     logreq = get_logger_requests()
     app = Flask(import_name, static_folder=None)
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
-    app.config["JWT_SECRET_KEY"] = get_secret_key_rnd(bfs_config.jwt_key_file_path)
+    app.config["JWT_SECRET_KEY"] = get_secret_key_rnd(bafser_config.jwt_key_file_path)
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = config.JWT_ACCESS_TOKEN_EXPIRES
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     app.config["JWT_SESSION_COOKIE"] = False
@@ -84,8 +84,8 @@ def create_app(import_name: str, config: AppConfig):
                 os.makedirs(path)
 
         if config.DEV_MODE:
-            if not os.path.exists(bfs_config.db_dev_path):
-                os.makedirs(os.path.dirname(bfs_config.db_dev_path), exist_ok=True)
+            if not os.path.exists(bafser_config.db_dev_path):
+                os.makedirs(os.path.dirname(bafser_config.db_dev_path), exist_ok=True)
                 init_db_values(True)
                 if init_dev_values is not None:
                     init_dev_values()
@@ -121,7 +121,7 @@ def create_app(import_name: str, config: AppConfig):
             jwt_identity = None
         if jwt_identity and isinstance(jwt_identity, (list, tuple)) and len(jwt_identity) == 2:
             g.userId = jwt_identity[0]
-        if request.path.startswith(bfs_config.api_url):
+        if request.path.startswith(bafser_config.api_url):
             try:
                 if g.json[1]:
                     if "password" in g.json[0]:
@@ -147,7 +147,7 @@ def create_app(import_name: str, config: AppConfig):
 
     @app.after_request
     def after_request(response: Response):
-        if request.path.startswith(bfs_config.api_url):
+        if request.path.startswith(bafser_config.api_url):
             try:
                 if response.content_type == "application/json":
                     logreq.info("Response;%s;%s", response.status_code, str(response.data)[:512])
@@ -175,7 +175,7 @@ def create_app(import_name: str, config: AppConfig):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def frontend(path):
-        if request.path.startswith(bfs_config.api_url):
+        if request.path.startswith(bafser_config.api_url):
             abort(404)
         if path != "" and os.path.exists(config.FRONTEND_FOLDER + "/" + path):
             res = send_from_directory(config.FRONTEND_FOLDER, path)
@@ -191,7 +191,7 @@ def create_app(import_name: str, config: AppConfig):
 
     @app.errorhandler(404)
     def not_found(error):
-        if request.path.startswith(bfs_config.api_url):
+        if request.path.startswith(bafser_config.api_url):
             return response_msg("Not found", 404)
         return make_response("Страница не найдена", 404)
 
@@ -212,15 +212,15 @@ def create_app(import_name: str, config: AppConfig):
     def internal_server_error(error):
         print(error)
         logging.error("%s\n%s", error, traceback.format_exc())
-        if request.path.startswith(bfs_config.api_url):
+        if request.path.startswith(bafser_config.api_url):
             return response_msg("Internal Server Error", 500)
         return make_response("Произошла ошибка", 500)
 
     @app.errorhandler(401)
     def unauthorized(error):
-        if request.path.startswith(bfs_config.api_url):
+        if request.path.startswith(bafser_config.api_url):
             return response_msg("Unauthorized", 401)
-        return redirect(bfs_config.login_page_url)
+        return redirect(bafser_config.login_page_url)
 
     @jwt_manager.expired_token_loader
     def expired_token_loader(jwt_header, jwt_data):

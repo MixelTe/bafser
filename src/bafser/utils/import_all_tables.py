@@ -1,6 +1,6 @@
 import importlib
 import os
-import bfs_config
+import bafser_config
 
 
 def import_all_tables():
@@ -11,8 +11,8 @@ def import_all_tables():
     from ..data import role
     from ..data import user_role
 
-    for file in os.listdir(bfs_config.data_tables_folder):
+    for file in os.listdir(bafser_config.data_tables_folder):
         if not file.endswith(".py"):
             continue
-        module = bfs_config.data_tables_folder + "." + file[:-3]
+        module = bafser_config.data_tables_folder + "." + file[:-3]
         importlib.import_module(module)

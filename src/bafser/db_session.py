@@ -9,7 +9,7 @@ import sqlalchemy.orm as orm
 
 from .table_base import TableBase
 from .utils import import_all_tables
-import bfs_config
+import bafser_config
 
 
 convention = {
@@ -32,12 +32,12 @@ def global_init(dev: bool):
         return
 
     if dev:
-        conn_str = f"sqlite:///{bfs_config.db_dev_path}?check_same_thread=False"
+        conn_str = f"sqlite:///{bafser_config.db_dev_path}?check_same_thread=False"
     else:
-        conn_str = f"mysql+pymysql://{bfs_config.db_path}?charset=UTF8mb4"
+        conn_str = f"mysql+pymysql://{bafser_config.db_path}?charset=UTF8mb4"
     print(f"Подключение к базе данных по адресу {conn_str}")
 
-    engine = sa.create_engine(conn_str, echo=bfs_config.sql_echo, pool_pre_ping=True)
+    engine = sa.create_engine(conn_str, echo=bafser_config.sql_echo, pool_pre_ping=True)
     __factory = orm.sessionmaker(bind=engine)
 
     import_all_tables()

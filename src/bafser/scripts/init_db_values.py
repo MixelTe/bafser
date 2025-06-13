@@ -4,8 +4,8 @@ def init_db_values(dev=False):
     from bafser import db_session, Role, UserBase, create_folder_for_file
 
     if dev:
-        import bfs_config
-        create_folder_for_file(bfs_config.db_dev_path)
+        import bafser_config
+        create_folder_for_file(bafser_config.db_dev_path)
 
     db_session.global_init(dev)
     db_sess = db_session.create_session()

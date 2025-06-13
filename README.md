@@ -15,7 +15,7 @@ PyMySQL==1.1.1
 ## usage
 scripts: `python -m bafser`
 
-copy `bfs_config.example.py` to project root as `bfs_config.py`
+copy `bafser_config.example.py` to project root as `bafser_config.py`
 
 create files:
 
