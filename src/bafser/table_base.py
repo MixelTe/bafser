@@ -81,6 +81,7 @@ class SingletonMixin:
         obj.init()
         db_sess.add(obj)
         db_sess.commit()
+        return obj
 
     def init(self):
         pass
