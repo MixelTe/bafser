@@ -67,3 +67,20 @@ class ObjMixin(IdMixin):
         from . import Log
         self.deleted = False
         Log.restored(self, actor, now=now, commit=commit, db_sess=db_sess)
+
+
+class SingletonMixin:
+    id = sa.Column(sa.Integer, primary_key=True, unique=True, autoincrement=True)
+
+    @classmethod
+    def get(cls, db_sess: Session):
+        obj = db_sess.get(cls, 1)
+        if obj:
+            return obj
+        obj = cls(id=1)
+        obj.init()
+        db_sess.add(obj)
+        db_sess.commit()
+
+    def init(self):
+        pass
