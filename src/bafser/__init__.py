@@ -25,7 +25,7 @@ from .app import AppConfig, create_app
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
 
 from .db_session import SqlAlchemyBase
-from .table_base import TableBase, IdMixin, ObjMixin
+from .table_base import TableBase, IdMixin, ObjMixin, SingletonMixin
 from .data._tables import TablesBase
 from .data._roles import RolesBase
 from .data.operation import OperationsBase
