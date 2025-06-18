@@ -19,7 +19,6 @@ import bafser_config
 
 
 class AppConfig():
-    is_admin_default = False
     data_folders: list[tuple[str, str]] = []
     config: list[tuple[str, str]] = []
 
@@ -93,7 +92,7 @@ def create_app(import_name: str, config: AppConfig):
         db_session.global_init(config.DEV_MODE)
 
         if not config.DEV_MODE:
-            check_is_admin_default()
+            change_admin_default_pwd()
 
         register_blueprints(app)
         if run_app:
@@ -102,12 +101,13 @@ def create_app(import_name: str, config: AppConfig):
                 print("Delay for requests is enabled")
             app.run(debug=True, port=port)
 
-    def check_is_admin_default():
+    def change_admin_default_pwd():
         from . import UserBase
         db_sess = db_session.create_session()
         admin = UserBase.get_by_login(db_sess, "admin", includeDeleted=True)
-        if admin is not None:
-            config.is_admin_default = admin.check_password("admin")
+        if admin is not None and admin.check_password("admin"):
+            admin.set_password(randstr(16))
+            db_sess.commit()
         db_sess.close()
 
     @app.before_request
@@ -139,11 +139,6 @@ def create_app(import_name: str, config: AppConfig):
 
         if config.DELAY_MODE:
             time.sleep(0.5)
-        if config.is_admin_default:
-            check_is_admin_default()
-            if config.is_admin_default:
-                # Admin password must be changed
-                return response_msg("Security error")
 
     @app.after_request
     def after_request(response: Response):

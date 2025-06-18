@@ -34,7 +34,10 @@ def global_init(dev: bool):
     if dev:
         conn_str = f"sqlite:///{bafser_config.db_dev_path}?check_same_thread=False"
     else:
-        conn_str = f"mysql+pymysql://{bafser_config.db_path}?charset=UTF8mb4"
+        if bafser_config.db_mysql:
+            conn_str = f"mysql+pymysql://{bafser_config.db_path}?charset=UTF8mb4"
+        else:
+            conn_str = f"sqlite:///{bafser_config.db_path}?check_same_thread=False"
     print(f"Подключение к базе данных по адресу {conn_str}")
 
     engine = sa.create_engine(conn_str, echo=bafser_config.sql_echo, pool_pre_ping=True)
