@@ -96,7 +96,7 @@ def create_app(import_name: str, config: AppConfig):
 
         register_blueprints(app)
         if run_app:
-            print("Starting")
+            print(f"Starting on port={port}")
             if config.DELAY_MODE:
                 print("Delay for requests is enabled")
             app.run(debug=True, port=port)
