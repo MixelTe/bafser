@@ -17,4 +17,4 @@ def init_db_values(dev=False):
 
 
 def run(args):
-    init_db_values("dev" in args, True)
+    init_db_values("dev" in args)

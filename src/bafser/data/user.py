@@ -76,11 +76,21 @@ class UserBase(SqlAlchemyBase, ObjMixin):
     @staticmethod
     def _create_admin(db_sess: Session):
         User = get_user_table()
+        admin = User.get_admin(db_sess)
+        if admin:
+            return admin
         return User.create_admin(db_sess)
 
     @classmethod
     def get_admin(cls, db_sess: Session):
         return db_sess.query(cls).join(UserRole).filter(UserRole.roleId == RolesBase.admin).first()
+
+    _is_admin = None
+
+    def is_admin(self):
+        if self._is_admin is None:
+            self._is_admin = self.has_role(RolesBase.admin)
+        return self._is_admin
 
     @staticmethod
     def get_fake_system():
@@ -117,6 +127,8 @@ class UserBase(SqlAlchemyBase, ObjMixin):
             return False
 
         UserRole.new(actor, self.id, roleId)
+        if roleId == RolesBase.admin:
+            self._is_admin = True
         return True
 
     def remove_role(self, actor: "UserBase", roleId: int):
@@ -126,6 +138,8 @@ class UserBase(SqlAlchemyBase, ObjMixin):
             return False
 
         user_role.delete(actor)
+        if roleId == RolesBase.admin:
+            self._is_admin = False
         return True
 
     def get_roles(self):
