@@ -99,7 +99,7 @@ def create_app(import_name: str, config: AppConfig):
             print(f"Starting on port={port}")
             if config.DELAY_MODE:
                 print("Delay for requests is enabled")
-            app.run(debug=True, port=port)
+            app.run(debug=config.DEV_MODE, port=port)
 
     def change_admin_default_pwd():
         from . import UserBase
