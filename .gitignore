@@ -2,4 +2,6 @@
 __pycache__/
 build/
 dist/
-bafser_config.py
+test/db
+test/logs
+test/secret_key_jwt.txt

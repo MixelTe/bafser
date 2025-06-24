@@ -1,0 +1,29 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "python.analysis.typeCheckingMode": "off"
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Python: main",
+                "type": "debugpy",
+                "request": "launch",
+                // "program": "${file}",
+                "program": "main_test.py",
+                "console": "integratedTerminal",
+                "args": [
+                    "dev"
+                ]
+            }
+        ]
+    }
+}
