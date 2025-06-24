@@ -8,7 +8,7 @@ Roles: "Type[RolesBase]" = None
 
 def get_roles():
     if Roles is None:
-        raise Exception("[BFS] No class inherited from RolesBase")
+        raise Exception("[bafser] No class inherited from RolesBase")
     return Roles
 
 
@@ -36,4 +36,4 @@ class RolesBase:
                 if fields[i][1] == fields[k][1]:
                     same.append((fields[i][0], fields[k][0], fields[i][1]))
         if len(same) > 0:
-            raise Exception(f"[BFS] Same ids for Role: {'; '.join(f'{n1} and {n2} is {v}' for (n1, n2, v) in same)}")
+            raise Exception(f"[bafser] Same ids for Role: {'; '.join(f'{n1} and {n2} is {v}' for (n1, n2, v) in same)}")

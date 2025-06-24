@@ -18,7 +18,7 @@ TValue = Any
 
 def get_user_table():
     if User is None:
-        raise Exception("[BFS] No class inherited from UserBase")
+        raise Exception("[bafser] No class inherited from UserBase")
     return User
 
 

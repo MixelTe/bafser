@@ -34,5 +34,5 @@ Operations: Type[OperationsBase] = None
 
 def get_operations():
     if Operations is None:
-        raise Exception("[BFS] No class inherited from OperationsBase")
+        raise Exception("[bafser] No class inherited from OperationsBase")
     return Operations

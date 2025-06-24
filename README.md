@@ -90,6 +90,7 @@ class SomeTable(SqlAlchemyBase, ObjMixin):
 ```
 * `IdMixin` adds `id` column
 * `ObjMixin` adds `id` and `deleted` columns
+* `SingletonMixin` adds `id` column
 
 ```py
 # main.py
