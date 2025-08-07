@@ -29,9 +29,10 @@ class AppConfig():
                  JWT_ACCESS_TOKEN_REFRESH: Union[Literal[False], timedelta] = timedelta(minutes=30),
                  CACHE_MAX_AGE=31536000,
                  MESSAGE_TO_FRONTEND="",
-                 STATIC_FOLDERS: list[str] = ["/static/", "/fonts/"],
+                 STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],
                  DEV_MODE=False,
                  DELAY_MODE=False,
+                 PAGE404="index.html",
                  ):
         self.FRONTEND_FOLDER = FRONTEND_FOLDER
         self.IMAGES_FOLDER = IMAGES_FOLDER
@@ -42,6 +43,7 @@ class AppConfig():
         self.STATIC_FOLDERS = STATIC_FOLDERS
         self.DEV_MODE = DEV_MODE
         self.DELAY_MODE = DELAY_MODE
+        self.PAGE404 = PAGE404
         self.add_data_folder("IMAGES_FOLDER", IMAGES_FOLDER)
         self.add("CACHE_MAX_AGE", CACHE_MAX_AGE)
 
@@ -172,17 +174,22 @@ def create_app(import_name: str, config: AppConfig):
     def frontend(path):
         if request.path.startswith(bafser_config.api_url):
             abort(404)
-        if path != "" and os.path.exists(config.FRONTEND_FOLDER + "/" + path):
-            res = send_from_directory(config.FRONTEND_FOLDER, path)
-            if any(request.path.startswith(path) for path in config.STATIC_FOLDERS):
-                res.headers.set("Cache-Control", f"public,max-age={config.CACHE_MAX_AGE},immutable")
-            else:
-                res.headers.set("Cache-Control", "no_cache")
-            return res
+
+        if path == "":
+            fname = "index.html"
+        elif os.path.exists(config.FRONTEND_FOLDER + "/" + path):
+            fname = path
+        elif os.path.exists(config.FRONTEND_FOLDER + "/" + path + ".html"):
+            fname = path + ".html"
         else:
-            res = send_from_directory(config.FRONTEND_FOLDER, "index.html")
-            res.headers.set("Cache-Control", "no_cache")
-            return res
+            fname = config.PAGE404
+
+        res = send_from_directory(config.FRONTEND_FOLDER, fname)
+        if any(request.path.startswith(path) for path in config.STATIC_FOLDERS):
+            res.headers.set("Cache-Control", f"public,max-age={config.CACHE_MAX_AGE},immutable")
+        else:
+            res.headers.set("Cache-Control", "public,max-age=60,stale-while-revalidate=600,stale-if-error=14400")
+        return res
 
     @app.errorhandler(404)
     def not_found(error):
