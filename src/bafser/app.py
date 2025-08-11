@@ -80,7 +80,13 @@ def create_app(import_name: str, config: AppConfig):
 
     jwt_manager = JWTManager(app)
 
-    def run(run_server: bool, init_db: Callable[[], None] = None, init_dev_values: Callable[[], None] = None, port=5000, host="127.0.0.1"):
+    def run(
+        run_server: bool,
+        init_db: Callable[[Session], None] = None,
+        init_dev_values: Callable[[Session], None] = None,
+        port=5000,
+        host="127.0.0.1"
+    ):
         for (_, path) in config.data_folders:
             if not os.path.exists(path):
                 os.makedirs(path)
@@ -96,7 +102,7 @@ def create_app(import_name: str, config: AppConfig):
                 print("Delay for requests is enabled")
             app.run(debug=config.DEV_MODE, port=port, host=host)
 
-    def init_database(init_db: Callable[[], None], init_dev_values: Callable[[], None]):
+    def init_database(init_db: Callable[[Session], None], init_dev_values: Callable[[Session], None]):
         from . import Role, UserBase
         from .data.db_state import DBState
         db_session.global_init(config.DEV_MODE)
@@ -108,10 +114,10 @@ def create_app(import_name: str, config: AppConfig):
                 UserBase._create_admin(db_sess)
                 if init_db is not None:
                     print("init_db")
-                    init_db()
+                    init_db(db_sess)
                 if config.DEV_MODE and init_dev_values is not None:
                     print("init_dev_values")
-                    init_dev_values()
+                    init_dev_values(db_sess)
                 DBState.mark_as_initialized(db_sess)
 
             if not config.DEV_MODE:
