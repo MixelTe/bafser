@@ -3,6 +3,9 @@ db_path = "username:UR2hqJDbSfQ@username.mysql.pythonanywhere-services.com/usern
 db_mysql = True
 sql_echo = False
 
+use_alembic = True
+migrations_folder = "alembic"
+
 log_info_path = "logs/log_info.csv"
 log_requests_path = "logs/log_requests.csv"
 log_errors_path = "logs/log_errors.log"

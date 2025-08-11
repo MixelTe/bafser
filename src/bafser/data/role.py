@@ -1,7 +1,7 @@
 from sqlalchemy import Column, orm, String
 from sqlalchemy.orm import Session
 
-from .. import SqlAlchemyBase, ObjMixin, UserBase, get_datetime_now
+from .. import SqlAlchemyBase, ObjMixin, get_datetime_now
 from ._roles import RoleDesc, RolesBase, TRole, get_roles
 from ._tables import TablesBase
 from .log import Actions, Log

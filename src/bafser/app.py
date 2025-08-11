@@ -9,10 +9,11 @@ import traceback
 from flask import Flask, Response, abort, g, make_response, redirect, request, send_from_directory
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt, get_jwt_identity, set_access_cookies, verify_jwt_in_request
 from urllib.parse import quote
+from sqlalchemy.orm import Session
 
-from bafser.scripts.init_db_values import init_db_values
 
 from . import db_session
+from .alembic import alembic_upgrade
 from .logger import get_logger_requests, setLogging
 from .utils import get_json, get_secret_key, get_secret_key_rnd, randstr, register_blueprints, response_msg
 import bafser_config
@@ -79,33 +80,45 @@ def create_app(import_name: str, config: AppConfig):
 
     jwt_manager = JWTManager(app)
 
-    def run(run_app: bool, init_dev_values: Callable[[], None] = None, port=5000):
+    def run(run_server: bool, init_db: Callable[[], None] = None, init_dev_values: Callable[[], None] = None, port=5000, host="127.0.0.1"):
         for (_, path) in config.data_folders:
             if not os.path.exists(path):
                 os.makedirs(path)
 
-        if config.DEV_MODE:
-            if not os.path.exists(bafser_config.db_dev_path):
-                os.makedirs(os.path.dirname(bafser_config.db_dev_path), exist_ok=True)
-                init_db_values(True)
-                if init_dev_values is not None:
-                    init_dev_values()
-
-        db_session.global_init(config.DEV_MODE)
-
-        if not config.DEV_MODE:
-            change_admin_default_pwd()
+        if bafser_config.use_alembic:
+            alembic_upgrade(config.DEV_MODE)
+        init_database(init_db, init_dev_values)
 
         register_blueprints(app)
-        if run_app:
+        if run_server:
             print(f"Starting on port={port}")
             if config.DELAY_MODE:
                 print("Delay for requests is enabled")
-            app.run(debug=config.DEV_MODE, port=port)
+            app.run(debug=config.DEV_MODE, port=port, host=host)
 
-    def change_admin_default_pwd():
+    def init_database(init_db: Callable[[], None], init_dev_values: Callable[[], None]):
+        from . import Role, UserBase
+        from .data.db_state import DBState
+        db_session.global_init(config.DEV_MODE)
+        with db_session.create_session() as db_sess:
+            is_initialized = DBState.is_initialized(db_sess)
+            if not is_initialized:
+                print("initialize database")
+                Role.update_roles_permissions(db_sess)
+                UserBase._create_admin(db_sess)
+                if init_db is not None:
+                    print("init_db")
+                    init_db()
+                if config.DEV_MODE and init_dev_values is not None:
+                    print("init_dev_values")
+                    init_dev_values()
+                DBState.mark_as_initialized(db_sess)
+
+            if not config.DEV_MODE:
+                change_admin_default_pwd(db_sess)
+
+    def change_admin_default_pwd(db_sess: Session):
         from . import UserBase
-        db_sess = db_session.create_session()
         admin = UserBase.get_by_login(db_sess, "admin", includeDeleted=True)
         if admin is not None and admin.check_password("admin"):
             admin.set_password(randstr(16))

@@ -8,7 +8,7 @@ import sqlalchemy.ext.declarative as dec
 import sqlalchemy.orm as orm
 
 from .table_base import TableBase
-from .utils import import_all_tables
+from .utils import import_all_tables, create_folder_for_file
 import bafser_config
 
 
@@ -32,13 +32,15 @@ def global_init(dev: bool):
         return
 
     if dev:
+        create_folder_for_file(bafser_config.db_dev_path)
         conn_str = f"sqlite:///{bafser_config.db_dev_path}?check_same_thread=False"
     else:
         if bafser_config.db_mysql:
             conn_str = f"mysql+pymysql://{bafser_config.db_path}?charset=UTF8mb4"
         else:
+            create_folder_for_file(bafser_config.db_path)
             conn_str = f"sqlite:///{bafser_config.db_path}?check_same_thread=False"
-    print(f"Подключение к базе данных по адресу {conn_str}")
+    print(f"Connecting to the database at {conn_str}")
 
     engine = sa.create_engine(conn_str, echo=bafser_config.sql_echo, pool_pre_ping=True)
     __factory = orm.sessionmaker(bind=engine)
