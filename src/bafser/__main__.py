@@ -23,7 +23,7 @@ def cli():
         print("-" * l)
         return
 
-    importlib.import_module("scripts." + sys.argv[1], "bafser").run(sys.argv[2:])
+    importlib.import_module(".scripts." + sys.argv[1], "bafser").run(sys.argv[2:])
 
 
 if __name__ == "__main__":
