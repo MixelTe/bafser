@@ -3,6 +3,7 @@ import os
 from alembic.config import Config
 from alembic import command
 
+from .utils import get_db_path
 import bafser_config
 
 
@@ -15,7 +16,7 @@ def create_alembic_config(dev: bool):
         db_path = bafser_config.db_dev_path
         issqlite = True
     else:
-        db_path = bafser_config.db_path
+        db_path = get_db_path(bafser_config.db_path)
         issqlite = not bafser_config.db_mysql
     alembic_cfg.set_main_option("issqlite", "1" if issqlite else "0")
 
