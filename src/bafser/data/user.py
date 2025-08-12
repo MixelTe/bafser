@@ -142,16 +142,19 @@ class UserBase(SqlAlchemyBase, ObjMixin):
             self._is_admin = False
         return True
 
-    def get_roles(self):
+    def get_roles(self) -> list[tuple[int, str]]:
         from .. import Role
         db_sess = Session.object_session(self)
         roles = db_sess\
             .query(Role)\
             .join(UserRole, UserRole.roleId == Role.id)\
             .filter(UserRole.userId == self.id)\
-            .values(Role.name)
+            .values(Role.id, Role.name)
 
-        return list(map(lambda v: v[0], roles))
+        return list(map(lambda v: (v[0], v[1]), roles))
+
+    def get_roles_names(self):
+        return [v[1] for v in self.get_roles()]
 
     def has_role(self, roleId: int):
         db_sess = Session.object_session(self)
