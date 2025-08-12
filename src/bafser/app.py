@@ -61,6 +61,12 @@ class AppConfig():
         self.add(key, get_secret_key(path))
         return self
 
+    def add_secret_key_env(self, key: str, envname: str = None, default: str = None):
+        if envname is None:
+            envname = key
+        self.add(key, os.environ.get(envname, default))
+        return self
+
     def add_secret_key_rnd(self, key: str, path: str):
         self.add(key, get_secret_key_rnd(path))
         return self
