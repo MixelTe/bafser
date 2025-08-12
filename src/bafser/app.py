@@ -64,7 +64,10 @@ class AppConfig():
     def add_secret_key_env(self, key: str, envname: str = None, default: str = None):
         if envname is None:
             envname = key
-        self.add(key, os.environ.get(envname, default))
+        v = os.environ.get(envname, default)
+        if v is None:
+            raise Exception(f"env var not set: {envname}")
+        self.add(key, v)
         return self
 
     def add_secret_key_rnd(self, key: str, path: str):
