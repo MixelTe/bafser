@@ -88,6 +88,7 @@ def create_app(import_name: str, config: AppConfig):
         app.config[key] = path
 
     jwt_manager = JWTManager(app)
+    register_blueprints(app)
 
     def run(
         run_server: bool,
@@ -104,7 +105,6 @@ def create_app(import_name: str, config: AppConfig):
             alembic_upgrade(config.DEV_MODE)
         init_database(init_db, init_dev_values)
 
-        register_blueprints(app)
         if run_server:
             print(f"Starting on http://{host}:{port}")
             if config.DELAY_MODE:
