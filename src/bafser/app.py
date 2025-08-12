@@ -91,8 +91,8 @@ def create_app(import_name: str, config: AppConfig):
 
     def run(
         run_server: bool,
-        init_db: Callable[[Session], None] = None,
-        init_dev_values: Callable[[Session], None] = None,
+        init_db: Callable[[Session, AppConfig], None] = None,
+        init_dev_values: Callable[[Session, AppConfig], None] = None,
         port=5000,
         host="127.0.0.1"
     ):
@@ -111,7 +111,7 @@ def create_app(import_name: str, config: AppConfig):
                 print("Delay for requests is enabled")
             app.run(debug=config.DEV_MODE, port=port, host=host)
 
-    def init_database(init_db: Callable[[Session], None], init_dev_values: Callable[[Session], None]):
+    def init_database(init_db: Callable[[Session, AppConfig], None], init_dev_values: Callable[[Session, AppConfig], None]):
         from . import Role, UserBase
         from .data.db_state import DBState
         db_session.global_init(config.DEV_MODE)
@@ -123,10 +123,10 @@ def create_app(import_name: str, config: AppConfig):
                 UserBase._create_admin(db_sess)
                 if init_db is not None:
                     print("init_db")
-                    init_db(db_sess)
+                    init_db(db_sess, config)
                 if config.DEV_MODE and init_dev_values is not None:
                     print("init_dev_values")
-                    init_dev_values(db_sess)
+                    init_dev_values(db_sess, config)
                 DBState.mark_as_initialized(db_sess)
 
             if not config.DEV_MODE:
