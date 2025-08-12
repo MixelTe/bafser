@@ -129,7 +129,7 @@ def setLogging():
     file_handler_error.encoding = "utf-8"
     logger.addHandler(file_handler_error)
 
-    formatter_info = RequestFormatter("%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)s;%(url)s;%(levelname)s;%(module)s;%(message)s")
+    formatter_info = RequestFormatter("%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)-4s;%(url)s;%(module)s;%(message)s")
     formatter_info.max_json_len = 4096
     file_handler_info = RotatingFileHandler(
         bafser_config.log_info_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
@@ -140,7 +140,7 @@ def setLogging():
 
     logger_requests = get_logger_requests()
     logger_requests.setLevel(logging.DEBUG)
-    formatter_req = RequestFormatter("%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)s;%(url)s;%(levelname)s;%(message)s")
+    formatter_req = RequestFormatter("%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)-4s;%(url)s;%(message)s")
     formatter_req.max_msg_len = 1024
     file_handler_req = RotatingFileHandler(
         bafser_config.log_requests_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)

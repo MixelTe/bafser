@@ -89,7 +89,12 @@ def create_app(import_name: str, config: AppConfig):
         app.config[key] = path
 
     jwt_manager = JWTManager(app)
+
     register_blueprints(app)
+
+    for (_, path) in config.data_folders:
+        if not os.path.exists(path):
+            os.makedirs(path)
 
     def run(
         run_server: bool,
@@ -98,9 +103,6 @@ def create_app(import_name: str, config: AppConfig):
         port=5000,
         host="127.0.0.1"
     ):
-        for (_, path) in config.data_folders:
-            if not os.path.exists(path):
-                os.makedirs(path)
 
         if bafser_config.use_alembic:
             alembic_upgrade(config.DEV_MODE)
