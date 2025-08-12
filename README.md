@@ -137,7 +137,7 @@ class User(UserBase):
     @staticmethod
     def create_admin(db_sess: Session):
         fake_creator = User.get_fake_system()
-        return User.new(fake_creator, "admin", "admin", "Админ", [Roles.admin], "newColumnValue", db_sess=db_sess)
+        return User.new(fake_creator, "admin", "admin", "Admin", [Roles.admin], "newColumnValue", db_sess=db_sess)
 
 ```
 Image:

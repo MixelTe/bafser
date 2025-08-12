@@ -71,7 +71,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
     @classmethod
     def create_admin(cls, db_sess: Session):
         fake_creator = UserBase.get_fake_system()
-        return cls.new(fake_creator, "admin", "admin", "Админ", [RolesBase.admin], db_sess=db_sess)
+        return cls.new(fake_creator, "admin", "admin", "Admin", [RolesBase.admin], db_sess=db_sess)
 
     @staticmethod
     def _create_admin(db_sess: Session):

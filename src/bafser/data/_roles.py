@@ -37,3 +37,8 @@ class RolesBase:
                     same.append((fields[i][0], fields[k][0], fields[i][1]))
         if len(same) > 0:
             raise Exception(f"[bafser] Same ids for Role: {'; '.join(f'{n1} and {n2} is {v}' for (n1, n2, v) in same)}")
+
+    @staticmethod
+    def get_all():
+        ROLES = get_roles().ROLES
+        return [(RolesBase.admin, "Admin")] + [(id, ROLES[id]["name"]) for id in ROLES.keys()]

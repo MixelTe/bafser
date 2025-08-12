@@ -26,7 +26,7 @@ class Role(SqlAlchemyBase, ObjMixin):
     def update_roles_permissions(db_sess: Session):
         ROLES = get_roles().ROLES
         # add new operations
-        operations_new = list(get_operations().get_all())
+        operations_new = get_operations().get_all()
         operations_new_ids = [v[0] for v in operations_new]
         operations_cur = list(db_sess.query(Operation).all())
         operations_cur_ids = [v.id for v in operations_cur]
@@ -58,7 +58,7 @@ class Role(SqlAlchemyBase, ObjMixin):
 
             # get role data
             if role.id == RolesBase.admin:
-                name = "Админ"
+                name = "Admin"
                 operations = operations_new
             else:
                 name = ROLES[role.id]["name"]
@@ -90,7 +90,7 @@ class Role(SqlAlchemyBase, ObjMixin):
 
         # add new roles
         new_roles: list[tuple[int, str]] = []
-        admin_role: tuple[TRole, RoleDesc] = (RolesBase.admin, {"name": "Админ", "operations": operations_new})
+        admin_role: tuple[TRole, RoleDesc] = (RolesBase.admin, {"name": "Admin", "operations": operations_new})
         for role_id, role_data in [admin_role, *list(ROLES.items())]:
             if role_id in roles_cur_ids:
                 continue

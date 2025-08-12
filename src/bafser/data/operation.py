@@ -1,4 +1,4 @@
-from typing import Generator, Type
+from typing import Type
 
 from sqlalchemy import Column, String
 
@@ -21,8 +21,8 @@ class Operation(SqlAlchemyBase):
 
 class OperationsBase:
     @classmethod
-    def get_all(cls) -> Generator[tuple[str, str], None, None]:
-        return get_all_values(cls())
+    def get_all(cls):
+        return list(get_all_values(cls()))
 
     def __init_subclass__(cls, **kwargs):
         global Operations
