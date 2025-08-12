@@ -106,7 +106,7 @@ def create_app(import_name: str, config: AppConfig):
 
         register_blueprints(app)
         if run_server:
-            print(f"Starting on port={port}")
+            print(f"Starting on http://{host}:{port}")
             if config.DELAY_MODE:
                 print("Delay for requests is enabled")
             app.run(debug=config.DEV_MODE, port=port, host=host)
