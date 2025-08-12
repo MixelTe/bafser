@@ -84,6 +84,7 @@ def create_app(import_name: str, config: AppConfig):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = config.JWT_ACCESS_TOKEN_EXPIRES
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     app.config["JWT_SESSION_COOKIE"] = False
+    app.secret_key = app.config["JWT_SECRET_KEY"]
     for (key, path) in config.config:
         app.config[key] = path
 
