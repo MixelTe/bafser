@@ -31,11 +31,11 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def added(
         record: TableBase,
-        actor: Union[UserBase, None],
+        actor: UserBase | None,
         changes: list[tuple[FieldName, NewValue]],
-        now: datetime = None,
-        commit=True,
-        db_sess: Session = None,
+        now: datetime | None = None,
+        commit: bool = True,
+        db_sess: Session | None = None,
     ):
         if actor is None:
             actor = UserBase.get_fake_system()
@@ -65,11 +65,11 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def updated(
         record: TableBase,
-        actor: Union[UserBase, None],
+        actor: UserBase | None,
         changes: list[tuple[FieldName, OldValue, NewValue]],
-        now: datetime = None,
-        commit=True,
-        db_sess: Session = None,
+        now: datetime | None = None,
+        commit: bool = True,
+        db_sess: Session | None = None,
     ):
         if actor is None:
             actor = UserBase.get_fake_system()
@@ -93,11 +93,11 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def deleted(
         record: TableBase,
-        actor: Union[UserBase, None],
+        actor: UserBase | None,
         changes: list[tuple[FieldName, OldValue]] = [],
-        now: datetime = None,
-        commit=True,
-        db_sess: Session = None,
+        now: datetime | None = None,
+        commit: bool = True,
+        db_sess: Session | None = None,
     ):
         if actor is None:
             actor = UserBase.get_fake_system()
@@ -121,11 +121,11 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def restored(
         record: TableBase,
-        actor: Union[UserBase, None],
+        actor: UserBase | None,
         changes: list[tuple[FieldName, OldValue, NewValue]] = [],
-        now: datetime = None,
-        commit=True,
-        db_sess: Session = None,
+        now: datetime | None = None,
+        commit: bool = True,
+        db_sess: Session | None = None,
     ):
         if actor is None:
             actor = UserBase.get_fake_system()

@@ -4,12 +4,12 @@ import bafser_config
 
 
 def import_all_tables():
-    from ..data import image
-    from ..data import log
-    from ..data import operation
-    from ..data import permission
-    from ..data import role
-    from ..data import user_role
+    from ..data import image  # type: ignore
+    from ..data import log  # type: ignore
+    from ..data import operation  # type: ignore
+    from ..data import permission  # type: ignore
+    from ..data import role  # type: ignore
+    from ..data import user_role  # type: ignore
 
     if not os.path.exists(bafser_config.data_tables_folder):
         return

@@ -18,7 +18,7 @@ def emoji_to_ip(emoji: str):
     try:
         if len(emoji) != 4:
             return ""
-        r = []
+        r: list[int] = []
         for e in emoji:
             r.append(EMOJI.index(e))
         return ".".join(map(str, r))

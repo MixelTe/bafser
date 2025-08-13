@@ -1,9 +1,11 @@
 import importlib
 import os
+
+from flask import Flask
 import bafser_config
 
 
-def register_blueprints(app):
+def register_blueprints(app: Flask):
     if not os.path.exists(bafser_config.blueprints_folder):
         return
 

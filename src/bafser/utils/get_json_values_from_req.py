@@ -1,18 +1,41 @@
-from typing import Any, Union
+from typing import Any, TypeVar, overload
 from flask import abort, g
 
 from . import get_json_values, response_msg
+from .get_json_values import field_desc
 
-field_name = str
-default_value = Any
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+T3 = TypeVar("T3")
+T4 = TypeVar("T4")
+T5 = TypeVar("T5")
 
 
-def get_json_values_from_req(*field_names: Union[field_name, tuple[field_name, default_value]]):
+@overload
+def get_json_values_from_req(f1: field_desc[T1]) -> T1: ...  # noqa: E704
+@overload
+def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2]) -> tuple[T1, T2]: ...  # noqa: E704
+@overload
+def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3]) -> tuple[T1, T2, T3]: ...  # noqa: E704
+@overload
+def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4]) -> tuple[T1, T2, T3, T4]: ...  # noqa: E704, E501
+@overload
+def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4], f5: field_desc[T5]) -> tuple[T1, T2, T3, T4, T5]: ...  # noqa: E704, E501
+@overload
+def get_json_values_from_req(*field_names: field_desc[Any]) -> list[Any]: ...  # noqa: E704
+
+
+def get_json_values_from_req(*field_names: field_desc[Any], **kwargs: Any):
+    if kwargs != {}:
+        raise Exception("dont support kwargs")
     data, is_json = g.json
     if not is_json:
         abort(response_msg("body is not json", 415))
 
-    values, values_error = get_json_values(data, *field_names)
+    if not isinstance(data, dict):
+        abort(response_msg("body json is not object", 415))
+
+    values, values_error = get_json_values(data, *field_names)  # type: ignore
 
     if values_error:
         abort(response_msg(values_error, 400))

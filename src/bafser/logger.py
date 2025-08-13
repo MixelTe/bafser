@@ -1,8 +1,9 @@
-from datetime import datetime, timedelta
+import datetime
 import json
 import logging
 import logging.handlers
 import os
+from typing import Any
 
 from flask import g, has_request_context, request
 
@@ -10,30 +11,30 @@ from bafser import create_folder_for_file, ip_to_emoji
 import bafser_config
 
 
-def customTime(*args):
-    utc_dt = datetime.utcnow()
-    utc_dt += timedelta(hours=3)
+def customTime(*args: Any):
+    utc_dt = datetime.datetime.now(datetime.timezone.utc)
+    utc_dt += datetime.timedelta(hours=3)
     return utc_dt.timetuple()
 
 
 class InfoFilter(logging.Filter):
-    def filter(self, rec):
-        return rec.levelno == logging.INFO and rec.name == "root"
+    def filter(self, record: Any):
+        return record.levelno == logging.INFO and record.name == "root"
 
 
 class RequestFormatter(logging.Formatter):
     converter = customTime
     max_msg_len = -1
     max_json_len = 2048
-    json_indent = None
+    json_indent: int | None = None
     outer_args: list[str] = []
 
-    def format(self, record):
+    def format(self, record: Any):
         if has_request_context():
             url_start = request.url.find(bafser_config.api_url)
             record.url = request.url[url_start:] if url_start >= 0 else request.url
             record.method = request.method
-            remote_addr = request.headers.get("X-Real-IP", request.remote_addr)
+            remote_addr = request.headers.get("X-Real-IP", request.remote_addr or "")
             record.ip = remote_addr
             record.ip_emoji = ip_to_emoji(remote_addr)
             record.req_id = g.get("req_id", "")
@@ -65,9 +66,9 @@ class RequestFormatter(logging.Formatter):
 
 
 class RotatingFileHandler(logging.handlers.RotatingFileHandler):
-    def __init__(self, *kargs, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         self.rollover = False
-        super().__init__(*kargs, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def doRollover(self):
         self.rollover = True
@@ -86,7 +87,7 @@ class RotatingFileHandler(logging.handlers.RotatingFileHandler):
         return r
 
 
-def get_log_fpath(fpath: str, next=False):
+def get_log_fpath(fpath: str, next: bool = False):
     i = 0
     n = fpath.split(".")
     name, ext = (".".join(n[:-1]), n[-1]) if len(n) > 1 else (n[0], "")
@@ -177,9 +178,9 @@ def log_frontend_error():
 def add_file_logger(
     fpath: str,
     name: str,
-    format="%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)s;%(url)s;%(levelname)s;%(module)s;%(message)s",
+    format: str = "%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)s;%(url)s;%(levelname)s;%(module)s;%(message)s",
     outer_args: list[str] = [],
-    max_json_len=4096
+    max_json_len: int = 4096
 ):
     create_folder_for_file(fpath)
     logger = logging.getLogger(name)
@@ -197,17 +198,17 @@ class ParametrizedLogger:
     def __init__(self, logger: logging.Logger):
         self.logger = logger
 
-    def _get_args(self):
-        return {}
+    def _get_args(self) -> object:
+        raise Exception("not implemented")
 
     def info(self, msg: str):
-        self._log(self.logger.info, msg)
+        self.__log(self.logger.info, msg)
 
     def error(self, msg: str):
-        self._log(self.logger.error, msg)
+        self.__log(self.logger.error, msg)
 
     def warning(self, msg: str):
-        self._log(self.logger.warning, msg)
+        self.__log(self.logger.warning, msg)
 
-    def _log(self, fn, msg: str):
+    def __log(self, fn: Any, msg: str):
         fn(msg, self._get_args(), stacklevel=3)

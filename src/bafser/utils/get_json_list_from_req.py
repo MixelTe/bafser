@@ -1,9 +1,10 @@
+from typing import Any
 from flask import abort, g
 
 from . import response_msg
 
 
-def get_json_list_from_req() -> list:
+def get_json_list_from_req() -> list[Any]:
     values, is_json = g.json
     if not is_json:
         abort(response_msg("body is not json", 415))
@@ -11,4 +12,4 @@ def get_json_list_from_req() -> list:
     if not isinstance(values, list):
         abort(response_msg("body is not json list", 400))
 
-    return values
+    return values  # type: ignore

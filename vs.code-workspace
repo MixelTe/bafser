@@ -8,7 +8,7 @@
         "editor.insertSpaces": true,
         "editor.formatOnSave": true,
         "editor.formatOnType": true,
-        "python.analysis.typeCheckingMode": "off"
+        "python.analysis.typeCheckingMode": "strict"
     },
     "launch": {
         "version": "0.2.0",

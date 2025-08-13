@@ -2,7 +2,7 @@ import os
 import uuid
 
 
-def get_secret_key_rnd(path):
+def get_secret_key_rnd(path: str):
     if os.path.exists(path):
         with open(path, "r", encoding="utf8") as f:
             return f.read()
@@ -13,7 +13,7 @@ def get_secret_key_rnd(path):
             return key
 
 
-def get_secret_key(path):
+def get_secret_key(path: str):
     if os.path.exists(path):
         with open(path, "r", encoding="utf8") as f:
             return f.read()

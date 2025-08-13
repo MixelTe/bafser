@@ -1,17 +1,15 @@
 from functools import wraps
-from bafser import db_session
+from typing import Any, Callable, TypeVar
+
+from .. import db_session
 
 
-def use_db_session():
-    def wrapper(fn):
-        @wraps(fn)
-        def decorator(*args, **kwargs):
-            db_sess = db_session.create_session()
-            try:
-                return fn(*args, **kwargs, db_sess=db_sess)
-            finally:
-                db_sess.close()
+TFn = TypeVar("TFn", bound=Callable[..., Any])
 
-        return decorator
 
-    return wrapper
+def use_db_session(fn: TFn) -> TFn:
+    @wraps(fn)
+    def wrapper(*args: Any, **kwargs: Any):
+        with db_session.create_session() as db_sess:
+            return fn(*args, **kwargs, db_sess=db_sess)
+    return wrapper  # type: ignore

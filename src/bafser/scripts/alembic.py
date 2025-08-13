@@ -7,7 +7,7 @@ from ..alembic import create_alembic_config
 import bafser_config
 
 
-def init(args):
+def init(args: list[str]):
     print("alembic init")
 
     os.makedirs(bafser_config.migrations_folder, exist_ok=True)
@@ -18,7 +18,7 @@ def init(args):
         f.write(script_py_mako)
 
 
-def revision(args):
+def revision(args: list[str]):
     alembic_cfg = create_alembic_config(dev=True)
     if len(args) == 0:
         script = ScriptDirectory.from_config(alembic_cfg)
@@ -35,7 +35,7 @@ def revision(args):
     command.revision(alembic_cfg, name, True)
 
 
-def run(args):
+def run(args: list[str]):
     scripts = [
         ("init", "create folders and files", init),
         ("revision", "[name] : autogenerate migration script", revision),

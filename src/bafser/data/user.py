@@ -37,7 +37,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
         User = cls
 
     @classmethod
-    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], db_sess: Session = None, **kwargs):
+    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], db_sess: Session = None, **kwargs: Any):
         from .. import Log
         db_sess = db_sess if db_sess else Session.object_session(creator)
         user, add_changes = cls._new(db_sess, {"login": login, "name": name}, **kwargs)

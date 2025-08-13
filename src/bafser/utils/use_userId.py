@@ -1,43 +1,31 @@
 from functools import wraps
-from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies
+from typing import Any, Callable, TypeVar
+
+from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request  # type: ignore
 
 from . import response_msg
 
+TFn = TypeVar("TFn", bound=Callable[..., Any])
 
-def use_userId():
-    def wrapper(fn):
+
+def use_userId(optional: bool = False):
+    from ..authentication import get_user_id_by_jwt_identity
+
+    def decorator(fn: TFn) -> TFn:
         @wraps(fn)
-        def decorator(*args, **kwargs):
-            jwt_identity = get_jwt_identity()
-            if (not isinstance(jwt_identity, list) and not isinstance(jwt_identity, tuple)) or len(jwt_identity) != 2:
+        def wrapper(*args: Any, **kwargs: Any):
+            try:
+                if optional:
+                    verify_jwt_in_request()
+                userId = get_user_id_by_jwt_identity(get_jwt_identity())
+            except Exception:
+                userId = None
+
+            if not optional and userId is None:
                 response = response_msg("The JWT has expired")
                 unset_jwt_cookies(response)
                 return response, 401
 
-            userId = jwt_identity[0]
             return fn(*args, **kwargs, userId=userId)
-
-        return decorator
-
-    return wrapper
-
-
-def use_userId_optional():
-    def wrapper(fn):
-        @wraps(fn)
-        def decorator(*args, **kwargs):
-            try:
-                jwt_identity = get_jwt_identity()
-                if (not isinstance(jwt_identity, list) and not isinstance(jwt_identity, tuple)) or len(jwt_identity) != 2:
-                    response = response_msg("The JWT has expired")
-                    unset_jwt_cookies(response)
-                    return response, 401
-                userId = jwt_identity[0]
-            except Exception:
-                userId = None
-
-            return fn(*args, **kwargs, userId=userId)
-
-        return decorator
-
-    return wrapper
+        return wrapper  # type: ignore
+    return decorator

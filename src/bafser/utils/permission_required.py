@@ -1,52 +1,48 @@
 from functools import wraps
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar, TYPE_CHECKING
+
 from flask import abort
-
-TCheckPermissionFn = TypeVar("TCheckPermissionFn", bound=Callable)
-
-
-def create_permission_required_decorator(check_permission: TCheckPermissionFn):
-    def permission_required(*args1, **kwargs1):
-        def wrapper(fn):
-            @wraps(fn)
-            def decorator(*args2, **kwargs2):
-                if "db_sess" not in kwargs2:
-                    abort(500, "permission_required: no db_sess")
-                if "user" not in kwargs2:
-                    abort(500, "permission_required: no user")
-
-                kwargs1["kwargs"] = kwargs2
-                if not check_permission(*args1, **kwargs1):
-                    abort(403)
-
-                return fn(*args2, **kwargs2)
-            return decorator
-        return wrapper
-    r: TCheckPermissionFn = permission_required
-    return r
-
-
-@create_permission_required_decorator
-def permission_required(*operations: tuple[str, str], kwargs: dict = None):
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
     from .. import UserBase
-    # db_sess: Session = kwargs["db_sess"]
-    user: UserBase = kwargs["user"]
 
-    for operation in operations:
-        if not user.check_permission(operation):
-            return False
-
-    return True
+TFn = TypeVar("TFn", bound=Callable[..., Any])
 
 
-@create_permission_required_decorator
-def permission_required_any(*operations: tuple[str, str], kwargs: dict = None):
-    from .. import UserBase
-    # db_sess: Session = kwargs["db_sess"]
-    user: UserBase = kwargs["user"]
+def create_permission_required_decorator(check_permission: Callable[["Session", "UserBase", dict[str, Any]], bool]):
+    def wrapper(fn: TFn) -> TFn:
+        @wraps(fn)
+        def decorator(*args: Any, **kwargs: Any):
+            if "db_sess" not in kwargs:
+                abort(500, "permission_required: no db_sess")
+            if "user" not in kwargs:
+                abort(500, "permission_required: no user")
 
-    for operation in operations:
-        if user.check_permission(operation):
-            return True
+            if not check_permission(kwargs["db_sess"], kwargs["user"], kwargs):
+                abort(403)
 
-    return False
+            return fn(*args, **kwargs)
+        return decorator  # type: ignore
+    return wrapper
+
+
+def permission_required(*operations: tuple[str, str]):
+    @create_permission_required_decorator
+    def check(db_sess: "Session", user: "UserBase", kwargs: dict[str, Any]):
+        for operation in operations:
+            if not user.check_permission(operation):
+                return False
+
+        return True
+    return check
+
+
+def permission_required_any(*operations: tuple[str, str]):
+    @create_permission_required_decorator
+    def check(db_sess: "Session", user: "UserBase", kwargs: dict[str, Any]):
+        for operation in operations:
+            if user.check_permission(operation):
+                return True
+
+        return False
+    return check

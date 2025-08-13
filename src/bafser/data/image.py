@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import Any, TypedDict, Union
+from typing import Any, Optional, TypedDict, Union
 import base64
 import os
 
 from flask import current_app
-from sqlalchemy import Column, String, orm, ForeignKey, Integer, DateTime
-from sqlalchemy.orm import Session
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 
 from .. import SqlAlchemyBase, ObjMixin, UserBase, Log, get_json_values, get_datetime_now, create_file_response
 from ._tables import TablesBase
@@ -16,6 +16,13 @@ class ImageJson(TypedDict):
     name: str
 
 
+class ImageKwargs(TypedDict):
+    name: str
+    type: str
+    createdById: int
+    creationDate: datetime
+
+
 TError = str
 TFieldName = str
 TValue = Any
@@ -24,17 +31,17 @@ TValue = Any
 class Image(SqlAlchemyBase, ObjMixin):
     __tablename__ = TablesBase.Image
 
-    name = Column(String(128), nullable=False)
-    type = Column(String(16), nullable=False)
-    creationDate = Column(DateTime, nullable=False)
-    deletionDate = Column(DateTime, nullable=True)
-    createdById = Column(Integer, ForeignKey("User.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(128))
+    type: Mapped[str] = mapped_column(String(16))
+    creationDate: Mapped[datetime]
+    deletionDate: Mapped[Optional[datetime]] = mapped_column(init=False)
+    createdById: Mapped[int] = mapped_column(ForeignKey("User.id"))
 
-    creator = orm.relationship("User")
+    creator: Mapped["UserBase"] = relationship("User", default=None)
 
     @classmethod
     def new(cls, creator: UserBase, json: ImageJson) -> Union[tuple[None, TError], tuple["Image", None]]:
-        (data, name), values_error = get_json_values(json, "data", "name")
+        (data, name), values_error = get_json_values(json, ("data", str), ("name", str))
         if values_error:
             return None, values_error
 
@@ -58,10 +65,13 @@ class Image(SqlAlchemyBase, ObjMixin):
         type = mimetype.split("/")[1]
 
         db_sess = Session.object_session(creator)
+        assert db_sess
         now = get_datetime_now()
         img, add_changes, err = cls._new(creator, json, {"name": name, "type": type, "createdById": creator.id, "creationDate": now})
         if err:
             return None, err
+        assert img
+        assert add_changes
         db_sess.add(img)
         db_sess.commit()
 
@@ -80,7 +90,7 @@ class Image(SqlAlchemyBase, ObjMixin):
         return img, None
 
     @staticmethod
-    def _new(creator: UserBase, json: ImageJson, image_kwargs: dict) -> \
+    def _new(creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> \
             Union[tuple[None, None, TError], tuple["Image", list[tuple[TFieldName, TValue]], None]]:
         img = Image(**image_kwargs)
         return img, [], None
@@ -88,19 +98,19 @@ class Image(SqlAlchemyBase, ObjMixin):
     def create_file_response(self):
         return create_file_response(self.get_path(), f"image/{self.type}", self.get_filename())
 
-    def delete(self, actor: UserBase, commit=True, now: datetime = None, db_sess: Session = None):
+    def delete(self, actor: UserBase, commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
         now = get_datetime_now() if now is None else now
         self.deletionDate = now
         super().delete(actor, commit, now, db_sess)
 
-    def restore(self, actor: UserBase, commit=True, now: datetime = None, db_sess: Session = None):
+    def restore(self, actor: UserBase, commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
         if not os.path.exists(self.get_path()):
             return False
         super().restore(actor, commit, now, db_sess)
         return True
 
     def get_path(self):
-        return os.path.join(current_app.config["IMAGES_FOLDER"], f"{self.id}.{self.type}")
+        return os.path.join(current_app.config["IMAGES_FOLDER"], f"{self.id}.{self.type}")  # type: ignore
 
     def get_filename(self):
         return self.name + "." + self.type

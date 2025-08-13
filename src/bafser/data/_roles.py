@@ -1,9 +1,9 @@
-from typing import Type, TypedDict
+from typing import Any, Type, TypedDict
 
 from ..utils.get_all_vars import get_all_fields
 
 
-Roles: "Type[RolesBase]" = None
+Roles: "Type[RolesBase] | None" = None
 
 
 def get_roles():
@@ -26,11 +26,11 @@ class RolesBase:
 
     ROLES: TRoles = {}
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any):
         global Roles
         Roles = cls
         fields = list(get_all_fields(cls()))
-        same = []
+        same: list[tuple[str, str, Any]] = []
         for i in range(len(fields)):
             for k in range(i + 1, len(fields)):
                 if fields[i][1] == fields[k][1]:

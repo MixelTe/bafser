@@ -1,26 +1,13 @@
-from typing import Type
-
-from sqlalchemy.ext.compiler import compiles
+from typing import Any
+from sqlalchemy.ext.compiler import compiles  # type: ignore
 from sqlalchemy.sql.expression import FunctionFilter
 from sqlalchemy.sql.functions import Function
 import sqlalchemy as sa
-import sqlalchemy.ext.declarative as dec
 import sqlalchemy.orm as orm
 
-from .table_base import TableBase
+from .table_base import TableBase as SqlAlchemyBase
 from .utils import import_all_tables, create_folder_for_file, get_db_path
 import bafser_config
-
-
-convention = {
-    "ix": "ix_%(column_0_label)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
-    "ck": "ck_%(table_name)s_%(constraint_name)s",
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "pk_%(table_name)s"
-}
-SqlAlchemyBase: Type[TableBase] = dec.declarative_base(cls=TableBase)
-SqlAlchemyBase.metadata = sa.MetaData(naming_convention=convention)
 
 __factory = None
 
@@ -52,24 +39,24 @@ def global_init(dev: bool):
 
 
 def create_session() -> orm.Session:
-    return __factory()
+    return __factory()  # type: ignore
 
 
-# @sa.event.listens_for(sa.engine.Engine, 'connect')
+# @sa.event.listens_for(sa.engine.Engine, "connect")
 # def sqlite_engine_connect(dbapi_conn, connection_record):
-#     dbapi_conn.create_function('lower', 1, str.lower)
+#     dbapi_conn.create_function("lower", 1, str.lower)
 
 
-@compiles(FunctionFilter, 'mysql')
-def compile_functionfilter_mysql(element, compiler, **kwgs):
+@compiles(FunctionFilter, "mysql")
+def compile_functionfilter_mysql(element: Any, compiler: Any, **kwgs: Any):
     # Support unary functions only
     arg0, = element.func.clauses
 
-    new_func = Function(
+    new_func = Function(  # type: ignore
         element.func.name,
-        sa.case([(element.criterion, arg0)]),
+        sa.case([(element.criterion, arg0)]),  # type: ignore
         packagenames=element.func.packagenames,
         type_=element.func.type,
         bind=element.func._bind)
 
-    return new_func._compiler_dispatch(compiler, **kwgs)
+    return new_func._compiler_dispatch(compiler, **kwgs)  # type: ignore
