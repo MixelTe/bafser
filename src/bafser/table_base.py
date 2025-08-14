@@ -49,7 +49,7 @@ class IdMixin:
 
 
 class ObjMixin(IdMixin):
-    deleted: Mapped[bool] = mapped_column(server_default="0", nullable=False)
+    deleted: Mapped[bool] = mapped_column(server_default="0", init=False)
 
     @classmethod
     def query(cls, db_sess: Session, includeDeleted: bool = False):
@@ -91,7 +91,8 @@ class SingletonMixin:
         obj = db_sess.get(cls, 1)
         if obj:
             return obj
-        obj = cls(id=1)  # type: ignore
+        obj = cls()
+        obj.id = 1
         obj.init()
         db_sess.add(obj)
         db_sess.commit()

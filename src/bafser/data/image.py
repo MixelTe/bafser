@@ -1,11 +1,11 @@
 from datetime import datetime
-from typing import Any, Optional, TypedDict, Union
+from typing import Any, Optional, TypedDict
 import base64
 import os
 
 from flask import current_app
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Session, Mapped, mapped_column
 
 from .. import SqlAlchemyBase, ObjMixin, UserBase, Log, get_json_values, get_datetime_now, create_file_response
 from ._tables import TablesBase
@@ -35,12 +35,10 @@ class Image(SqlAlchemyBase, ObjMixin):
     type: Mapped[str] = mapped_column(String(16))
     creationDate: Mapped[datetime]
     deletionDate: Mapped[Optional[datetime]] = mapped_column(init=False)
-    createdById: Mapped[int] = mapped_column(ForeignKey("User.id"))
-
-    creator: Mapped["UserBase"] = relationship("User", default=None)
+    createdById: Mapped[int] = mapped_column(ForeignKey(f"{TablesBase.User}.id"))
 
     @classmethod
-    def new(cls, creator: UserBase, json: ImageJson) -> Union[tuple[None, TError], tuple["Image", None]]:
+    def new(cls, creator: UserBase, json: ImageJson) -> tuple[None, TError] | tuple["Image", None]:
         (data, name), values_error = get_json_values(json, ("data", str), ("name", str))
         if values_error:
             return None, values_error
@@ -91,7 +89,7 @@ class Image(SqlAlchemyBase, ObjMixin):
 
     @staticmethod
     def _new(creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> \
-            Union[tuple[None, None, TError], tuple["Image", list[tuple[TFieldName, TValue]], None]]:
+            tuple[None, None, TError] | tuple["Image", list[tuple[TFieldName, TValue]], None]:
         img = Image(**image_kwargs)
         return img, [], None
 

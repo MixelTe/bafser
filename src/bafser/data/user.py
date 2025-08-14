@@ -1,7 +1,7 @@
 from typing import Any, Type, TypeVar
 
-from sqlalchemy import Column, String
-from sqlalchemy.orm import Session
+from sqlalchemy import String
+from sqlalchemy.orm import Session, Mapped, mapped_column
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .. import SqlAlchemyBase, ObjMixin, UserRole
@@ -11,35 +11,38 @@ from ._tables import TablesBase
 from .permission import Permission
 
 T = TypeVar("T", bound="UserBase")
-User: "Type[UserBase]" = None
+_User: "Type[UserBase] | None" = None
 TFieldName = str
 TValue = Any
 
 
 def get_user_table():
-    if User is None:
+    if _User is None:
         raise Exception("[bafser] No class inherited from UserBase")
-    return User
+    return _User
 
 
-class UserBase(SqlAlchemyBase, ObjMixin):
+class UserBase(ObjMixin, SqlAlchemyBase):
     __tablename__ = TablesBase.User
+    __abstract__ = True
 
-    login = Column(String(64), index=True, unique=True, nullable=False)
-    password = Column(String(128), nullable=False)
-    name = Column(String(64), nullable=False)
+    login: Mapped[str] = mapped_column(String(64), index=True, unique=True)
+    password: Mapped[str] = mapped_column(String(128), init=False)
+    name: Mapped[str] = mapped_column(String(64))
 
     def __repr__(self):
         return f"<{self.__class__.__name__}> [{self.id}] {self.login}"
 
-    def __init_subclass__(cls, **kwargs):
-        global User
-        User = cls
+    def __init_subclass__(cls, *args: Any, **kwargs: Any):
+        super().__init_subclass__(*args, **kwargs)
+        global _User
+        _User = cls
 
     @classmethod
-    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], db_sess: Session = None, **kwargs: Any):
+    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], db_sess: Session | None = None, **kwargs: Any):
         from .. import Log
         db_sess = db_sess if db_sess else Session.object_session(creator)
+        assert db_sess
         user, add_changes = cls._new(db_sess, {"login": login, "name": name}, **kwargs)
         user.set_password(password)
         db_sess.add(user)
@@ -60,12 +63,12 @@ class UserBase(SqlAlchemyBase, ObjMixin):
         return user
 
     @classmethod
-    def _new(cls: Type[T], db_sess: Session, user_kwargs: dict, **kwargs) -> tuple[T, list[tuple[TFieldName, TValue]]]:
+    def _new(cls: Type[T], db_sess: Session, user_kwargs: dict[str, Any], **kwargs: Any) -> tuple[T, list[tuple[TFieldName, TValue]]]:
         user = cls(**user_kwargs)
         return user, []
 
     @classmethod
-    def get_by_login(cls, db_sess: Session, login: str, includeDeleted=False):
+    def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False):
         return cls.query(db_sess, includeDeleted).filter(cls.login == login).first()
 
     @classmethod
@@ -94,10 +97,12 @@ class UserBase(SqlAlchemyBase, ObjMixin):
 
     @staticmethod
     def get_fake_system():
-        return UserBase(id=1, name="System")
+        u = UserBase(name="System", login="system")
+        u.id = 1
+        return u
 
     @classmethod
-    def all_of_role(cls, db_sess: Session, role: int, includeDeleted=False):
+    def all_of_role(cls, db_sess: Session, role: int, includeDeleted: bool = False):
         return cls.query(db_sess, includeDeleted).join(UserRole).filter(UserRole.roleId == role).all()
 
     def update_password(self, actor: "UserBase", password: str):
@@ -122,6 +127,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
 
     def add_role(self, actor: "UserBase", roleId: int):
         db_sess = Session.object_session(self)
+        assert db_sess
         existing = UserRole.get(db_sess, self.id, roleId)
         if existing:
             return False
@@ -133,6 +139,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
 
     def remove_role(self, actor: "UserBase", roleId: int):
         db_sess = Session.object_session(self)
+        assert db_sess
         user_role = UserRole.get(db_sess, self.id, roleId)
         if not user_role:
             return False
@@ -145,6 +152,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
     def get_roles(self) -> list[tuple[int, str]]:
         from .. import Role
         db_sess = Session.object_session(self)
+        assert db_sess
         roles = db_sess\
             .query(Role)\
             .join(UserRole, UserRole.roleId == Role.id)\
@@ -158,6 +166,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
 
     def has_role(self, roleId: int):
         db_sess = Session.object_session(self)
+        assert db_sess
         ur = db_sess\
             .query(UserRole.roleId)\
             .filter(UserRole.roleId == roleId)\
@@ -166,9 +175,10 @@ class UserBase(SqlAlchemyBase, ObjMixin):
 
         return ur is not None
 
-    def get_operations(self):
+    def get_operations(self) -> list[str]:
         from .. import Role
         db_sess = Session.object_session(self)
+        assert db_sess
         operations = db_sess\
             .query(Permission)\
             .join(Role, Permission.roleId == Role.id)\
@@ -178,7 +188,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
 
         return list(map(lambda v: v[0], operations))
 
-    def get_dict(self):
+    def get_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "name": self.name,
@@ -187,7 +197,7 @@ class UserBase(SqlAlchemyBase, ObjMixin):
             "operations": self.get_operations(),
         }
 
-    def get_dict_full(self):
+    def get_dict_full(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "deleted": self.deleted,

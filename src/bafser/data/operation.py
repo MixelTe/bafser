@@ -1,6 +1,7 @@
-from typing import Type
+from typing import Any, Type
 
-from sqlalchemy import Column, String
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .. import SqlAlchemyBase
 from ..utils import get_all_values
@@ -9,8 +10,8 @@ from ..utils import get_all_values
 class Operation(SqlAlchemyBase):
     __tablename__ = "Operation"
 
-    id = Column(String(32), primary_key=True, unique=True)
-    name = Column(String(32), nullable=False)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, unique=True)
+    name: Mapped[str] = mapped_column(String(32))
 
     def __repr__(self):
         return f"<Operation> [{self.id}] {self.name}"
@@ -24,15 +25,15 @@ class OperationsBase:
     def get_all(cls):
         return list(get_all_values(cls()))
 
-    def __init_subclass__(cls, **kwargs):
-        global Operations
-        Operations = cls
+    def __init_subclass__(cls, **kwargs: Any):
+        global _Operations
+        _Operations = cls
 
 
-Operations: Type[OperationsBase] = None
+_Operations: Type[OperationsBase] | None = None
 
 
 def get_operations():
-    if Operations is None:
+    if _Operations is None:
         raise Exception("[bafser] No class inherited from OperationsBase")
-    return Operations
+    return _Operations

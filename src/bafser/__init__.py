@@ -22,9 +22,10 @@ from .utils.use_user import use_user
 
 from .app import AppConfig, create_app
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
+from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
 
 from .db_session import SqlAlchemyBase
-from .table_base import TableBase, IdMixin, ObjMixin, SingletonMixin
+from .table_base import IdMixin, ObjMixin, SingletonMixin
 from .data._tables import TablesBase
 from .data._roles import RolesBase
 from .data.operation import OperationsBase
@@ -43,3 +44,39 @@ class M:
     PATCH = "PATCH"
     POST = "POST"
     PUT = "PUT"
+
+
+__all__ = [
+    "M",
+    "response_msg",
+    "get_json_values",
+    "create_file_response",
+    "create_folder_for_file",
+    "get_datetime_now",
+    "get_json",
+    "get_json_list_from_req",
+    "get_json_values_from_req",
+    "ip_to_emoji", "emoji_to_ip",
+    "jsonify_list",
+    "parse_date",
+    "create_permission_required_decorator",
+    "permission_required", "permission_required_any",
+    "randstr",
+    "response_not_found",
+    "use_db_session",
+    "use_userId",
+    "use_user",
+    "AppConfig", "create_app",
+    "get_logger_frontend", "log_frontend_error", "get_log_fpath", "add_file_logger", "ParametrizedLogger",
+    "create_access_token", "get_user_by_jwt_identity", "get_user_id_by_jwt_identity",
+    "SqlAlchemyBase",
+    "IdMixin", "ObjMixin", "SingletonMixin",
+    "TablesBase",
+    "RolesBase",
+    "OperationsBase",
+    "UserRole",
+    "UserBase",
+    "Log",
+    "Role",
+    "Image",
+]

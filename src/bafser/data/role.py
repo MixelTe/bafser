@@ -1,10 +1,11 @@
-from sqlalchemy import Column, orm, String
-from sqlalchemy.orm import Session
+from typing import List
+from sqlalchemy import String
+from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 
 from .. import SqlAlchemyBase, ObjMixin, get_datetime_now
 from ._roles import RoleDesc, RolesBase, TRole, get_roles
 from ._tables import TablesBase
-from .log import Actions, Log
+from .log import Actions, Changes, Log
 from .operation import Operation, get_operations
 from .permission import Permission
 
@@ -12,9 +13,9 @@ from .permission import Permission
 class Role(SqlAlchemyBase, ObjMixin):
     __tablename__ = TablesBase.Role
 
-    name = Column(String(32), nullable=False)
+    name: Mapped[str] = mapped_column(String(32))
 
-    permissions = orm.relationship("Permission")
+    permissions: Mapped[List["Permission"]] = relationship(default_factory=list)
 
     def __repr__(self):
         return f"<Role> [{self.id}] {self.name}"
@@ -96,7 +97,8 @@ class Role(SqlAlchemyBase, ObjMixin):
                 continue
             name, operations = role_data["name"], role_data["operations"]
 
-            role = Role(name=name, id=role_id)
+            role = Role(name=name)
+            role.id = role_id
             new_roles.append((role_id, name))
             db_sess.add(role)
 
@@ -105,7 +107,7 @@ class Role(SqlAlchemyBase, ObjMixin):
 
         now = get_datetime_now()
 
-        def log_role(actionCode, recordId, changes):
+        def log_role(actionCode: str, recordId: int, changes: Changes):
             db_sess.add(Log(
                 date=now,
                 actionCode=actionCode,

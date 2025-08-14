@@ -1,5 +1,4 @@
-from sqlalchemy import Boolean, Column, DefaultClause
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Mapped, mapped_column
 
 from .. import SqlAlchemyBase, SingletonMixin
 
@@ -7,7 +6,7 @@ from .. import SqlAlchemyBase, SingletonMixin
 class DBState(SqlAlchemyBase, SingletonMixin):
     __tablename__ = "db_state"
 
-    initialized = Column(Boolean, DefaultClause("0"), nullable=False)
+    initialized: Mapped[bool] = mapped_column(server_default="0", init=False)
 
     @staticmethod
     def is_initialized(db_sess: Session):

@@ -3,13 +3,13 @@ from typing import Any, Type, TypedDict
 from ..utils.get_all_vars import get_all_fields
 
 
-Roles: "Type[RolesBase] | None" = None
+_Roles: "Type[RolesBase] | None" = None
 
 
 def get_roles():
-    if Roles is None:
+    if _Roles is None:
         raise Exception("[bafser] No class inherited from RolesBase")
-    return Roles
+    return _Roles
 
 
 class RoleDesc(TypedDict):
@@ -27,8 +27,8 @@ class RolesBase:
     ROLES: TRoles = {}
 
     def __init_subclass__(cls, **kwargs: Any):
-        global Roles
-        Roles = cls
+        global _Roles
+        _Roles = cls
         fields = list(get_all_fields(cls()))
         same: list[tuple[str, str, Any]] = []
         for i in range(len(fields)):

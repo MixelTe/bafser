@@ -1,26 +1,34 @@
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
-from sqlalchemy import Column, DateTime, orm, Integer, String, JSON
-from sqlalchemy.orm import Session
+from sqlalchemy import String, JSON
+from sqlalchemy.orm import Session, Mapped, mapped_column
 
-from .. import SqlAlchemyBase, TableBase, UserBase, IdMixin, get_datetime_now
+from .. import SqlAlchemyBase, UserBase, IdMixin, get_datetime_now
 
 FieldName = str
 NewValue = Any
 OldValue = Any
+Changes = list[tuple[FieldName, OldValue, NewValue]]
+
+
+class Actions:
+    added = "added"
+    updated = "updated"
+    deleted = "deleted"
+    restored = "restored"
 
 
 class Log(SqlAlchemyBase, IdMixin):
     __tablename__ = "Log"
 
-    date = Column(DateTime, nullable=False)
-    actionCode = Column(String(16), nullable=False)
-    userId = Column(Integer, nullable=False)
-    userName = Column(String(64), nullable=False)
-    tableName = Column(String(16), nullable=False)
-    recordId = Column(Integer, nullable=False)
-    changes = Column(JSON, nullable=False)
+    date: Mapped[datetime]
+    actionCode: Mapped[str] = mapped_column(String(16))
+    userId: Mapped[int]
+    userName: Mapped[str] = mapped_column(String(64))
+    tableName: Mapped[str] = mapped_column(String(16))
+    recordId: Mapped[int]
+    changes: Mapped[Changes] = mapped_column(JSON)
 
     def __repr__(self):
         return f"<Log> [{self.id}] {self.date} {self.actionCode}"
@@ -30,7 +38,7 @@ class Log(SqlAlchemyBase, IdMixin):
 
     @staticmethod
     def added(
-        record: TableBase,
+        record: SqlAlchemyBase,
         actor: UserBase | None,
         changes: list[tuple[FieldName, NewValue]],
         now: datetime | None = None,
@@ -40,6 +48,7 @@ class Log(SqlAlchemyBase, IdMixin):
         if actor is None:
             actor = UserBase.get_fake_system()
         db_sess = db_sess if db_sess else Session.object_session(actor)
+        assert db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(
@@ -53,7 +62,7 @@ class Log(SqlAlchemyBase, IdMixin):
         )
         db_sess.add(log)
         if isinstance(record, IdMixin):
-            if record.id is not None:
+            if record.id is not None:  # type: ignore
                 log.recordId = record.id
             elif commit:
                 db_sess.commit()
@@ -64,9 +73,9 @@ class Log(SqlAlchemyBase, IdMixin):
 
     @staticmethod
     def updated(
-        record: TableBase,
+        record: SqlAlchemyBase,
         actor: UserBase | None,
-        changes: list[tuple[FieldName, OldValue, NewValue]],
+        changes: Changes,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
@@ -74,6 +83,7 @@ class Log(SqlAlchemyBase, IdMixin):
         if actor is None:
             actor = UserBase.get_fake_system()
         db_sess = db_sess if db_sess else Session.object_session(actor)
+        assert db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(
@@ -92,7 +102,7 @@ class Log(SqlAlchemyBase, IdMixin):
 
     @staticmethod
     def deleted(
-        record: TableBase,
+        record: SqlAlchemyBase,
         actor: UserBase | None,
         changes: list[tuple[FieldName, OldValue]] = [],
         now: datetime | None = None,
@@ -102,6 +112,7 @@ class Log(SqlAlchemyBase, IdMixin):
         if actor is None:
             actor = UserBase.get_fake_system()
         db_sess = db_sess if db_sess else Session.object_session(actor)
+        assert db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(
@@ -120,9 +131,9 @@ class Log(SqlAlchemyBase, IdMixin):
 
     @staticmethod
     def restored(
-        record: TableBase,
+        record: SqlAlchemyBase,
         actor: UserBase | None,
-        changes: list[tuple[FieldName, OldValue, NewValue]] = [],
+        changes: Changes = [],
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
@@ -130,6 +141,7 @@ class Log(SqlAlchemyBase, IdMixin):
         if actor is None:
             actor = UserBase.get_fake_system()
         db_sess = db_sess if db_sess else Session.object_session(actor)
+        assert db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(
@@ -145,10 +157,3 @@ class Log(SqlAlchemyBase, IdMixin):
         if commit:
             db_sess.commit()
         return log
-
-
-class Actions:
-    added = "added"
-    updated = "updated"
-    deleted = "deleted"
-    restored = "restored"
