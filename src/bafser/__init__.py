@@ -9,6 +9,11 @@ except ModuleNotFoundError:
     cfg_src = os.path.join(current, "bafser_config.example.py")
     cfg_dst = os.path.join(os.getcwd(), "bafser_config.py")
     shutil.copy(cfg_src, cfg_dst)
+    try:
+        import bafser_config
+    except ModuleNotFoundError:
+        import sys
+        sys.path.append(os.getcwd())
 
 from .utils.response_msg import response_msg
 from .utils.get_json_values import get_json_values
