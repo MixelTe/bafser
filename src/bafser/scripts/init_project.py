@@ -16,6 +16,7 @@ def init_project():
     write_file(os.path.join(bafser_config.data_tables_folder, "_tables.py"), data_tables)
     os.makedirs(bafser_config.blueprints_folder, exist_ok=True)
     write_file(os.path.join(bafser_config.blueprints_folder, "docs.py"), blueprints_docs_py)
+    write_file("main.py", main)
     if bafser_config.use_alembic:
         alembic_init()
 
@@ -38,14 +39,12 @@ __all__ = [
     "Roles",
     "Tables",
 ]
-
 """
 data_operations = """from bafser import OperationsBase
 
 
 class Operations(OperationsBase):
     pass
-
 """
 data_roles = """from bafser import RolesBase
 # from test.data._operations import Operations
@@ -61,14 +60,12 @@ Roles.ROLES = {
         "operations": []
     },
 }
-
 """
 data_tables = """from bafser import TablesBase
 
 
 class Tables(TablesBase):
     pass
-
 """
 
 blueprints_docs_py = """from flask import Blueprint
@@ -86,7 +83,6 @@ def docs():
             "response": "",
         },
     }
-
 """
 
 main = """import sys
@@ -100,5 +96,4 @@ app, run = create_app(__name__, AppConfig(
 ))
 
 run(__name__ == "__main__")
-
 """
