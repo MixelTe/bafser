@@ -30,10 +30,10 @@ from .data._tables import TablesBase
 from .data._roles import RolesBase
 from .data.operation import OperationsBase
 from .data.user_role import UserRole
-from .data.user import UserBase
+from .data.user import UserBase, UserKwargs
 from .data.log import Log
 from .data.role import Role
-from .data.image import Image
+from .data.image import Image, ImageKwargs
 
 
 class M:
@@ -75,8 +75,8 @@ __all__ = [
     "RolesBase",
     "OperationsBase",
     "UserRole",
-    "UserBase",
+    "UserBase", "UserKwargs",
     "Log",
     "Role",
-    "Image",
+    "Image", "ImageKwargs",
 ]

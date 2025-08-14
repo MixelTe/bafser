@@ -2,4 +2,4 @@ from bafser import OperationsBase
 
 
 class Operations(OperationsBase):
-    pass
+    upload_img = ("upload_img", "Add image")

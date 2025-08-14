@@ -1,3 +1,4 @@
+from typing import get_type_hints
 from typing import Any, Mapping, TypeVar, overload
 
 T = TypeVar("T")
@@ -42,9 +43,10 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
 
         if field_name in d:
             value = d[field_name]
-            if not isinstance(value, field_type):
+            _, err = validate_type(value, field_type)
+            if err is not None:
                 rv = None if len(field_names) == 1 else list(map(lambda _: None, field_names))
-                return rv, f"{field_name} is not {field_type}"
+                return rv, f"{field_name} {err}"
             r.append(value)
         elif have_default:
             r.append(default_value)
@@ -54,3 +56,28 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
     if len(r) == 1:
         return r[0], None
     return r, None
+
+
+type SimpleType = Mapping[str, SimpleType] | int | float | bool | str
+TC = TypeVar("TC", bound=SimpleType)
+
+
+def validate_type(obj: Any, otype: type[TC]) -> tuple[TC, None] | tuple[None, str]:
+    if otype in (int, float, bool, str):
+        if isinstance(obj, otype):
+            return obj, None
+        else:
+            return None, f"is not {otype}"
+    if not isinstance(obj, dict):
+        return None, f"is not {otype}"
+
+    type_hints = get_type_hints(otype)
+    for k, t in type_hints.items():
+        if k not in obj:
+            return None, f"field is missing {k}: {t}"
+        v = obj[k]  # type: ignore
+        _, err = validate_type(v, t)
+        if err is not None:
+            return None, f"field {k} {err}"
+
+    return obj, None  # type: ignore

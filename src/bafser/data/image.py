@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional, TypedDict
+from typing import Any, Optional, Type, TypeVar, TypedDict
 import base64
 import os
 
@@ -23,6 +23,7 @@ class ImageKwargs(TypedDict):
     creationDate: datetime
 
 
+T = TypeVar("T", bound="Image")
 TError = str
 TFieldName = str
 TValue = Any
@@ -38,7 +39,7 @@ class Image(SqlAlchemyBase, ObjMixin):
     createdById: Mapped[int] = mapped_column(ForeignKey(f"{TablesBase.User}.id"))
 
     @classmethod
-    def new(cls, creator: UserBase, json: ImageJson) -> tuple[None, TError] | tuple["Image", None]:
+    def new(cls: Type[T], creator: UserBase, json: ImageJson) -> tuple[T, None] | tuple[None, TError]:
         (data, name), values_error = get_json_values(json, ("data", str), ("name", str))
         if values_error:
             return None, values_error
@@ -87,10 +88,10 @@ class Image(SqlAlchemyBase, ObjMixin):
 
         return img, None
 
-    @staticmethod
-    def _new(creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> \
-            tuple[None, None, TError] | tuple["Image", list[tuple[TFieldName, TValue]], None]:
-        img = Image(**image_kwargs)
+    @classmethod
+    def _new(cls: Type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> \
+            tuple[None, None, TError] | tuple[T, list[tuple[TFieldName, TValue]], None]:
+        img = cls(**image_kwargs)
         return img, [], None
 
     def create_file_response(self):

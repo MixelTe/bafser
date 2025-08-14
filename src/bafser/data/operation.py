@@ -27,6 +27,7 @@ class OperationsBase:
 
     def __init_subclass__(cls, **kwargs: Any):
         global _Operations
+        # TODO check all for correct type
         _Operations = cls
 
 

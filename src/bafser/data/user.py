@@ -1,4 +1,4 @@
-from typing import Any, Type, TypeVar
+from typing import Any, Type, TypeVar, TypedDict
 
 from sqlalchemy import String
 from sqlalchemy.orm import Session, Mapped, mapped_column
@@ -14,6 +14,11 @@ T = TypeVar("T", bound="UserBase")
 _User: "Type[UserBase] | None" = None
 TFieldName = str
 TValue = Any
+
+
+class UserKwargs(TypedDict):
+    login: str
+    name: str
 
 
 def get_user_table():
@@ -39,7 +44,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         _User = cls
 
     @classmethod
-    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], db_sess: Session | None = None, **kwargs: Any):
+    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], *_: Any, db_sess: Session | None = None, **kwargs: Any):  # noqa: E501
         from .. import Log
         db_sess = db_sess if db_sess else Session.object_session(creator)
         assert db_sess
@@ -63,7 +68,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return user
 
     @classmethod
-    def _new(cls: Type[T], db_sess: Session, user_kwargs: dict[str, Any], **kwargs: Any) -> tuple[T, list[tuple[TFieldName, TValue]]]:
+    def _new(cls: Type[T], db_sess: Session, user_kwargs: UserKwargs, **kwargs: Any) -> tuple[T, list[tuple[TFieldName, TValue]]]:
         user = cls(**user_kwargs)
         return user, []
 
