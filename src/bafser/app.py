@@ -26,7 +26,6 @@ class AppConfig():
 
     def __init__(self,
                  FRONTEND_FOLDER: str = "build",
-                 IMAGES_FOLDER: str = "images",
                  JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = False,
                  JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30),
                  CACHE_MAX_AGE: int = 31536000,
@@ -37,7 +36,6 @@ class AppConfig():
                  PAGE404: str = "index.html",
                  ):
         self.FRONTEND_FOLDER = FRONTEND_FOLDER
-        self.IMAGES_FOLDER = IMAGES_FOLDER
         self.JWT_ACCESS_TOKEN_EXPIRES = JWT_ACCESS_TOKEN_EXPIRES
         self.JWT_ACCESS_TOKEN_REFRESH = JWT_ACCESS_TOKEN_REFRESH
         self.CACHE_MAX_AGE = CACHE_MAX_AGE
@@ -46,7 +44,7 @@ class AppConfig():
         self.DEV_MODE = DEV_MODE
         self.DELAY_MODE = DELAY_MODE
         self.PAGE404 = PAGE404
-        self.add_data_folder("IMAGES_FOLDER", IMAGES_FOLDER)
+        self.add_data_folder("IMAGES_FOLDER", bafser_config.images_folder)
         self.add("CACHE_MAX_AGE", CACHE_MAX_AGE)
 
     def add(self, key: str, value: Any):

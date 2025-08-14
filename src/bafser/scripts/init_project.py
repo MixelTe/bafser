@@ -18,6 +18,18 @@ def init_project():
     os.makedirs(bafser_config.blueprints_folder, exist_ok=True)
     write_file(os.path.join(bafser_config.blueprints_folder, "docs.py"), blueprints_docs_py)
     write_file("main.py", main)
+    if not os.path.exists(".gitignore"):
+        gitignore = gitignore_base
+        gitignore += "\n" + "\n".join([
+            bafser_config.db_dev_path,
+            bafser_config.log_info_path,
+            bafser_config.log_requests_path,
+            bafser_config.log_errors_path,
+            bafser_config.log_frontend_path,
+            bafser_config.jwt_key_file_path,
+            bafser_config.images_folder,
+        ])
+        write_file(".gitignore", gitignore)
     if bafser_config.use_alembic:
         alembic_init()
 
@@ -106,3 +118,8 @@ app, run = create_app(__name__, AppConfig(
 
 run(__name__ == "__main__")
 """
+
+gitignore_base = """.venv/
+__pycache__/
+build/
+dist/"""

@@ -13,6 +13,7 @@ log_errors_path = "logs/log_errors.log"
 log_frontend_path = "logs/log_frontend.log"
 
 jwt_key_file_path = "secret_key_jwt.txt"
+images_folder = "images"
 
 login_page_url = "/login"
 api_url = "/api/"
