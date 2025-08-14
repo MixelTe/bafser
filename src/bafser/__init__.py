@@ -1,5 +1,15 @@
 # base for flask server by Mixel Te
 
+try:
+    import bafser_config  # type: ignore
+except ModuleNotFoundError:
+    import shutil
+    import os
+    current = os.path.dirname(__file__)
+    cfg_src = os.path.join(current, "bafser_config.example.py")
+    cfg_dst = os.path.join(os.getcwd(), "bafser_config.py")
+    shutil.copy(cfg_src, cfg_dst)
+
 from .utils.response_msg import response_msg
 from .utils.get_json_values import get_json_values
 

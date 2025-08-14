@@ -13,16 +13,16 @@ werkzeug == 3.1.3
 ```
 
 ## usage
-scripts: `python -m bafser`
+scripts: `bafser`
 
-copy `bafser_config.example.py` to project root as `bafser_config.py`
-
-init project: `python -m bafser init_project`
+init project: `bafser init_project`
 
 ---
 or manually
 
-init alimbic `python -m bafser alimbic init`
+copy `bafser_config.example.py` to project root as `bafser_config.py`
+
+init alimbic `bafser alimbic init`
 
 ### create files:
 

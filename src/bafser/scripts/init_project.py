@@ -5,6 +5,10 @@ import bafser_config
 
 
 def init_project():
+    r = input("Do you want to change bafser_config? [Y/n]: ")
+    if r != "n":
+        print("Run again when bafser_config is ready")
+        return
     os.makedirs(bafser_config.data_tables_folder, exist_ok=True)
     write_file(os.path.join(bafser_config.data_tables_folder, "__init__.py"), data__init__)
     write_file(os.path.join(bafser_config.data_tables_folder, "_operations.py"), data_operations)
