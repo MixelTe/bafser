@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, TypedDict
 from sqlalchemy import String
 from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
 
@@ -8,6 +8,11 @@ from ._tables import TablesBase
 from .log import Actions, Changes, Log
 from .operation import Operation, get_operations
 from .permission import Permission
+
+
+class RoleDict(TypedDict):
+    id: int
+    name: str
 
 
 class Role(SqlAlchemyBase, ObjMixin):
@@ -20,8 +25,8 @@ class Role(SqlAlchemyBase, ObjMixin):
     def __repr__(self):
         return f"<Role> [{self.id}] {self.name}"
 
-    def get_dict(self):
-        return self.to_dict(only=("id", "name"))
+    def get_dict(self) -> RoleDict:
+        return self.to_dict(only=("id", "name"))  # type: ignore
 
     @staticmethod
     def update_roles_permissions(db_sess: Session):

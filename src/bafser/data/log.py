@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, TypedDict
 
 from sqlalchemy import String, JSON
 from sqlalchemy.orm import Session, Mapped, mapped_column
@@ -19,6 +19,17 @@ class Actions:
     restored = "restored"
 
 
+class LogDict(TypedDict):
+    id: int
+    date: datetime
+    actionCode: str
+    userId: int
+    userName: str
+    tableName: str
+    recordId: int
+    changes: Changes
+
+
 class Log(SqlAlchemyBase, IdMixin):
     __tablename__ = "Log"
 
@@ -33,8 +44,8 @@ class Log(SqlAlchemyBase, IdMixin):
     def __repr__(self):
         return f"<Log> [{self.id}] {self.date} {self.actionCode}"
 
-    def get_dict(self):
-        return self.to_dict(only=("id", "date", "actionCode", "userId", "userName", "tableName", "recordId", "changes"))
+    def get_dict(self) -> LogDict:
+        return self.to_dict(only=("id", "date", "actionCode", "userId", "userName", "tableName", "recordId", "changes"))  # type: ignore
 
     @staticmethod
     def added(

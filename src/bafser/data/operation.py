@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any, Type, TypedDict
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -16,8 +16,13 @@ class Operation(SqlAlchemyBase):
     def __repr__(self):
         return f"<Operation> [{self.id}] {self.name}"
 
-    def get_dict(self):
-        return self.to_dict(only=("id", "name"))
+    def get_dict(self) -> "OperationDict":
+        return self.to_dict(only=("id", "name"))  # type: ignore
+
+
+class OperationDict(TypedDict):
+    id: int
+    name: str
 
 
 class OperationsBase:

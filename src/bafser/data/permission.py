@@ -16,6 +16,3 @@ class Permission(SqlAlchemyBase):
 
     def __repr__(self):
         return f"<Permission> role: {self.roleId} oper: {self.operationId}"
-
-    def get_dict(self):
-        return self.to_dict(only=("roleId", "operationId"))

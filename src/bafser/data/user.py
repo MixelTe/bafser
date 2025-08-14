@@ -193,7 +193,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
 
         return list(map(lambda v: v[0], operations))
 
-    def get_dict(self) -> dict[str, Any]:
+    def get_dict(self) -> "UserDict":
         return {
             "id": self.id,
             "name": self.name,
@@ -202,7 +202,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
             "operations": self.get_operations(),
         }
 
-    def get_dict_full(self) -> dict[str, Any]:
+    def get_dict_full(self) -> "UserDictFull":
         return {
             "id": self.id,
             "deleted": self.deleted,
@@ -211,3 +211,20 @@ class UserBase(ObjMixin, SqlAlchemyBase):
             "roles": self.get_roles(),
             "operations": self.get_operations(),
         }
+
+
+class UserDict(TypedDict):
+    id: int
+    name: str
+    login: str
+    roles: list[tuple[int, str]]
+    operations: list[str]
+
+
+class UserDictFull(TypedDict):
+    id: int
+    deleted: bool
+    name: str
+    login: str
+    roles: list[tuple[int, str]]
+    operations: list[str]

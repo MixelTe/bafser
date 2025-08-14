@@ -21,9 +21,6 @@ class UserRole(SqlAlchemyBase):
     def __repr__(self):
         return f"<UserRole> user: {self.userId} role: {self.roleId}"
 
-    def get_dict(self):
-        return self.to_dict(only=("userId", "roleId"))
-
     @staticmethod
     def new(creator: "UserBase", userId: int, roleId: int, now: datetime | None = None, commit: bool = True, db_sess: Session | None = None):
         from .. import Log

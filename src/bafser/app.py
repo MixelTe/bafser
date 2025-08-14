@@ -15,9 +15,13 @@ from sqlalchemy.orm import Session
 from . import db_session
 from .authentication import get_user_id_by_jwt_identity
 from .alembic import alembic_upgrade
+from .doc_api import init_api_docs
 from .logger import get_logger_requests, setLogging
 from .utils import get_json, get_secret_key, get_secret_key_rnd, randstr, register_blueprints, response_msg
 import bafser_config
+
+
+_config: "AppConfig | None" = None
 
 
 class AppConfig():
@@ -75,7 +79,9 @@ class AppConfig():
 
 
 def create_app(import_name: str, config: AppConfig):
+    global _config
     setLogging()
+    _config = config
     logreq = get_logger_requests()
     app = Flask(import_name, static_folder=None)
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
@@ -90,6 +96,7 @@ def create_app(import_name: str, config: AppConfig):
     jwt_manager = JWTManager(app)
 
     register_blueprints(app)
+    init_api_docs(app)
 
     for (_, path) in config.data_folders:
         if not os.path.exists(path):
@@ -265,3 +272,8 @@ def create_app(import_name: str, config: AppConfig):
         return response_msg("Unauthorized", 401)
 
     return app, run
+
+
+def update_message_to_frontend(msg: str):
+    assert _config
+    _config.MESSAGE_TO_FRONTEND = msg

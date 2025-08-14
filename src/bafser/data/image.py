@@ -114,5 +114,13 @@ class Image(SqlAlchemyBase, ObjMixin):
     def get_filename(self):
         return self.name + "." + self.type
 
-    def get_dict(self):
-        return self.to_dict(only=("name", "type", "creationDate", "deletionDate", "createdById"))
+    def get_dict(self) -> "ImageDict":
+        return self.to_dict(only=("name", "type", "creationDate", "deletionDate", "createdById"))  # type: ignore
+
+
+class ImageDict(TypedDict):
+    name: str
+    type: str
+    creationDate: datetime
+    deletionDate: datetime
+    createdById: int

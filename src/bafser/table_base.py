@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from typing_extensions import Annotated
 
 from sqlalchemy import MetaData
@@ -26,7 +26,7 @@ class TableBase(SerializerMixin, MappedAsDataclass, DeclarativeBase):
     def __repr__(self):
         return f"<{self.__class__.__name__}>"
 
-    def get_dict(self) -> dict[str, Any]:
+    def get_dict(self) -> object:
         return {}
 
 

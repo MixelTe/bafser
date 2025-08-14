@@ -35,7 +35,7 @@ from .utils.use_db_session import use_db_session
 from .utils.use_userId import use_userId
 from .utils.use_user import use_user
 
-from .app import AppConfig, create_app
+from .app import AppConfig, create_app, update_message_to_frontend
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
 
@@ -43,12 +43,12 @@ from .db_session import SqlAlchemyBase
 from .table_base import IdMixin, ObjMixin, SingletonMixin
 from .data._tables import TablesBase
 from .data._roles import RolesBase
-from .data.operation import OperationsBase
+from .data.operation import OperationsBase, OperationDict
 from .data.user_role import UserRole
-from .data.user import UserBase, UserKwargs
-from .data.log import Log
-from .data.role import Role
-from .data.image import Image, ImageKwargs
+from .data.user import UserBase, UserKwargs, UserDict, UserDictFull
+from .data.log import Log, LogDict
+from .data.role import Role, RoleDict
+from .data.image import Image, ImageKwargs, ImageDict
 
 
 class M:
@@ -81,17 +81,17 @@ __all__ = [
     "use_db_session",
     "use_userId",
     "use_user",
-    "AppConfig", "create_app",
+    "AppConfig", "create_app", "update_message_to_frontend",
     "get_logger_frontend", "log_frontend_error", "get_log_fpath", "add_file_logger", "ParametrizedLogger",
     "create_access_token", "get_user_by_jwt_identity", "get_user_id_by_jwt_identity",
     "SqlAlchemyBase",
     "IdMixin", "ObjMixin", "SingletonMixin",
     "TablesBase",
     "RolesBase",
-    "OperationsBase",
+    "OperationsBase", "OperationDict",
     "UserRole",
-    "UserBase", "UserKwargs",
-    "Log",
-    "Role",
-    "Image", "ImageKwargs",
+    "UserBase", "UserKwargs", "UserDict", "UserDictFull",
+    "Log", "LogDict",
+    "Role", "RoleDict",
+    "Image", "ImageKwargs", "ImageDict",
 ]

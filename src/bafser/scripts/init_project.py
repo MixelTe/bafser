@@ -27,7 +27,7 @@ def init_project():
             bafser_config.log_errors_path,
             bafser_config.log_frontend_path,
             bafser_config.jwt_key_file_path,
-            bafser_config.images_folder,
+            bafser_config.images_folder if bafser_config.images_folder[-1] == "/" else bafser_config.images_folder + "/",
         ])
         write_file(".gitignore", gitignore)
     if bafser_config.use_alembic:
