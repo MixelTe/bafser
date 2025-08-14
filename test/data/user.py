@@ -17,6 +17,9 @@ class User(UserBase):
     avatar: Mapped["Img"] = relationship(init=False, foreign_keys=f"{Tables.User}.avatarId")
     apples: Mapped[List["Apple"]] = relationship(back_populates="owner", default_factory=list)
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__}> [{self.id}] {self.login}"
+
     @classmethod
     @override
     def new(cls, creator: UserBase, login: str, password: str, name: str, roles: list[int], balance: int, *, db_sess: Session | None = None):  # noqa: E501

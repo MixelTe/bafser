@@ -16,4 +16,4 @@ class Apple(SqlAlchemyBase, ObjMixin):
     eatDate: Mapped[Optional[datetime]] = mapped_column(init=False)
     ownerId: Mapped[int] = mapped_column(ForeignKey(f"{Tables.User}.id"))
 
-    owner: Mapped["User"] = relationship(back_populates="apples", default=None)
+    owner: Mapped["User"] = relationship(back_populates="apples", init=False)

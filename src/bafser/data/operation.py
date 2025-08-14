@@ -4,7 +4,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .. import SqlAlchemyBase
-from ..utils import get_all_values
+from ..utils import get_all_fields, get_all_values
 
 
 class Operation(SqlAlchemyBase):
@@ -22,12 +22,16 @@ class Operation(SqlAlchemyBase):
 
 class OperationsBase:
     @classmethod
-    def get_all(cls):
+    def get_all(cls) -> list[tuple[str, str]]:
         return list(get_all_values(cls()))
 
     def __init_subclass__(cls, **kwargs: Any):
         global _Operations
-        # TODO check all for correct type
+        for key, v in get_all_fields(cls()):
+            if isinstance(v, tuple) and len(v) == 2 and isinstance(v[0], str) and isinstance(v[1], str):  # type: ignore
+                pass
+            else:
+                raise Exception(f"[bafser] Wrong type of operation {key}: {type(v)} != tuple[str, str]")  # type: ignore
         _Operations = cls
 
 

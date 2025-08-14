@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bafser"
-version = "2.0"
+version = "2.0.0"
 authors = [
 	{ name = "Mixel Te" },
 ]
@@ -30,3 +30,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/MixelTe/bafser"
 Issues = "https://github.com/MixelTe/bafser/issues"
+
+[project.scripts]
+bafser = "bafser.cli:cli"

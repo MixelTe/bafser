@@ -1,0 +1,100 @@
+import os
+
+from bafser.scripts import alembic_init
+import bafser_config
+
+
+def init_project():
+    os.makedirs(bafser_config.data_tables_folder, exist_ok=True)
+    write_file(os.path.join(bafser_config.data_tables_folder, "__init__.py"), data__init__)
+    write_file(os.path.join(bafser_config.data_tables_folder, "_operations.py"), data_operations)
+    write_file(os.path.join(bafser_config.data_tables_folder, "_roles.py"), data_roles)
+    write_file(os.path.join(bafser_config.data_tables_folder, "_tables.py"), data_tables)
+    os.makedirs(bafser_config.blueprints_folder, exist_ok=True)
+    write_file(os.path.join(bafser_config.blueprints_folder, "docs.py"), blueprints_docs_py)
+    if bafser_config.use_alembic:
+        alembic_init()
+
+
+def write_file(path: str, text: str):
+    with open(path, "w", encoding="utf8") as f:
+        f.write(text)
+
+
+def run(args: list[str]):
+    init_project()
+
+
+data__init__ = """from ._operations import Operations
+from ._roles import Roles
+from ._tables import Tables
+
+__all__ = [
+    "Operations",
+    "Roles",
+    "Tables",
+]
+
+"""
+data_operations = """from bafser import OperationsBase
+
+
+class Operations(OperationsBase):
+    pass
+
+"""
+data_roles = """from bafser import RolesBase
+# from test.data._operations import Operations
+
+
+class Roles(RolesBase):
+    user = 2
+
+
+Roles.ROLES = {
+    Roles.user: {
+        "name": "User",
+        "operations": []
+    },
+}
+
+"""
+data_tables = """from bafser import TablesBase
+
+
+class Tables(TablesBase):
+    pass
+
+"""
+
+blueprints_docs_py = """from flask import Blueprint
+
+
+blueprint = Blueprint("docs", __name__)
+
+
+@blueprint.route("/api")
+def docs():
+    return {
+        "/api": {
+            "__desc__": "Api docs",
+            "request": "",
+            "response": "",
+        },
+    }
+
+"""
+
+main = """import sys
+from bafser import AppConfig, create_app
+
+
+app, run = create_app(__name__, AppConfig(
+    MESSAGE_TO_FRONTEND="",
+    DEV_MODE="dev" in sys.argv,
+    DELAY_MODE="delay" in sys.argv,
+))
+
+run(__name__ == "__main__")
+
+"""
