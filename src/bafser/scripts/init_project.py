@@ -14,6 +14,7 @@ def init_project():
     write_file(os.path.join(bafser_config.data_tables_folder, "_operations.py"), data_operations)
     write_file(os.path.join(bafser_config.data_tables_folder, "_roles.py"), data_roles)
     write_file(os.path.join(bafser_config.data_tables_folder, "_tables.py"), data_tables)
+    write_file(os.path.join(bafser_config.data_tables_folder, "user.py"), data_user)
     os.makedirs(bafser_config.blueprints_folder, exist_ok=True)
     write_file(os.path.join(bafser_config.blueprints_folder, "docs.py"), blueprints_docs_py)
     write_file("main.py", main)
@@ -66,6 +67,14 @@ data_tables = """from bafser import TablesBase
 
 class Tables(TablesBase):
     pass
+"""
+data_user = """
+from bafser import UserBase
+
+
+class User(UserBase):
+    def __repr__(self):
+        return f"<{self.__class__.__name__}> [{self.id}] {self.login}"
 """
 
 blueprints_docs_py = """from flask import Blueprint

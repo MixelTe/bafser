@@ -87,6 +87,15 @@ class Tables(TablesBase):
     AnotherTableName = "AnotherTableName"
 ```
 ```py
+# data/user.py
+from bafser import UserBase
+
+
+class User(UserBase):
+    def __repr__(self):
+        return f"<{self.__class__.__name__}> [{self.id}] {self.login}"
+```
+```py
 # data/some_table.py
 from bafser import SqlAlchemyBase, ObjMixin
 from data._tables import Tables
