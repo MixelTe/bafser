@@ -70,7 +70,7 @@ class Image(SqlAlchemyBase, ObjMixin):
         if err:
             return None, err
         assert img
-        assert add_changes
+        assert add_changes is not None
         db_sess.add(img)
         db_sess.commit()
 
