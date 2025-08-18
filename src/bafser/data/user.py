@@ -32,7 +32,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     __abstract__ = True
 
     login: Mapped[str] = mapped_column(String(64), index=True, unique=True)
-    password: Mapped[str] = mapped_column(String(128), init=False)
+    password: Mapped[str] = mapped_column(String(256), init=False)
     name: Mapped[str] = mapped_column(String(64))
 
     def __repr__(self):
