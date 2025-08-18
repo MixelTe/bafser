@@ -9,6 +9,7 @@ T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 T4 = TypeVar("T4")
 T5 = TypeVar("T5")
+T6 = TypeVar("T6")
 
 
 @overload
@@ -21,6 +22,8 @@ def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_d
 def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4]) -> tuple[T1, T2, T3, T4]: ...  # noqa: E704, E501
 @overload
 def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4], f5: field_desc[T5]) -> tuple[T1, T2, T3, T4, T5]: ...  # noqa: E704, E501
+@overload
+def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4], f5: field_desc[T5], f6: field_desc[T6]) -> tuple[T1, T2, T3, T4, T5, T6]: ...  # noqa: E704, E501
 @overload
 def get_json_values_from_req(*field_names: field_desc[Any]) -> list[Any]: ...  # noqa: E704
 

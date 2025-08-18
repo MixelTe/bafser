@@ -7,6 +7,7 @@ T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 T4 = TypeVar("T4")
 T5 = TypeVar("T5")
+T6 = TypeVar("T6")
 
 field_desc = tuple[str, type[T]] | tuple[str, type[T], T]
 # field_desc: (field_name, field_type) | (field_name, field_type, default_value)
@@ -24,6 +25,8 @@ def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2]
 def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4]) -> tuple[tuple[T1, T2, T3, T4], error]: ...  # noqa: E704, E501
 @overload
 def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4], f5: field_desc[T5]) -> tuple[tuple[T1, T2, T3, T4, T5], error]: ...  # noqa: E704, E501
+@overload
+def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4], f5: field_desc[T5], f6: field_desc[T6]) -> tuple[tuple[T1, T2, T3, T4, T5, T6], error]: ...  # noqa: E704, E501
 @overload
 def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any]) -> tuple[values, error]: ...  # noqa: E704
 

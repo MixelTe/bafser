@@ -3,17 +3,17 @@
 try:
     import bafser_config  # type: ignore
 except ModuleNotFoundError:
-    import shutil
     import os
-    current = os.path.dirname(__file__)
-    cfg_src = os.path.join(current, "bafser_config.example.py")
-    cfg_dst = os.path.join(os.getcwd(), "bafser_config.py")
-    shutil.copy(cfg_src, cfg_dst)
+    import sys
+    sys.path.append(os.getcwd())
     try:
         import bafser_config
     except ModuleNotFoundError:
-        import sys
-        sys.path.append(os.getcwd())
+        import shutil
+        current = os.path.dirname(__file__)
+        cfg_src = os.path.join(current, "bafser_config.example.py")
+        cfg_dst = os.path.join(os.getcwd(), "bafser_config.py")
+        shutil.copy(cfg_src, cfg_dst)
 
 from .utils.response_msg import response_msg
 from .utils.get_json_values import get_json_values
@@ -48,7 +48,7 @@ from .data.user_role import UserRole
 from .data.user import UserBase, UserKwargs, UserDict, UserDictFull
 from .data.log import Log, LogDict
 from .data.role import Role, RoleDict
-from .data.image import Image, ImageKwargs, ImageDict
+from .data.image import Image, ImageKwargs, ImageDict, ImageJson
 
 
 class M:
@@ -93,5 +93,5 @@ __all__ = [
     "UserBase", "UserKwargs", "UserDict", "UserDictFull",
     "Log", "LogDict",
     "Role", "RoleDict",
-    "Image", "ImageKwargs", "ImageDict",
+    "Image", "ImageKwargs", "ImageDict", "ImageJson",
 ]
