@@ -142,8 +142,9 @@ def create_app(import_name: str, config: AppConfig):
                 change_admin_default_pwd(db_sess)
 
     def change_admin_default_pwd(db_sess: Session):
-        from . import UserBase
-        admin = UserBase.get_by_login(db_sess, "admin", includeDeleted=True)
+        from .data.user import get_user_table
+        User = get_user_table()
+        admin = User.get_by_login(db_sess, "admin", includeDeleted=True)
         if admin is not None and admin.check_password("admin"):
             admin.set_password(randstr(16))
             db_sess.commit()
