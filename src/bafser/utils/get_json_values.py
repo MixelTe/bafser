@@ -68,14 +68,14 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
     return r, None
 
 
-type ValidateType = Mapping[str, ValidateType] | int | float | bool | str | list[Any]
+type ValidateType = Mapping[str, ValidateType] | int | float | bool | str | object | list[Any]
 TC = TypeVar("TC", bound=ValidateType)
 
 
 def validate_type(obj: Any, otype: type[TC]) -> tuple[TC, None] | tuple[None, str]:
-    """Supports int, float, bool, str, list, dict, list[<type>], Union[], TypedDict"""
+    """Supports int, float, bool, str, object, list, dict, list[<type>], Union[], TypedDict"""
     # simple type
-    if otype in (int, float, bool, str, list, dict):
+    if otype in (int, float, bool, str, object, list, dict):
         if type(obj) is bool:  # couse isinstance(True, int) is True
             if otype is bool:
                 return obj, None  # type: ignore
