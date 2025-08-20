@@ -53,16 +53,16 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
 
         if field_name in d:
             value = d[field_name]
-            _, err = validate_type(value, field_type)
+            value, err = validate_type(value, field_type)
             if err is not None:
                 rv = None if len(field_names) == 1 else list(map(lambda _: None, field_names))
-                return rv, f"'{field_name}' {err}"
+                return rv, field_name + err
             r.append(value)
         elif have_default:
             r.append(default_value)
         else:
             rv = None if len(field_names) == 1 else list(map(lambda _: None, field_names))
-            return rv, f"'{field_name}' is undefined"
+            return rv, f"{field_name} is undefined"
     if len(r) == 1:
         return r[0], None
     return r, None
