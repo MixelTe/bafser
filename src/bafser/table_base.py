@@ -80,14 +80,14 @@ class ObjMixin(IdMixin):
         now = get_datetime_now() if now is None else now
         db_sess = db_sess if db_sess else Session.object_session(actor)
         assert db_sess
-        if not self._on_delete(db_sess, actor, now):
+        if not self._on_delete(db_sess, actor, now, commit):
             return False
         self.deleted = True
         if isinstance(self, TableBase):
             Log.deleted(self, actor, now=now, commit=commit, db_sess=db_sess)
         return True
 
-    def _on_delete(self, db_sess: Session, actor: "UserBase", now: datetime) -> bool:
+    def _on_delete(self, db_sess: Session, actor: "UserBase", now: datetime, commit: bool) -> bool:
         return True
 
     def restore(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None) -> bool:
@@ -95,14 +95,14 @@ class ObjMixin(IdMixin):
         now = get_datetime_now() if now is None else now
         db_sess = db_sess if db_sess else Session.object_session(actor)
         assert db_sess
-        if not self._on_restore(db_sess, actor, now):
+        if not self._on_restore(db_sess, actor, now, commit):
             return False
         self.deleted = False
         if isinstance(self, TableBase):
             Log.restored(self, actor, now=now, commit=commit, db_sess=db_sess)
         return True
 
-    def _on_restore(self, db_sess: Session, actor: "UserBase", now: datetime) -> bool:
+    def _on_restore(self, db_sess: Session, actor: "UserBase", now: datetime, commit: bool) -> bool:
         return True
 
 

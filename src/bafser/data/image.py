@@ -98,12 +98,12 @@ class Image(SqlAlchemyBase, ObjMixin):
         return create_file_response(self.get_path(), f"image/{self.type}", self.get_filename())
 
     @override
-    def _on_delete(self, db_sess: Session, actor: UserBase, now: datetime):
+    def _on_delete(self, db_sess: Session, actor: UserBase, now: datetime, commit: bool):
         self.deletionDate = now
         return True
 
     @override
-    def _on_restore(self, db_sess: Session, actor: UserBase, now: datetime):
+    def _on_restore(self, db_sess: Session, actor: UserBase, now: datetime, commit: bool):
         return os.path.exists(self.get_path())
 
     def get_path(self):
