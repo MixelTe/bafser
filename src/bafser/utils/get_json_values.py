@@ -1,6 +1,6 @@
-from types import UnionType
-from typing import get_type_hints, get_origin, get_args
 from typing import Any, Mapping, TypeVar, overload
+
+from ..jsonobj import validate_type
 
 T = TypeVar("T")
 T1 = TypeVar("T1")
@@ -66,78 +66,3 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
     if len(r) == 1:
         return r[0], None
     return r, None
-
-
-type ValidateType = Mapping[str, ValidateType] | int | float | bool | str | object | list[Any]
-TC = TypeVar("TC", bound=ValidateType)
-
-
-def validate_type(obj: Any, otype: type[TC]) -> tuple[TC, None] | tuple[None, str]:
-    """Supports int, float, bool, str, object, list, dict, list[<type>], Union[], TypedDict"""
-    # simple type
-    if otype in (int, float, bool, str, object, list, dict):
-        if type(obj) is bool:  # couse isinstance(True, int) is True
-            if otype is bool:
-                return obj, None  # type: ignore
-        elif isinstance(obj, otype):
-            return obj, None  # type: ignore
-        return None, f"is not {otype}"
-
-    # generic list
-    torigin = get_origin(otype)
-    targs = get_args(otype)
-    if torigin is list and len(targs) == 1:
-        t = targs[0]
-        if not isinstance(obj, list):
-            return None, f"is not {otype}"
-        for i, el in enumerate(obj):  # type: ignore
-            _, err = validate_type(el, t)
-            if err is not None:
-                return None, f"[{i}] {err}"
-        return obj, None  # type: ignore
-
-    # generic dict
-    if torigin is dict and len(targs) == 2:
-        tk = targs[0]
-        tv = targs[1]
-        if not isinstance(obj, dict):
-            return None, f"is not {otype}"
-        for k, v in obj.items():  # type: ignore
-            if tk != Any:
-                _, err = validate_type(k, tk)
-                if err is not None:
-                    return None, f"key '{k}' {err}"
-            if tv != Any:
-                _, err = validate_type(v, tv)
-                if err is not None:
-                    return None, f"field '{k}' {err}"
-        return obj, None  # type: ignore
-
-    # Union
-    if torigin is UnionType:
-        for t in targs:
-            _, err = validate_type(obj, t)
-            if err is None:
-                return obj, None  # type: ignore
-        return None, f"is not {otype}"
-
-    # TypedDict
-    try:
-        type_hints = get_type_hints(otype)
-        opt_keys: frozenset[str] = otype.__optional_keys__  # type: ignore
-    except (TypeError, AttributeError):
-        raise Exception("[bafser] validate_type: unsupported type")
-
-    if not isinstance(obj, dict):
-        return None, f"is not {otype}"
-    for k, t in type_hints.items():
-        if k not in obj:
-            if k in opt_keys:
-                continue
-            return None, f"field is missing '{k}': {t}"
-        v = obj[k]  # type: ignore
-        _, err = validate_type(v, t)
-        if err is not None:
-            return None, f"field '{k}' {err}"
-
-    return obj, None  # type: ignore

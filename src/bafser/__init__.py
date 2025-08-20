@@ -39,6 +39,7 @@ from .utils.use_user import use_user
 from .app import AppConfig, create_app, update_message_to_frontend
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
+from .jsonobj import JsonObj, JsonOpt, undefined as Undefined, JsonParseError
 
 from .db_session import SqlAlchemyBase
 from .table_base import IdMixin, ObjMixin, SingletonMixin
@@ -86,6 +87,7 @@ __all__ = [
     "AppConfig", "create_app", "update_message_to_frontend",
     "get_logger_frontend", "log_frontend_error", "get_log_fpath", "add_file_logger", "ParametrizedLogger",
     "create_access_token", "get_user_by_jwt_identity", "get_user_id_by_jwt_identity",
+    "JsonObj", "JsonOpt", "Undefined", "JsonParseError",
     "SqlAlchemyBase",
     "IdMixin", "ObjMixin", "SingletonMixin",
     "TablesBase",
