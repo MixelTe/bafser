@@ -2,7 +2,7 @@ db_dev_path = "test/db/dev.db"
 db_path = "username:UR2hqJDbSfQ@username.mysql.pythonanywhere-services.com/username$default"
 # db_path = "ENV:DBPATH"
 db_mysql = True
-sql_echo = False
+sql_echo = True
 
 use_alembic = True
 migrations_folder = "test/alembic"

@@ -1,7 +1,7 @@
 from typing import Any, List, Type, TypeVar, TypedDict
 
 from sqlalchemy import String
-from sqlalchemy.orm import Session, Mapped, mapped_column, relationship, declared_attr
+from sqlalchemy.orm import Session, Mapped, mapped_column, relationship, declared_attr, lazyload
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from .. import SqlAlchemyBase, ObjMixin, UserRole, listfind
@@ -74,6 +74,10 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def _new(cls: Type[T], db_sess: Session, user_kwargs: UserKwargs, **kwargs: Any) -> tuple[T, list[tuple[TFieldName, TValue]]]:
         user = cls(**user_kwargs)
         return user, []
+
+    @classmethod
+    def get_lazy(cls, db_sess: Session, id: int, includeDeleted: bool = False):
+        return cls.query(db_sess, includeDeleted).filter(cls.id == id).options(lazyload(cls.roles)).first()
 
     @classmethod
     def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False):

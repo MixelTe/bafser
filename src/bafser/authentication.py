@@ -22,7 +22,7 @@ def get_user_id_by_jwt_identity(jwt_identity: Any):
     return id
 
 
-def get_user_by_jwt_identity(db_sess: Session, jwt_identity: Any):
+def get_user_by_jwt_identity(db_sess: Session, jwt_identity: Any, lazyload: bool = False):
     from .data.user import get_user_table
     jwt_identity = json.loads(jwt_identity)
     if not isinstance(jwt_identity, list) or len(jwt_identity) != 2:  # type: ignore
@@ -31,7 +31,10 @@ def get_user_by_jwt_identity(db_sess: Session, jwt_identity: Any):
     if not isinstance(id, int) or not isinstance(password, str):
         return None
 
-    user = get_user_table().get(db_sess, id)
+    if lazyload:
+        user = get_user_table().get_lazy(db_sess, id)
+    else:
+        user = get_user_table().get(db_sess, id)
     if not user:
         return None
     if user.password != jwt_identity[1]:
