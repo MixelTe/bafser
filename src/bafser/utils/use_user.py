@@ -10,7 +10,7 @@ from . import response_msg
 TFn = TypeVar("TFn", bound=Callable[..., Any])
 
 
-def use_user(optional: bool = False, lazyload: bool = False):
+def use_user(*, optional: bool = False, lazyload: bool = False, for_update: bool = False):
     from ..authentication import get_user_by_jwt_identity
 
     def decorator(fn: TFn) -> TFn:
@@ -23,7 +23,7 @@ def use_user(optional: bool = False, lazyload: bool = False):
             try:
                 if optional:
                     verify_jwt_in_request()
-                user = get_user_by_jwt_identity(db_sess, get_jwt_identity(), lazyload)
+                user = get_user_by_jwt_identity(db_sess, get_jwt_identity(), lazyload=lazyload, for_update=for_update)
             except Exception:
                 user = None
 

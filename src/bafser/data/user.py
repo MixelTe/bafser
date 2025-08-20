@@ -76,12 +76,12 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return user, []
 
     @classmethod
-    def get_lazy(cls, db_sess: Session, id: int, includeDeleted: bool = False):
-        return cls.query(db_sess, includeDeleted).filter(cls.id == id).options(lazyload(cls.roles)).first()
+    def get_lazy(cls, db_sess: Session, id: int, includeDeleted: bool = False, *, for_update: bool = False):
+        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.id == id).options(lazyload(cls.roles)).first()
 
     @classmethod
-    def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False):
-        return cls.query(db_sess, includeDeleted).filter(cls.login == login).first()
+    def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False, *, for_update: bool = False):
+        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.login == login).first()
 
     @classmethod
     def create_admin(cls, db_sess: Session):
@@ -98,7 +98,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
 
     @classmethod
     def get_admin(cls, db_sess: Session):
-        return db_sess.query(cls).join(UserRole).filter(UserRole.roleId == RolesBase.admin).first()
+        return cls.query(db_sess).join(UserRole).filter(UserRole.roleId == RolesBase.admin).options(lazyload(cls.roles)).first()
 
     def is_admin(self):
         return self.has_role(RolesBase.admin)
@@ -110,8 +110,8 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return u
 
     @classmethod
-    def all_of_role(cls, db_sess: Session, role: int, includeDeleted: bool = False):
-        return cls.query(db_sess, includeDeleted).join(UserRole).filter(UserRole.roleId == role).all()
+    def all_of_role(cls, db_sess: Session, role: int, includeDeleted: bool = False, *, for_update: bool = False):
+        return cls.query(db_sess, includeDeleted, for_update=for_update).join(UserRole).filter(UserRole.roleId == role).all()
 
     def update_password(self, actor: "UserBase", password: str):
         from .. import Log

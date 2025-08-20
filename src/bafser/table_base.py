@@ -37,16 +37,19 @@ class IdMixin:
     id: Mapped[intpk] = mapped_column(init=False)
 
     @classmethod
-    def query(cls, db_sess: Session):
-        return db_sess.query(cls)
+    def query(cls, db_sess: Session, *, for_update: bool = False):
+        q = db_sess.query(cls)
+        if for_update:
+            q = q.with_for_update()
+        return q
 
     @classmethod
-    def get(cls, db_sess: Session, id: int):
-        return cls.query(db_sess).filter(cls.id == id).first()
+    def get(cls, db_sess: Session, id: int, *, for_update: bool = False):
+        return cls.query(db_sess, for_update=for_update).filter(cls.id == id).first()
 
     @classmethod
-    def all(cls, db_sess: Session):
-        return cls.query(db_sess).all()
+    def all(cls, db_sess: Session, *, for_update: bool = False):
+        return cls.query(db_sess, for_update=for_update).all()
 
     def __repr__(self):
         return f"<{self.__class__.__name__}> [{self.id}]"
@@ -56,31 +59,50 @@ class ObjMixin(IdMixin):
     deleted: Mapped[bool] = mapped_column(server_default="0", init=False)
 
     @classmethod
-    def query(cls, db_sess: Session, includeDeleted: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def query(cls, db_sess: Session, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
         items = db_sess.query(cls)
+        if for_update:
+            items = items.with_for_update()
         if not includeDeleted:
             items = items.filter(cls.deleted == False)
         return items
 
     @classmethod
-    def get(cls, db_sess: Session, id: int, includeDeleted: bool = False):
-        return cls.query(db_sess, includeDeleted).filter(cls.id == id).first()
+    def get(cls, db_sess: Session, id: int, includeDeleted: bool = False, *, for_update: bool = False):
+        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.id == id).first()
 
     @classmethod
-    def all(cls, db_sess: Session, includeDeleted: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
-        return cls.query(db_sess, includeDeleted).all()
+    def all(cls, db_sess: Session, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
+        return cls.query(db_sess, includeDeleted, for_update=for_update).all()
 
     def delete(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
-        from . import Log
+        from . import Log, get_datetime_now
+        now = get_datetime_now() if now is None else now
+        db_sess = db_sess if db_sess else Session.object_session(actor)
+        assert db_sess
+        if not self._on_delete(db_sess, actor, now):
+            return False
         self.deleted = True
         if isinstance(self, TableBase):
             Log.deleted(self, actor, now=now, commit=commit, db_sess=db_sess)
+        return True
+
+    def _on_delete(self, db_sess: Session, actor: "UserBase", now: datetime) -> bool:
+        return True
 
     def restore(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None) -> bool:
-        from . import Log
+        from . import Log, get_datetime_now
+        now = get_datetime_now() if now is None else now
+        db_sess = db_sess if db_sess else Session.object_session(actor)
+        assert db_sess
+        if not self._on_restore(db_sess, actor, now):
+            return False
         self.deleted = False
         if isinstance(self, TableBase):
             Log.restored(self, actor, now=now, commit=commit, db_sess=db_sess)
+        return True
+
+    def _on_restore(self, db_sess: Session, actor: "UserBase", now: datetime) -> bool:
         return True
 
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional, Type, TypeVar, TypedDict
+from typing import Any, Optional, Type, TypeVar, TypedDict, override
 import base64
 import os
 
@@ -97,16 +97,14 @@ class Image(SqlAlchemyBase, ObjMixin):
     def create_file_response(self):
         return create_file_response(self.get_path(), f"image/{self.type}", self.get_filename())
 
-    def delete(self, actor: UserBase, commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
-        now = get_datetime_now() if now is None else now
+    @override
+    def _on_delete(self, db_sess: Session, actor: UserBase, now: datetime):
         self.deletionDate = now
-        super().delete(actor, commit, now, db_sess)
-
-    def restore(self, actor: UserBase, commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
-        if not os.path.exists(self.get_path()):
-            return False
-        super().restore(actor, commit, now, db_sess)
         return True
+
+    @override
+    def _on_restore(self, db_sess: Session, actor: UserBase, now: datetime):
+        return os.path.exists(self.get_path())
 
     def get_path(self):
         return os.path.join(current_app.config["IMAGES_FOLDER"], f"{self.id}.{self.type}")  # type: ignore
