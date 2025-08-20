@@ -37,12 +37,16 @@ class IdMixin:
     id: Mapped[intpk] = mapped_column(init=False)
 
     @classmethod
+    def query(cls, db_sess: Session):
+        return db_sess.query(cls)
+
+    @classmethod
     def get(cls, db_sess: Session, id: int):
-        return db_sess.get(cls, id)
+        return cls.query(db_sess).filter(cls.id == id).first()
 
     @classmethod
     def all(cls, db_sess: Session):
-        return db_sess.query(cls).all()
+        return cls.query(db_sess).all()
 
     def __repr__(self):
         return f"<{self.__class__.__name__}> [{self.id}]"
@@ -52,7 +56,7 @@ class ObjMixin(IdMixin):
     deleted: Mapped[bool] = mapped_column(server_default="0", init=False)
 
     @classmethod
-    def query(cls, db_sess: Session, includeDeleted: bool = False):
+    def query(cls, db_sess: Session, includeDeleted: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
         items = db_sess.query(cls)
         if not includeDeleted:
             items = items.filter(cls.deleted == False)
@@ -60,13 +64,10 @@ class ObjMixin(IdMixin):
 
     @classmethod
     def get(cls, db_sess: Session, id: int, includeDeleted: bool = False):
-        obj = db_sess.get(cls, id)
-        if obj is None or (not includeDeleted and obj.deleted):
-            return None
-        return obj
+        return cls.query(db_sess, includeDeleted).filter(cls.id == id).first()
 
     @classmethod
-    def all(cls, db_sess: Session, includeDeleted: bool = False):  # type: ignore
+    def all(cls, db_sess: Session, includeDeleted: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
         return cls.query(db_sess, includeDeleted).all()
 
     def delete(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):

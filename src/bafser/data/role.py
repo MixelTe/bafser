@@ -20,7 +20,7 @@ class Role(SqlAlchemyBase, ObjMixin):
 
     name: Mapped[str] = mapped_column(String(32))
 
-    permissions: Mapped[List["Permission"]] = relationship(default_factory=list)
+    permissions: Mapped[List[Permission]] = relationship(lazy="joined", init=False)
 
     def __repr__(self):
         return f"<Role> [{self.id}] {self.name}"

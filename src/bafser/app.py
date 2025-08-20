@@ -152,6 +152,8 @@ def create_app(import_name: str, config: AppConfig):
 
     @app.before_request
     def before_request():  # type: ignore
+        if bafser_config.sql_echo:
+            print(request.path)
         g.json = get_json(request)
         g.req_id = randstr(4)
         try:

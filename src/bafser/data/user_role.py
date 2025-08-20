@@ -16,7 +16,7 @@ class UserRole(SqlAlchemyBase):
     userId: Mapped[int] = mapped_column(ForeignKey(f"{TablesBase.User}.id"), primary_key=True)
     roleId: Mapped[int] = mapped_column(ForeignKey(f"{TablesBase.Role}.id"), primary_key=True)
 
-    role: Mapped["Role"] = relationship(init=False)
+    role: Mapped["Role"] = relationship(lazy="joined", init=False)
 
     def __repr__(self):
         return f"<UserRole> user: {self.userId} role: {self.roleId}"

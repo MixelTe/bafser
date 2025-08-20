@@ -26,6 +26,7 @@ from .utils.get_json_list_from_req import get_json_list_from_req
 from .utils.get_json_values_from_req import get_json_values_from_req
 from .utils.ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .utils.jsonify_list import jsonify_list
+from .utils.listfind import listfind
 from .utils.parse_date import parse_date
 from .utils.permission_required import create_permission_required_decorator
 from .utils.permission_required import permission_required, permission_required_any
@@ -73,6 +74,7 @@ __all__ = [
     "get_json_values_from_req",
     "ip_to_emoji", "emoji_to_ip",
     "jsonify_list",
+    "listfind",
     "parse_date",
     "create_permission_required_decorator",
     "permission_required", "permission_required_any",

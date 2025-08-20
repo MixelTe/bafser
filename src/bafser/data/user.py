@@ -1,14 +1,13 @@
-from typing import Any, Type, TypeVar, TypedDict
+from typing import Any, List, Type, TypeVar, TypedDict
 
 from sqlalchemy import String
-from sqlalchemy.orm import Session, Mapped, mapped_column
+from sqlalchemy.orm import Session, Mapped, mapped_column, relationship, declared_attr
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from .. import SqlAlchemyBase, ObjMixin, UserRole
+from .. import SqlAlchemyBase, ObjMixin, UserRole, listfind
 from ..utils import get_datetime_now
 from ._roles import RolesBase
 from ._tables import TablesBase
-from .permission import Permission
 
 T = TypeVar("T", bound="UserBase")
 _User: "Type[UserBase] | None" = None
@@ -34,6 +33,10 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     login: Mapped[str] = mapped_column(String(64), index=True, unique=True)
     password: Mapped[str] = mapped_column(String(256), init=False)
     name: Mapped[str] = mapped_column(String(64))
+
+    @declared_attr
+    def roles(self) -> Mapped[List[UserRole]]:
+        return relationship(UserRole, lazy="joined", init=False)
 
     def __repr__(self):
         return f"<{self.__class__.__name__}> [{self.id}] {self.login}"
@@ -93,12 +96,8 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def get_admin(cls, db_sess: Session):
         return db_sess.query(cls).join(UserRole).filter(UserRole.roleId == RolesBase.admin).first()
 
-    _is_admin = None
-
     def is_admin(self):
-        if self._is_admin is None:
-            self._is_admin = self.has_role(RolesBase.admin)
-        return self._is_admin
+        return self.has_role(RolesBase.admin)
 
     @classmethod
     def get_fake_system(cls):
@@ -131,74 +130,39 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return operation[0] in self.get_operations()
 
     def add_role(self, actor: "UserBase", roleId: int):
-        db_sess = Session.object_session(self)
-        assert db_sess
-        existing = UserRole.get(db_sess, self.id, roleId)
-        if existing:
+        if roleId in self.get_roles_ids():
             return False
-
         UserRole.new(actor, self.id, roleId)
-        if roleId == RolesBase.admin:
-            self._is_admin = True
         return True
 
     def remove_role(self, actor: "UserBase", roleId: int):
-        db_sess = Session.object_session(self)
-        assert db_sess
-        user_role = UserRole.get(db_sess, self.id, roleId)
+        user_role = listfind(self.roles, lambda r: r.roleId == roleId)
         if not user_role:
             return False
-
         user_role.delete(actor)
-        if roleId == RolesBase.admin:
-            self._is_admin = False
         return True
 
     def get_roles(self) -> list[tuple[int, str]]:
-        from .. import Role
-        db_sess = Session.object_session(self)
-        assert db_sess
-        roles = db_sess\
-            .query(Role)\
-            .join(UserRole, UserRole.roleId == Role.id)\
-            .filter(UserRole.userId == self.id)\
-            .values(Role.id, Role.name)
+        return [(r.roleId, r.role.name) for r in self.roles]
 
-        return list(map(lambda v: (v[0], v[1]), roles))
+    def get_roles_ids(self):
+        return [v[0] for v in self.get_roles()]
 
     def get_roles_names(self):
         return [v[1] for v in self.get_roles()]
 
     def has_role(self, roleId: int):
-        db_sess = Session.object_session(self)
-        assert db_sess
-        ur = db_sess\
-            .query(UserRole.roleId)\
-            .filter(UserRole.roleId == roleId)\
-            .filter(UserRole.userId == self.id)\
-            .first()
-
-        return ur is not None
+        return roleId in self.get_roles_ids()
 
     def get_operations(self) -> list[str]:
-        from .. import Role
-        db_sess = Session.object_session(self)
-        assert db_sess
-        operations = db_sess\
-            .query(Permission)\
-            .join(Role, Permission.roleId == Role.id)\
-            .join(UserRole, UserRole.roleId == Role.id)\
-            .filter(UserRole.userId == self.id)\
-            .values(Permission.operationId)
-
-        return list(map(lambda v: v[0], operations))
+        return [v.operationId for r in self.roles for v in r.role.permissions]
 
     def get_dict(self) -> "UserDict":
         return {
             "id": self.id,
             "name": self.name,
             "login": self.login,
-            "roles": self.get_roles(),
+            "roles": self.get_roles_names(),
             "operations": self.get_operations(),
         }
 
@@ -217,7 +181,7 @@ class UserDict(TypedDict):
     id: int
     name: str
     login: str
-    roles: list[tuple[int, str]]
+    roles: list[str]
     operations: list[str]
 
 

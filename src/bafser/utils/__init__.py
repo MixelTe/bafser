@@ -13,6 +13,7 @@ from .get_secret_key import get_secret_key, get_secret_key_rnd
 from .import_all_tables import import_all_tables
 from .ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .jsonify_list import jsonify_list
+from .listfind import listfind
 from .parse_date import parse_date
 from .permission_required import create_permission_required_decorator
 from .permission_required import permission_required, permission_required_any
@@ -38,6 +39,7 @@ __all__ = [
     "import_all_tables",
     "ip_to_emoji", "emoji_to_ip",
     "jsonify_list",
+    "listfind",
     "parse_date",
     "create_permission_required_decorator",
     "permission_required", "permission_required_any",
