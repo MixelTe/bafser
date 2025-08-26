@@ -1,4 +1,4 @@
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 from flask import Blueprint, send_from_directory
 from flask_jwt_extended import jwt_required  # type: ignore
 
@@ -62,11 +62,43 @@ class SomeObj(JsonObj):
     v: list[list[SomeObj2]]
 
 
+class SomeDict11(TypedDict):
+    name: str
+    keys: list[int | str]
+    v: list[list[SomeObj2]]
+
+
+class SomeObjRes(JsonObj):
+    a: int
+    obj: SomeDict11
+
+
 @blueprint.post("/api/post2")
 @doc_api(req=dict, res=list, desc="The best route")
 def test_post2():  # type: ignore
-    a, obj = get_json_values_from_req(("a", int), ("obj", SomeObj))
-    return {"a": a, "obj": obj.json()}  # type: ignore
+    a, obj = get_json_values_from_req(("a", int), ("obj", SomeDict11))
+    return SomeObjRes.new(a=a, obj=obj).json()
+
+
+class SomeObj3(JsonObj):
+    name: Literal["3"]
+    v: int
+
+
+class SomeObj4(JsonObj):
+    name = Literal["4"]
+    d: str
+
+
+class SomeObj5(JsonObj):
+    objs: list[SomeObj3 | SomeObj4]
+
+
+@blueprint.post("/api/post3")
+@doc_api(req=dict, res=list)
+def test_post3():  # type: ignore
+    obj = get_json_values_from_req(("obj", SomeObj5))
+    return obj.json()
 
 
 @blueprint.post("/api/img")

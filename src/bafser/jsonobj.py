@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from types import NoneType, UnionType
-from typing import Any, Callable, TypeVar, get_args, get_origin, get_type_hints
+from typing import Any, Callable, Literal, TypeVar, get_args, get_origin, get_type_hints
 
 from flask import jsonify
 
@@ -61,8 +61,10 @@ class JsonObj:
         def _parse(self, key: str, v: Any, json: dict[str, Any]):
             if key == "from":
                 return "frm", v
-            if key == "rect":
-                return key, MyRect(v)
+            if key == "char":
+                if not isinstance(v, str) or len(v) != 1:
+                    raise JsonParseError("must be a single character string")
+                return key, v.lower()
             return None
 
     Override `_serialize` to map keys and add custom serializer::
@@ -77,13 +79,26 @@ class JsonObj:
         _type_hints: dict[str, Any]
         _field_types: dict[str, Any]  # JsonOpt[T] replaced with T
         _optional_fields: list[str]  # list of JsonOpt[T] fields
+
+    Unions are supported::
+
+        class ObjD(JsonObj):
+            name: Literal["d"]
+            d: int
+        class ObjV(JsonObj):
+            name = Literal["v"]
+            v: str
+
+        class SomeObj(JsonObj):
+            objs: list[ObjD | ObjV]
     """
     __repr_fields__: list[str] | None = None
     __datetime_parser__: Callable[[Any], datetime] = datetime.fromisoformat
     __datetime_serializer__: Callable[[datetime], Any] = datetime.isoformat
 
     def __init__(self, json: object):
-        self._exceptions: list[tuple[str, Exception]] = []
+        # self._exceptions: list[tuple[str, Exception]] = []
+        self.__exceptions__: list[tuple[str, JsonParseError]] = []
         for k in self._type_hints:
             if not hasattr(self, k):
                 setattr(self, k, undefined)
@@ -105,8 +120,9 @@ class JsonObj:
             if r is not None:
                 k, v = r
                 t = self._type_hints.get(k, None)
-        except Exception as x:
-            self._exceptions.append((k, x))
+        # except Exception as x:
+        except JsonParseError as x:
+            self.__exceptions__.append((k, x))
 
         if k not in self._type_hints:
             return None, v
@@ -159,6 +175,17 @@ class JsonObj:
             obj: Any = {}
         return cls(obj)
 
+    @classmethod
+    def new(cls, **values: Any):
+        obj = cls({})
+
+        for k, v in values.items():
+            if k not in obj._type_hints:
+                raise Exception(f"Wrong argument name: {k}")
+            setattr(obj, k, v)
+
+        return obj.valid()
+
     def __repr__(self) -> str:
         params = ", ".join(
             f"{k}={repr(v)}" for (k, v) in self.items()
@@ -176,13 +203,14 @@ class JsonObj:
                 if err:
                     r = k + err
                     break
-            except Exception as x:
-                self._exceptions.append((k, x))
-        if len(self._exceptions) != 0:
-            k, x = self._exceptions[0]
+            # except Exception as x:
+            except JsonParseError as x:
+                self.__exceptions__.append((k, x))
+        if len(self.__exceptions__) != 0:
+            k, x = self.__exceptions__[0]
             if k in self._type_hints:
                 t = self._type_hints[k]
-                return f"{k} is not {type_names.get(t, t.__name__)}: {x}"
+                return f"{k} is not {type_name(t)}: {x}"
             return f"{k}: {x}"
         return r
 
@@ -196,11 +224,12 @@ class JsonObj:
         :raises JsonParseError: if there is any error
         """
         err = self.validate()
-        if len(self._exceptions) != 0:
-            _, x = self._exceptions[0]
-            if isinstance(x, JsonParseError):
-                raise x
-            raise JsonParseError(repr(x)).with_traceback(x.__traceback__)
+        if len(self.__exceptions__) != 0:
+            _, x = self.__exceptions__[0]
+            raise x
+            # if isinstance(x, JsonParseError):
+            #     raise x
+            # raise JsonParseError(repr(x)).with_traceback(x.__traceback__)
         if err is not None:
             raise JsonParseError(err)
         return self
@@ -232,11 +261,18 @@ class JsonObj:
             v = type(self).__datetime_serializer__(v)
         elif isinstance(v, list):
             r: list[Any] = []
-            for el in v:  # pyright: ignore[reportUnknownVariableType]
-                _, el = self.__serialize_item__(k, el)
+            for i, el in enumerate(v):  # type: ignore
+                _, el = self.__serialize_item__(f"{k}[{i}]", el)  # type: ignore
                 if el is not undefined:
                     r.append(el)
             v = r
+        elif isinstance(v, dict):
+            d: dict[Any, Any] = {}
+            for dk, dv in v.items():  # pyright: ignore[reportUnknownVariableType]
+                dk, dv = self.__serialize_item__(f"{k}.{dk}", dv)  # type: ignore
+                if dv is not undefined:
+                    d[dk] = dv
+            v = d
         return k, v
 
     def _serialize(self, key: str, v: Any) -> tuple[str, Any] | None:
@@ -264,105 +300,101 @@ class Undefined:
 undefined = Undefined()
 type JsonOpt[T] = T | Undefined
 
-
-class SomeDict2(JsonObj):
-    value: int
-    date: datetime
-    isCool: JsonOpt[bool]
-    name: str = "anonym"
-    name_opt: JsonOpt[str] = "anonym"
-
-    some_var = 5
-
-    def some_fn(self) -> bool:
-        return True
-
-
-class SomeDict(JsonObj):
-    name: str
-    keys: list[int | str]
-    v: list[SomeDict2]
-
-
 type ValidateType = dict[str, ValidateType] | int | float | bool | str | object | None | list[Any]
 TC = TypeVar("TC", bound=ValidateType)
-
-type_names: dict[Any, str] = {
-    NoneType: "None",
-}
 
 
 def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None] | tuple[None, str]:
     """Supports int, float, bool, str, object, None, list, dict, list['type'], dict['type', 'type'], Union[...], TypedDict"""
     # simple type
-    if isinstance(otype, type):  # type: ignore
+    try:
+        isinstance(obj, otype)
+        good_type = True
+    except Exception:
+        good_type = False
+    if good_type and isinstance(otype, type):  # type: ignore
         if type(obj) is bool:  # handle isinstance(True, int) is True
             if otype is bool:
                 return obj, None  # type: ignore
-        elif issubclass(otype, JsonObj):
+        if issubclass(otype, JsonObj):
             if not isinstance(obj, JsonObj):
                 obj = otype(obj)
             err = obj.validate()
-            if len(obj._exceptions) != 0:  # pyright: ignore[reportPrivateUsage]
-                k, x = obj._exceptions[0]  # pyright: ignore[reportPrivateUsage]
-                if r:
-                    raise JsonParseError(repr(x)).with_traceback(x.__traceback__)
+            if r and len(obj.__exceptions__) != 0:  # pyright: ignore[reportPrivateUsage]
+                k, x = obj.__exceptions__[0]  # pyright: ignore[reportPrivateUsage]
+                if isinstance(x, JsonParseError):
+                    raise x
+                raise JsonParseError(repr(x)).with_traceback(x.__traceback__)
             if err is None:
                 return obj, None  # type: ignore
             return None, "." + err
-        elif isinstance(obj, otype):
+        if isinstance(obj, otype):
             return obj, None  # type: ignore
         if obj is undefined:
             return None, " is undefined"
-        return None, f" is not {type_names.get(otype, otype.__name__)}"
+        return None, f" is not {type_name(otype)}"
 
-    # generic list
     torigin = get_origin(otype)
     targs = get_args(otype)
-    if torigin is list and len(targs) == 1:
-        t = targs[0]
-        if not isinstance(obj, list):
-            return None, f" is not list[{type_names.get(t, t.__name__)}]"
-        for i, el in enumerate(obj):  # type: ignore
-            _, err = validate_type(el, t, r)
-            if err is not None:
-                return None, f"[{i}]{err}"
-        return obj, None  # type: ignore
-
-    # generic dict
-    if torigin is dict and len(targs) == 2:
-        tk = targs[0]
-        tv = targs[1]
-        if not isinstance(obj, dict):
-            return None, f" is not dict[{type_names.get(tk, tk.__name__)},{type_names.get(tv, tv.__name__)}]"
-        for k, v in obj.items():  # type: ignore
-            if tk != Any:
-                _, err = validate_type(k, tk, r)
-                if err is not None:
-                    return None, f" key '{k}'{err}"
-            if tv != Any:
-                _, err = validate_type(v, tv, r)
-                if err is not None:
-                    return None, f".{k}{err}"
-        return obj, None  # type: ignore
-
-    # Union
-    if torigin is UnionType:
-        for t in targs:
-            _, err = validate_type(obj, t, r)
-            if err is None:
-                return obj, None
-        return None, f" is not {" | ".join(type_names.get(t, t.__name__) for t in targs)}"
 
     # JsonOpt
     if torigin is JsonOpt and len(targs) == 1:
         t = targs[0]
         if obj is undefined:
             return obj, None
-        _, err = validate_type(obj, t, r)
+        obj, err = validate_type(obj, t, r)
         if err is None:
             return obj, None
-        return None, f" is not {type_names.get(t, t.__name__)}"
+        return None, f" is not {type_name(t)}"
+
+    if obj is undefined:
+        return None, " is undefined"
+
+    if torigin is Literal:
+        t = targs[0]
+        if obj == t:
+            return obj, None
+        return None, f" is not {type_name(otype)}"
+
+    # generic list
+    if torigin is list and len(targs) == 1:
+        t = targs[0]
+        if not isinstance(obj, list):
+            return None, f" is not list[{type_name(t)}]"
+        l: list[Any] = []
+        for i, el in enumerate(obj):  # type: ignore
+            o, err = validate_type(el, t, r)
+            if err is not None:
+                return None, f"[{i}]{err}"
+            l.append(o)
+        return l, None  # type: ignore
+
+    # generic dict
+    if torigin is dict and len(targs) == 2:
+        tk = targs[0]
+        tv = targs[1]
+        if not isinstance(obj, dict):
+            return None, f" is not dict[{type_name(tk)},{type_name(tv)}]"
+        d: dict[Any, Any] = {}
+        for k, v in obj.items():  # type: ignore
+            d[k] = v
+            if tk != Any:
+                _, err = validate_type(k, tk, r)
+                if err is not None:
+                    return None, f" key '{k}'{err}"
+            if tv != Any:
+                d[k], err = validate_type(v, tv, r)
+                if err is not None:
+                    return None, f".{k}{err}"
+        return d, None  # type: ignore
+
+    # Union
+    if torigin is UnionType:
+        for t in targs:
+            o, err = validate_type(obj, t, r)
+            if err is None:
+                return o, None  # type: ignore
+        return None, f" is not {" | ".join(type_name(t) for t in targs)}"
 
     # TypedDict
     try:
@@ -373,14 +405,34 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
 
     if not isinstance(obj, dict):
         return None, f"is not {otype}"
+    d: dict[Any, Any] = {}
     for k, t in type_hints.items():
+        d[k] = obj[k]
         if k not in obj:
             if k in opt_keys:
                 continue
-            return None, f"field is missing '{k}': {t}"
-        v = obj[k]  # type: ignore
-        _, err = validate_type(v, t, r)
+            return None, f"field is missing '{k}': {type_name(t)}"
+        d[k], err = validate_type(obj[k], t, r)
         if err is not None:
             return None, f"field '{k}' {err}"
 
-    return obj, None  # type: ignore
+    return d, None  # type: ignore
+
+
+def type_name(t: Any) -> str:
+    if t is NoneType:
+        return "None"
+    torigin = get_origin(t)
+    targs = get_args(t)
+    if torigin is list and len(targs) == 1:
+        return f"list[{type_name(targs[0])}]"
+    if torigin is dict and len(targs) == 2:
+        return f"dict[{type_name(targs[0])}, {type_name(targs[1])}]"
+    if torigin is UnionType:
+        return " | ".join(type_name(v) for v in targs)
+    if torigin is Literal:
+        return repr(targs[0])
+    try:
+        return t.__name__
+    except Exception:
+        return str(t)
