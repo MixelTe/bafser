@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap" rel="stylesheet">
+    <title>Test</title>
+    <style>
+        body {
+            display: flex;
+            height: 100dvh;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: "Fira Code", 'Courier New', Courier, monospace;
+        }
+        body > div {
+            width: 100%;
+            max-width: 800px;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        body > div > div {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 100dvh;
+            overflow: auto;
+        }
+        #history {
+            display: flex;
+            flex-direction: column;
+            min-width: 260px;
+            min-height: 100px;
+            width: 260px;
+            height: 20vh;
+            resize: both;
+            overflow: auto;
+            gap: 0.25rem;
+            font-size: 0.6rem;
+        }
+        #history button {
+            font-size: 0.6rem;
+        }
+        #history > div {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            border: 1px solid gray;
+            border-radius: 0.25rem;
+            padding: 0.25rem;
+        }
+        #history pre {
+            margin: 0;
+            overflow: auto;
+        }
+        #history > div > :nth-child(4) {
+            grid-column: 1/4;
+        }
+        textarea {
+            min-width: 260px;
+            tab-size: 2em;
+        }
+        #result, #preview {
+            white-space-collapse: preserve;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div>
+            <label>
+                <span>endpoint</span>
+                <input type="text" value="/api/" id="inp_endpoint">
+            </label>
+            <select id="inp_method">
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+            </select>
+            <span>
+                <span>JSON</span>
+                <button id="btn_format">format</button>
+                <button id="btn_save">save</button>
+            </span>
+            <textarea id="inp_json" rows="6" spellcheck="false"></textarea>
+            <button id="btn_post">Post (ctrl+Enter)</button>
+            <div id="history">
+            </div>
+        </div>
+        <div>
+            <span>Req:</span>
+            <div id="preview"></div>
+            <span>Res:</span>
+            <div id="result"></div>
+        </div>
+    </div>
+    <script>
+        const inp_endpoint = document.getElementById("inp_endpoint");
+        const inp_method = document.getElementById("inp_method");
+        const inp_json = document.getElementById("inp_json");
+        const btn_format = document.getElementById("btn_format");
+        const btn_save = document.getElementById("btn_save");
+        const btn_post = document.getElementById("btn_post");
+        const preview = document.getElementById("preview");
+        const result = document.getElementById("result");
+        const reqhistory = document.getElementById("history");
+        inp_endpoint.value = localStorage.getItem("bafsertest_inp_endpoint") || inp_endpoint.value;
+        inp_method.value = localStorage.getItem("bafsertest_inp_method") || inp_method.value;
+        inp_json.value = localStorage.getItem("bafsertest_inp_json") || inp_json.value;
+        inp_endpoint.addEventListener("input", () => localStorage.setItem("bafsertest_inp_endpoint", inp_endpoint.value));
+        inp_method.addEventListener("input", () => localStorage.setItem("bafsertest_inp_method", inp_method.value));
+        inp_json.addEventListener("input", () => { formatJson(); localStorage.setItem("bafsertest_inp_json", inp_json.value); previewReq(); });
+        btn_format.addEventListener("click", formatInp);
+        btn_post.addEventListener("click", callfetch);
+        inp_json.addEventListener("keydown", e => {
+            if (e.ctrlKey && e.key == "Enter") {
+                callfetch();
+                return;
+            }
+            if (e.key != "Tab") return;
+            e.preventDefault();
+            const ni = inp_json.selectionStart;
+            const v = inp_json.value.slice(0, ni) + "    " + inp_json.value.slice(ni);
+            inp_json.value = v;
+            pv = v;
+            localStorage.setItem("bafsertest_inp_json", v);
+            inp_json.setSelectionRange(ni + 4, ni + 4);
+        })
+        async function callfetch() {
+            result.innerText = "fetching...";
+            formatInp();
+            result.innerText = await fetchRes()
+        }
+        async function fetchRes() {
+            try {
+                const r = await fetch(inp_endpoint.value, {
+                    method: inp_method.value,
+                    headers: inp_method.value == "POST" ? { "Content-Type": "application/json" } : {},
+                    body: inp_method.value == "POST" ? inp_json.value : undefined,
+                });
+                if (r.ok) {
+                    return await r.text();
+                }
+                else {
+                    return `Error (${r.status}):\n${await r.text()}`;
+                }
+            } catch (error) {
+                return "Error: \n" + error;
+            }
+        }
+        btn_save.addEventListener("click", async () => {
+            const h = JSON.parse(localStorage.getItem("bafsertest_history") || "[]");
+            h.push({endpoint: inp_endpoint.value, method: inp_method.value, json: inp_json.value, res: await fetchRes()});
+            localStorage.setItem("bafsertest_history", JSON.stringify(h));
+            updateHistory();
+        });
+        previewReq();
+        function previewReq() {
+            try {
+                preview.innerText = JSON.stringify(JSON.parse(inp_json.value), null, 4);
+            } catch (error) {
+                preview.innerText = "Error: \n" + error;
+            }
+        }
+        function formatInp() {
+            try {
+                const pos = inp_json.selectionStart;
+                inp_json.value = JSON.stringify(JSON.parse(inp_json.value), null, 4);
+                pv = inp_json.value;
+                inp_json.setSelectionRange(pos, pos);
+            } catch (error) {console.log(error);}
+        }
+        let pv = inp_json.value;
+        function formatJson() {
+            let v = inp_json.value;
+            if (v.length != pv.length + 1) { pv = v; return; };
+            let ni = inp_json.selectionStart;
+            let pos = ni;
+            const pch = v[ni - 2];
+            const ch = v[ni - 1];
+            const nch = v[ni];
+            // console.log("pv:", pv, "v:", v, "ni:", ni, "ch:", ch);
+            const before = v.slice(0, ni);
+            const after = v.slice(ni);
+            const _blnl = before.lastIndexOf("\n")
+            const line = before.slice(_blnl + 1);
+            const _bl = before.slice(0, _blnl);
+            const prevline = _blnl < 0 ? "" : _bl.slice(_bl.lastIndexOf("\n") + 1);
+            switch (ch) {
+                case "{": v = before + "}" + after; break;
+                case "[": v = before + "]" + after; break;
+                case '"': if (!nch || nch == "\n") v = before + '"' + after; break;
+                case "\n":
+                    if (pch != "\n") {
+                        let indentS = Math.floor((prevline.length - prevline.trimStart(" ").length) / 4);
+                        if (pch == "{" || pch == "[") indentS++;
+                        if (nch == "}" || nch == "]") indentS--;
+                        const indent = new Array(indentS * 4).fill(" ").join("");
+                        const indent2 = new Array((indentS + 1) * 4).fill(" ").join("");
+                        v = before + indent + after;
+                        pos += indentS * 4;
+                        if (pch == "{" && nch == "}" || pch == "[" && nch == "]") {
+                            v = before + indent2 + "\n" + indent + after;
+                            pos += 4;
+                        }
+                    }
+                    break;
+            }
+            pv = v;
+            inp_json.value = v;
+            inp_json.setSelectionRange(pos, pos);
+        }
+        inp_json.focus();
+        updateHistory();
+        function updateHistory() {
+            const h = JSON.parse(localStorage.getItem("bafsertest_history") || "[]");
+            for (let i1 = h.length - 1; i1 >= 0; i1--) {
+                const it1 = h[i1];
+                for (let i2 = i1 - 1; i2 >= 0; i2--) {
+                    const it2 = h[i2];
+                    if (
+                        it1.endpoint == it2.endpoint &&
+                        it1.method == it2.method &&
+                        it1.json == it2.json
+                    )
+                    h.splice(i2, 1);
+                }
+            }
+            localStorage.setItem("bafsertest_history", JSON.stringify(h));
+            reqhistory.innerHTML = "";
+            for (let i = h.length - 1; i >= 0; i--) {
+                const it = h[i];
+                const {endpoint, method, json, res} = it;
+                const el = document.createElement("div");
+                const elEndpoint = document.createElement("div");
+                const elJson = document.createElement("pre");
+                const elBtn = document.createElement("button");
+                const elSet = document.createElement("button");
+                reqhistory.appendChild(el);
+                el.appendChild(elEndpoint);
+                el.appendChild(elSet);
+                el.appendChild(elBtn);
+                el.appendChild(elJson);
+                elEndpoint.innerText = method + " " + endpoint;
+                elJson.innerText = json;
+                elBtn.innerText = "Del";
+                elSet.innerText = "Set";
+                elBtn.addEventListener("click", () => {
+                    h.splice(i, 1);
+                    localStorage.setItem("bafsertest_history", JSON.stringify(h));
+                    updateHistory();
+                })
+                elSet.addEventListener("click", () => {
+                    inp_endpoint.value = endpoint;
+                    inp_method.value = method;
+                    inp_json.value = json;
+                    result.innerText = res;
+                })
+            }
+        }
+    </script>
+</body>
+</html>

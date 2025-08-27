@@ -1,25 +1,24 @@
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Literal
 import json
 import logging
 import os
 import time
 import traceback
+from datetime import datetime, timedelta, timezone
+from typing import Any, Callable, Literal
+from urllib.parse import quote
 
 from flask import Flask, Response, abort, g, make_response, redirect, request, send_from_directory
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt, get_jwt_identity, set_access_cookies, verify_jwt_in_request  # type: ignore
-from urllib.parse import quote
 from sqlalchemy.orm import Session
 
+import bafser_config
 
 from . import db_session
-from .authentication import get_user_id_by_jwt_identity
 from .alembic import alembic_upgrade
+from .authentication import get_user_id_by_jwt_identity
 from .doc_api import init_api_docs
 from .logger import get_logger_requests, setLogging
 from .utils import get_json, get_secret_key, get_secret_key_rnd, randstr, register_blueprints, response_msg
-import bafser_config
-
 
 _config: "AppConfig | None" = None
 

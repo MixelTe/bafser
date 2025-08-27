@@ -1,7 +1,5 @@
 from typing import Any, Mapping, TypeVar, overload
 
-from ..jsonobj import validate_type
-
 T = TypeVar("T")
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
@@ -39,6 +37,7 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any]) -> tupl
 
 
 def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwargs: Any) -> tuple[values, error]:
+    from ..jsonobj import validate_type
     if kwargs != {}:
         raise Exception("dont support kwargs")
     r: list[Any] = []
@@ -65,4 +64,15 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
             return rv, f"{field_name} is undefined"
     if len(r) == 1:
         return r[0], None
+    return r, None
+
+
+def get_json_list(l: list[Any], otype: type[T]) -> tuple[list[T], error]:
+    from ..jsonobj import validate_type
+    r: list[T] = []
+    for i, el in enumerate(l):
+        el, err = validate_type(el, otype)
+        if err is not None:
+            return [], f"[{i}] {err}"
+        r.append(el)  # type: ignore
     return r, None

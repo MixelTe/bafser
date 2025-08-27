@@ -1,9 +1,11 @@
 from typing import Any, TypeVar, overload
+
 from flask import abort, g
 
-from . import get_json_values, response_msg
+from . import get_json_list, get_json_values, response_msg
 from .get_json_values import field_desc
 
+T = TypeVar("T")
 T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
@@ -37,12 +39,7 @@ def get_json_values_from_req(*field_names: field_desc[Any]) -> list[Any]: ...  #
 def get_json_values_from_req(*field_names: field_desc[Any], **kwargs: Any):
     if kwargs != {}:
         raise Exception("dont support kwargs")
-    data, is_json = g.json
-    if not is_json:
-        abort(response_msg("body is not json", 415))
-
-    if not isinstance(data, dict):
-        abort(response_msg("body json is not object", 415))
+    data = get_json_from_req(dict)  # type: ignore
 
     values, values_error = get_json_values(data, *field_names)  # type: ignore
 
@@ -50,3 +47,28 @@ def get_json_values_from_req(*field_names: field_desc[Any], **kwargs: Any):
         abort(response_msg(values_error, 400))
 
     return values
+
+
+def get_json_list_from_req(otype: type[T]) -> list[T]:
+    data = get_json_from_req(list)  # type: ignore
+
+    values, values_error = get_json_list(data, otype)  # type: ignore
+
+    if values_error:
+        abort(response_msg(values_error, 400))
+
+    return values
+
+
+def get_json_from_req(otype: type[T]) -> T:
+    data, is_json = g.json
+    if not is_json:
+        abort(response_msg("body is not json", 415))
+
+    if not isinstance(data, otype):
+        tname = otype.__name__
+        if otype is dict:
+            tname = "object"
+        abort(response_msg(f"body json is not {tname}", 400))
+
+    return data

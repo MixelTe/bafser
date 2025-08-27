@@ -16,14 +16,13 @@ except ModuleNotFoundError:
         shutil.copy(cfg_src, cfg_dst)
 
 from .utils.response_msg import response_msg
-from .utils.get_json_values import get_json_values
+from .utils.get_json_values import get_json_values, get_json_list
 
 from .utils.create_file_response import create_file_response
 from .utils.create_folder_for_file import create_folder_for_file
 from .utils.get_datetime_now import get_datetime_now
 from .utils.get_json import get_json
-from .utils.get_json_list_from_req import get_json_list_from_req
-from .utils.get_json_values_from_req import get_json_values_from_req
+from .utils.get_json_values_from_req import get_json_values_from_req, get_json_list_from_req
 from .utils.ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .utils.jsonify_list import jsonify_list
 from .utils.listfind import listfind
@@ -40,6 +39,7 @@ from .app import AppConfig, create_app, update_message_to_frontend
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
 from .jsonobj import JsonObj, JsonOpt, undefined as Undefined, JsonParseError
+from .doc_api import doc_api, get_api_docs, JsonSingleKey
 
 from .db_session import SqlAlchemyBase
 from .table_base import IdMixin, ObjMixin, SingletonMixin
@@ -66,13 +66,12 @@ class M:
 __all__ = [
     "M",
     "response_msg",
-    "get_json_values",
+    "get_json_values", "get_json_list",
     "create_file_response",
     "create_folder_for_file",
     "get_datetime_now",
     "get_json",
-    "get_json_list_from_req",
-    "get_json_values_from_req",
+    "get_json_values_from_req", "get_json_list_from_req",
     "ip_to_emoji", "emoji_to_ip",
     "jsonify_list",
     "listfind",
@@ -88,6 +87,7 @@ __all__ = [
     "get_logger_frontend", "log_frontend_error", "get_log_fpath", "add_file_logger", "ParametrizedLogger",
     "create_access_token", "get_user_by_jwt_identity", "get_user_id_by_jwt_identity",
     "JsonObj", "JsonOpt", "Undefined", "JsonParseError",
+    "doc_api", "get_api_docs", "JsonSingleKey",
     "SqlAlchemyBase",
     "IdMixin", "ObjMixin", "SingletonMixin",
     "TablesBase",
