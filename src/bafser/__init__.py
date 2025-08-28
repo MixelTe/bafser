@@ -35,11 +35,11 @@ from .utils.use_db_session import use_db_session
 from .utils.use_userId import use_userId
 from .utils.use_user import use_user
 
-from .app import AppConfig, create_app, update_message_to_frontend
+from .app import AppConfig, create_app, update_message_to_frontend, get_app_config
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
 from .jsonobj import JsonObj, JsonOpt, undefined as Undefined, JsonParseError
-from .doc_api import doc_api, get_api_docs, JsonSingleKey
+from .doc_api import doc_api, get_api_docs, JsonSingleKey, render_docs_page
 
 from .db_session import SqlAlchemyBase
 from .table_base import IdMixin, ObjMixin, SingletonMixin
@@ -83,11 +83,11 @@ __all__ = [
     "use_db_session",
     "use_userId",
     "use_user",
-    "AppConfig", "create_app", "update_message_to_frontend",
+    "AppConfig", "create_app", "update_message_to_frontend", "get_app_config",
     "get_logger_frontend", "log_frontend_error", "get_log_fpath", "add_file_logger", "ParametrizedLogger",
     "create_access_token", "get_user_by_jwt_identity", "get_user_id_by_jwt_identity",
     "JsonObj", "JsonOpt", "Undefined", "JsonParseError",
-    "doc_api", "get_api_docs", "JsonSingleKey",
+    "doc_api", "get_api_docs", "JsonSingleKey", "render_docs_page",
     "SqlAlchemyBase",
     "IdMixin", "ObjMixin", "SingletonMixin",
     "TablesBase",

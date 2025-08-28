@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
+    <link rel="shortcut icon" media="(prefers-color-scheme: light)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
+    <link rel="shortcut icon" media="(prefers-color-scheme: dark)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAAAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZPs9tbQAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
+    <title>Api Docs</title>
+    <style>
+		:root {
+			--c-back: #faebd7;
+			--c-box: white;
+			--c-text: black;
+			--c-link: #0969da;
+			--c-main: #ebba7a;
+			--c-main-dim: #f6e1c6;
+            --c-card: #80808022;
+
+            --c-t-int: #005fcc;
+            --c-t-float: #005fcc;
+            --c-t-bool: #5204c8;
+            --c-t-str: #cc4700;
+            --c-t-null: #888a0f;
+            --c-t-any: #00a830;
+		}
+		@media (prefers-color-scheme: dark) {
+			:root {
+				--c-back: #172124;
+				--c-box: #1e1e1e;
+				--c-text: #d4d4d4;
+				--c-link: #00ffff;
+			    --c-main: #007599;
+			    --c-main-dim: #0d3c4a;
+
+                --c-t-int: #74b5ff;
+                --c-t-float: #74b5ff;
+                --c-t-bool: #bd93fd;
+                --c-t-str: #ffaf85;
+                --c-t-null: #fbfd9a;
+                --c-t-any: #70ff99;
+			}
+		}
+        *, *::before, *::after {
+            box-sizing: border-box;
+            color: inherit;
+            font: inherit;
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+        }
+        body {
+            text-decoration-skip-ink: none;
+    	    font-family: "PT Sans", Arial, Helvetica, sans-serif;
+			background-color: var(--c-back);
+			color: var(--c-text);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+        }
+		.body {
+			display: grid;
+			grid-template-rows: auto 1fr;
+            gap: 1rem;
+			width: 100%;
+            flex-grow: 1;
+            max-height: 100%;
+			max-width: 1000px;
+			background-color: var(--c-box);
+			padding: 1em 2em;
+		}
+		@media screen and (min-width: 1000px) {
+            body {
+				padding: 1em;
+            }
+			.body {
+				border-radius: 1em;
+				padding: 1em 3em;
+			}
+		}
+        .content {
+            position: relative;
+        }
+        .content > * {
+            position: absolute;
+            inset: 0;
+            overflow: auto;
+            z-index: 1;
+			background-color: var(--c-box);
+        }
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .link {
+            cursor: pointer;
+            color: var(--c-link);
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+        }
+        h2 {
+            font-size: 1.25rem;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            background-color: transparent;
+        }
+        button:disabled {
+            cursor: default;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: gray;
+        }
+    </style>
+    <style>
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .header > a {
+            padding: 0.5em 1em;
+            background-color: var(--c-card);
+        }
+        .header > :first-child {
+            border-top-left-radius: 0.5em;
+            border-bottom-left-radius: 0.5em;
+        }
+        .header > :last-child {
+            border-top-right-radius: 0.5em;
+            border-bottom-right-radius: 0.5em;
+        }
+        .header:has(~* #routes:target) > :nth-child(1),
+        .header:has(~* #routes *:target) > :nth-child(1) {
+            anchor-name: --header;
+        }
+        .header:has(~* #types:target) > :nth-child(2),
+        .header:has(~* #types *:target) > :nth-child(2) {
+            anchor-name: --header;
+        }
+        .header::after {
+            content: "";
+            position: absolute;
+            background-color: var(--c-main);
+            height: 0.2em;
+            bottom: calc(anchor(--header bottom) + 0.2em);
+            left: calc(anchor(--header left) + 0.3em);
+            right: calc(anchor(--header right) + 0.3em);
+            border-radius: 1rem;
+            transition-property: bottom, left, right;
+            transition-duration: 300ms;
+        }
+        #routes,
+        #types {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            opacity: 0;
+            transition: opacity 200ms;
+        }
+        #routes:target, #routes:has(*:target),
+        #types:target, #types:has(*:target) {
+            opacity: 1;
+            z-index: 2;
+        }
+    </style>
+    <style>
+        .card {
+            border-radius: 0.5em;
+            background-color: var(--c-card);
+        }
+
+        .card__title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+        }
+
+        .card__title input {
+            appearance: none;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1em;
+            height: 1em;
+            cursor: pointer;
+        }
+        .card__title input::before {
+            content: "";
+            display: flex;
+            position: absolute;
+            inset: 0;
+            background-color: var(--c-main);
+            border-radius: 0.25em;
+            transition: box-shadow 100ms;
+            box-shadow: 0 0 0 0 var(--c-main);
+        }
+        .card__title input:hover::before {
+            box-shadow: 0 0 0 0.1em var(--c-main);
+        }
+        .card__title input:active::before {
+            box-shadow: 0 0 0 0em var(--c-main);
+        }
+        .card__title input::after {
+            content: "";
+            z-index: 2;
+            display: flex;
+            width: 45%;
+            height: 45%;
+            border: 0.15em solid var(--c-text);
+            border-top: none;
+            border-left: none;
+            border-radius: 0.1em;
+            rotate: -45deg;
+            transition: rotate 150ms;
+        }
+        .card__title input:checked::after {
+            rotate: 45deg;
+        }
+
+        .card__body {
+            display: grid;
+            grid-template-rows: 0fr;
+            overflow: hidden;
+            transition: grid-template-rows 150ms, padding 150ms;
+            padding: 0 1rem;
+        }
+        .card__title:has(*:checked) ~ .card__body {
+            grid-template-rows: 1fr;
+            padding: 0.5rem 1rem;
+        }
+        .card__body > * {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .flexRow {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.25em;
+        }
+
+        .boxes {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .boxes > * {
+            background-color: var(--c-main-dim);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.4em;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.25em;
+        }
+
+        .btn {
+            background-color: var(--c-main);
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.1em;
+            border-radius: 0.25em;
+            transition: box-shadow 100ms;
+            box-shadow: 0 0 0 0 var(--c-main);
+        }
+        .btn:hover {
+            box-shadow: 0 0 0 0.1em var(--c-main);
+        }
+        .btn:active {
+            box-shadow: 0 0 0 0em var(--c-main);
+        }
+
+        .quote {
+            border-left: 0.2em solid var(--c-main);
+            margin-left: 0.5em;
+            padding: 0.25em;
+            border-radius: 0.25em;
+        }
+    </style>
+    <style>
+        .type {
+            display: inline-flex;
+            flex-wrap: wrap;
+            align-items: center;
+            white-space-collapse: preserve;
+        }
+        .type_open {
+            display: flex;
+            width: 100%;
+        }
+
+        .typeShort {
+            display: inline;
+        }
+        .type_open > .typeShort {
+            display: none;
+        }
+
+        .typeFull {
+            display: none;
+            flex-grow: 1;
+            flex-direction: column;
+            gap: 0.2em;
+        }
+        .type_open > .typeFull {
+            display: flex;
+        }
+        .typeFull > * {
+            padding-left: 1em;
+        }
+        .typeFull > :first-child,
+        .typeFull > :last-child {
+            padding-left: 0;
+        }
+
+        .type_int {
+            color: var(--c-t-int);
+        }
+        .type_float {
+            color: var(--c-t-float);
+        }
+        .type_bool {
+            color: var(--c-t-bool);
+        }
+        .type_str {
+            color: var(--c-t-str);
+        }
+        .type_null {
+            color: var(--c-t-null);
+        }
+        .type_any {
+            color: var(--c-t-any);
+        }
+
+        .type_object,
+        .type_list,
+        .type_dict,
+        .type_union,
+        .type_tuple {
+            padding: 0.2em;
+            border-radius: 0.2em;
+        }
+        .type_object {
+            background: linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_list {
+            background: linear-gradient(0, #00ff0015), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_list .type_list {
+            background: linear-gradient(0, #00ff0008), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_dict {
+            background: linear-gradient(0, #00d9ff15), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_dict .type_dict {
+            background: linear-gradient(0, #00d9ff08), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_union {
+            background: linear-gradient(0, #b700ff15), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_union .type_union {
+            background: linear-gradient(0, #b700ff08), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_tuple {
+            background: linear-gradient(0, #ffa60015), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+        .type_tuple .type_tuple {
+            background: linear-gradient(0, #ffa60008), linear-gradient(0, var(--c-card)), var(--c-box);
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const routes = {{ routes }};
+        const types = {{ types }};
+        const dev = "{{dev}}" == "True";
+    </script>
+    <script>
+        var url = new URL(window.location.href);
+        if (url.hash == "") {
+            url.hash = "pages";
+            window.history.replaceState(null, '', url.toString());
+        }
+    </script>
+    <div class="body">
+        <div class="header">
+            <a href="#routes">Routes</a>
+            <a href="#types">Types</a>
+        </div>
+        <div class="content">
+            <div id="routes"></div>
+            <div id="types"></div>
+        </div>
+    </div>
+    <!-- initEl -->
+    <script>
+        function initEl(tagName, classes, children, fn)
+        {
+            const el = document.createElement(tagName);
+            if (classes)
+            {
+                if (typeof classes == "string") el.classList.add(classes);
+                else classes.forEach(cs => cs && el.classList.add(cs));
+            }
+            if (children)
+            {
+                if (children instanceof Array)
+                    children.forEach(ch => !!ch && el.append(ch));
+                else if (!!children)
+                    el.append(children);
+            }
+
+            fn?.(el);
+
+            return el;
+        }
+        function Div(classes, children, fn) {
+            return initEl("div", classes, children, fn);
+        }
+        function Span(classes, children, fn) {
+            return initEl("span", classes, children, fn);
+        }
+        function Link(classes, children, href, fn) {
+            const a = initEl("a", classes, children, fn);
+            if (href) a.href = href;
+            return a;
+        }
+        function Input(classes, type, placeholder, fn)
+        {
+            const input = initEl("input", classes, undefined, fn);
+            if (type) input.type = type;
+            if (placeholder) input.placeholder = placeholder;
+            return input;
+        }
+        function Button(classes, children, clickListener, fn)
+        {
+            const button = initEl("button", classes, children, fn);
+            if (clickListener) button.addEventListener("click", clickListener.bind(button, button));
+            return button;
+        }
+    </script>
+    <!-- vscodeLink -->
+    <script>
+        function vscodeLink(module, line) {
+            let path = module.split(".").slice(0, -1);
+            line = line ? ":" + line : "";
+            let loc = "{{loc}}";
+            if (path[0] == "bafser") {
+                loc = "{{locb}}";
+                path = path.slice(1);
+            }
+            return `vscode://file/${loc}/${path.join("/")}.py${line}`
+        }
+    </script>
+    <!-- icons -->
+    <script>
+        function Icon(path) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            svg.appendChild(p);
+            svg.setAttribute("viewBox", "0 -960 960 960");
+            svg.setAttribute("height", "1em");
+            svg.setAttribute("width", "1em");
+            svg.setAttribute("fill", "currentColor");
+            p.setAttribute("d", path);
+            return svg;
+        }
+        function IconSave() {
+            return Icon("M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z")
+        }
+        function IconCopy() {
+            return Icon("M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z")
+        }
+        function IconCard() {
+            return Icon("M560-440h200v-80H560v80Zm0-120h200v-80H560v80ZM200-320h320v-22q0-45-44-71.5T360-440q-72 0-116 26.5T200-342v22Zm160-160q33 0 56.5-23.5T440-560q0-33-23.5-56.5T360-640q-33 0-56.5 23.5T280-560q0 33 23.5 56.5T360-480ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z")
+        }
+        function IconLink() {
+            return Icon("M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z")
+        }
+    </script>
+    <!-- renderType -->
+    <script>
+        function renderType(type, full = false) {
+            if (type.type == "int") return Div(["type", "type_int"], "int");
+            if (type.type == "float") return Div(["type", "type_float"], "float");
+            if (type.type == "bool") return Div(["type", "type_bool"], "boolean");
+            if (type.type == "str") return Div(["type", "type_str"], "string");
+            if (type.type == "null") return Div(["type", "type_null"], "null");
+            if (type.type == "any") return Div(["type", "type_any"], "any");
+            if (type.type == "literal") return Div(["type", "type_literal"], type.literal.reduce((pv, v) => {
+                    if (pv.length > 0) pv.push(Span([], " | "));
+                    if (typeof v == "number") pv.push(Div("type_int", `${v}`));
+                    else if (typeof v == "string") pv.push(Div("type_str", `"${v}"`));
+                    else if (typeof v == "boolean") pv.push(Div("type_bool", v ? "true" : "false"));
+                    else pv.push(Div("type_null", `${v}`));
+                    return pv;
+                }, []));
+            if (type.type == "list") return Div(["type", "type_list"], [
+                    Span([], "list["),
+                    renderType(type.list_type),
+                    Span([], "]"),
+                ]);
+            if (type.type == "dict") return Div(["type", "type_dict"], [
+                    Span([], "dict["),
+                    renderType(type.dict_type[0]),
+                    Span([], ", "),
+                    renderType(type.dict_type[1]),
+                    Span([], "]"),
+                ]);
+            if (type.type == "union") return Div(["type", "type_union"], type.union_type.reduce((pv, t) => {
+                    if (pv.length > 0) pv.push(Span([], " | "));
+                    pv.push(renderType(t));
+                    return pv;
+                }, []));
+            if (type.type == "tuple") return Div(["type", "type_tuple"], [
+                    Span([], "tuple["),
+                    ...type.tuple_type.reduce((pv, t) => {
+                        if (pv.length > 0) pv.push(Span([], ", "));
+                        pv.push(renderType(t));
+                        return pv;
+                    }, []),
+                    Span([], "]"),
+                ]);
+            if (type.type == "tlink") return type.name in types ? renderType(types[type.name]) : Div("type", "Unknown");
+            if (type.type != "object") return Div("type", "Unknown");
+            let shortEl, fullEl;
+            const name = type.name?.split(".")?.at(-1) || "dict";
+            const typeEl = Div("type", [
+                Div(["typeShort", "link"], name, el => shortEl = el),
+                Div(["typeFull", "type_object"], [], el => fullEl = el),
+            ]);
+            shortEl.addEventListener("click", () => {
+                if (render) {
+                    render();
+                    render = null;
+                }
+                typeEl.classList.toggle("type_open");
+            });
+            function render() {
+                fullEl.appendChild(Div("flexRow", [
+                    Span(full ? "" : "link", `${name}`, el => el.addEventListener("click", () => !full && typeEl.classList.toggle("type_open"))),
+                    (!full && type.name) && Link("btn", [IconLink()], "#" + type.name),
+                    Span([], "{"),
+                ]));
+                type.object_fields.forEach(field => {
+                    fullEl.appendChild(Div([], [
+                        Span([], field.name + (field.optional ? "?" : "") + ": "),
+                        renderType(field.type),
+                        field.desc && Span("", field.desc),
+                    ]));
+                })
+                fullEl.appendChild(Div([], "}"))
+            }
+            if (full) {
+                render();
+                render = null;
+                typeEl.classList.toggle("type_open");
+            }
+            return typeEl;
+        }
+    </script>
+    <!-- Card -->
+    <script>
+        const _cardsCbx = [];
+        addEventListener("hashchange", () => {
+            const id = location.hash.slice(1);
+            const cbx = _cardsCbx.find(v => v.id == id)?.cbx;
+            if (cbx) cbx.checked = true;
+        });
+        const _onloadSelectedId = location.hash.slice(1);
+        function Card(title, id, body) {
+            return Div("card", [
+                initEl("label", "card__title", [
+                    Div([], title),
+                    Input([], "checkbox", "", cbx => {
+                        cbx.checked = id == _onloadSelectedId;
+                        cbx.addEventListener("input", () => { if (cbx.checked) location.hash = "#" + id })
+                        _cardsCbx.push({ cbx, id })
+                    }),
+                ], card => card.id = id),
+                Div("card__body", [
+                    Div([], body)
+                ]),
+            ])
+        }
+    </script>
+    <!-- pages -->
+    <script>
+        const routesEl = document.getElementById("routes");
+        routes.forEach(route => { route.module = route.name.split(".").slice(0, -1).join(".") });
+        routes.sort((a, b) => (a.module > b.module) ? 1 : ((b.module > a.module) ? -1 : a.line - b.line))
+        routes.forEach((route) => {
+            routesEl.appendChild(Card(route.url, route.url, [
+                Div("boxes", [
+                    Div([], [
+                        Button("btn", [IconCopy()], () => navigator.clipboard.writeText(route.url)),
+                        Span([], route.url),
+                    ]),
+                    Div([], `route: ${route.route}`),
+                    dev && Div([], Link("link", `${route.module}:${route.line}`, vscodeLink(route.name, route.line))),
+                ]),
+                (route.perms || route.nojwt) && Div("boxes", [
+                    route.perms && Div([], [
+                        IconCard(),
+                        Span([], route.perms),
+                    ]),
+                    route.nojwt && Div([], "nojwt"),
+                ]),
+                route.desc && Div("quote", route.desc),
+                Div(),
+                route.reqtype && Div([], [
+                    Span([], "Request: "),
+                    renderType(route.reqtype),
+                ]),
+                route.restype && Div([], [
+                    Span([], "Response: "),
+                    renderType(route.restype),
+                ]),
+            ]));
+        });
+    </script>
+    <!-- types -->
+    <script>
+        const typesEl = document.getElementById("types");
+        const typeNames = Object.keys(types);
+        typeNames.sort();
+        for (const typeName of typeNames) {
+            const module = typeName.split(".").slice(0, -1).join(".")
+            const type = types[typeName];
+            typesEl.appendChild(Card(typeName.split(".").at(-1), typeName, [
+                dev && Div([], Link("link", `${module}:${type.line}`, vscodeLink(typeName, type.line))),
+                renderType(type, true),
+            ]));
+        }
+    </script>
+</body>
+</html>

@@ -1,20 +1,31 @@
+import inspect
+import json
+import os
 from collections.abc import Callable as CallableClass
 from types import NoneType, UnionType
-from typing import Any, Mapping, get_args, get_origin, get_type_hints
+from typing import Any, Literal, Mapping, get_args, get_origin, get_type_hints
 
-from flask import Flask
+import jinja2
+from flask import Flask, render_template
 
-from bafser.jsonobj import JsonObj, type_name
+from .jsonobj import JsonObj, JsonOpt, type_name
 
 type JsonSingleKey[K: str, V] = Mapping[K, V]
 
 _docs: list[tuple[str, Any]] = []
 _types: dict[str, Any] = {}
+_endpoints: list["EndpointInfo"] = []
+_types_full: dict[str, "TypeInfo"] = {}
+
+_loc = os.path.abspath(os.path.dirname(__file__))
+_templateEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(_loc, "templates")))
+# template_docs = _templateEnv.get_template("docs.html")
 
 
 def init_api_docs(app: Flask):
     for rule in app.url_map.iter_rules():
         fn = app.view_functions[rule.endpoint]
+        _, line = inspect.getsourcelines(fn)
         reqtype: Any = None
         restype: Any = None
         desc: Any = None
@@ -32,26 +43,47 @@ def init_api_docs(app: Flask):
             nojwt = fn._doc_api_nojwt  # type: ignore
 
         route = str(rule)
-        d: Any = {}
+        d: dict[str, Any] = {}
+        endpoint = EndpointInfo.new(route=rule.endpoint, url=route, name=fn.__module__ + "." + fn.__name__, line=line)
         if desc is not None:
             d["__desc__"] = desc
+            endpoint.desc = desc
+        if perms is not None:
+            d["__permsions__"] = perms
+            endpoint.perms = perms
+        if nojwt is True:
+            d["__nojwt__"] = True
+            endpoint.nojwt = True
         if reqtype is not None:
             route += " POST"
             d["request"] = type_to_json(reqtype, _types, toplvl=True)
+            endpoint.reqtype = type_info(reqtype, _types_full)
         if restype is not None:
             d["response"] = type_to_json(restype, _types, toplvl=True)
-        if perms is not None:
-            d["__permsions__"] = perms
-        if nojwt is True:
-            d["__nojwt__"] = True
+            endpoint.restype = type_info(restype, _types_full)
         if d == {}:
             continue
         _docs.append((route, d))
+        _endpoints.append(endpoint)
 
 
 def get_api_docs() -> dict[str, Any]:
     _docs.sort(key=lambda v: v[0])
     return {**{k: v for (k, v) in _docs}, **_types}
+
+
+def render_docs_page():
+    from . import get_app_config
+    template_docs = _templateEnv.get_template("docs.html")
+    routes = [e.json() for e in _endpoints]
+    types = {k: v.json() for k, v in _types_full.items()}
+    return render_template(template_docs,
+                           routes=json.dumps(routes),
+                           types=json.dumps(types),
+                           loc=os.getcwd().replace("\\", "/"),
+                           locb=_loc.replace("\\", "/"),
+                           dev=get_app_config().DEV_MODE
+                           )
 
 
 def doc_api(*, req: Any = None, res: Any = None, desc: str | None = None, nojwt: bool = False):
@@ -87,12 +119,19 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
         if verbose:
             return [r]
         return type_name(otype, json=True)
+    if torigin is tuple:
+        l = [type_to_json(t, types) for t in targs]
+        if verbose:
+            return l
+        return type_name(otype, json=True)
     if torigin is dict:
         type_to_json(targs[1], types, False)
         return type_name(otype, json=True)
     if torigin is UnionType:
         for t in targs:
             type_to_json(t, types, False)
+        return type_name(otype, json=True)
+    if torigin is Literal:
         return type_name(otype, json=True)
     if torigin is JsonSingleKey:
         k = targs[0]
@@ -125,3 +164,92 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
         r[k] = type_to_json(t, types, False)
 
     return r
+
+
+class EndpointInfo(JsonObj):
+    url: str
+    route: str
+    name: str
+    line: int
+    reqtype: JsonOpt["TypeInfo"]
+    restype: JsonOpt["TypeInfo"]
+    desc: JsonOpt[str]
+    perms: JsonOpt[str]
+    nojwt: JsonOpt[bool]
+
+
+class TypeInfo(JsonObj):
+    name: JsonOpt[str]
+    line: JsonOpt[int]
+    type: Literal["tlink", "int", "float", "bool", "str", "null", "any", "literal", "list", "tuple", "dict", "union", "object"]
+    list_type: JsonOpt["TypeInfo"]
+    tuple_type: JsonOpt[list["TypeInfo"]]
+    dict_type: JsonOpt[tuple["TypeInfo", "TypeInfo"]]
+    union_type: JsonOpt[list["TypeInfo"]]
+    literal: JsonOpt[list[str | int | bool | None]]
+    object_fields: JsonOpt[list["TypeInfoField"]]
+
+
+class TypeInfoField(JsonObj):
+    name: str
+    type: TypeInfo
+    optional: bool = False
+    desc: str | None = None
+
+
+def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
+    if otype == int:
+        return TypeInfo.new(type="int")
+    if otype == float:
+        return TypeInfo.new(type="float")
+    if otype == bool:
+        return TypeInfo.new(type="bool")
+    if otype == str:
+        return TypeInfo.new(type="str")
+    if otype in (None, NoneType):
+        return TypeInfo.new(type="null")
+    if otype == Any:
+        return TypeInfo.new(type="any")
+
+    torigin = get_origin(otype)
+    targs = get_args(otype)
+    if torigin is list:
+        if len(targs) != 1:
+            return TypeInfo.new(type="list", list_type=type_info(Any, types))
+        return TypeInfo.new(type="list", list_type=type_info(targs[0], types))
+    if torigin is tuple:
+        return TypeInfo.new(type="tuple", tuple_type=[type_info(t, types) for t in targs])
+    if torigin is dict:
+        if len(targs) != 2:
+            return TypeInfo.new(type="dict", dict_type=(type_info(Any, types), type_info(Any, types)))
+        return TypeInfo.new(type="dict", dict_type=(type_info(targs[0], types), type_info(targs[1], types)))
+    if torigin is UnionType:
+        return TypeInfo.new(type="union", union_type=[type_info(t, types) for t in targs])
+    if torigin is Literal:
+        return TypeInfo.new(type="literal", literal=targs)
+    if torigin is JsonSingleKey:
+        return TypeInfo.new(type="object", object_fields=[
+            TypeInfoField.new(name=targs[0], type=type_info(targs[1], types))
+        ])
+
+    optional_fields: list[str] = []
+    try:
+        if issubclass(otype, JsonObj):
+            type_hints = otype.get_field_types()
+            optional_fields = otype.get_optional_fields()
+        else:
+            type_hints = get_type_hints(otype)
+    except Exception:
+        type_hints = get_type_hints(otype)
+
+    _, line = inspect.getsourcelines(otype)
+    tname = otype.__module__ + "." + otype.__name__
+    if tname not in types:
+        tinfo = TypeInfo.new(type="object", name=tname, line=line)
+        types[tname] = tinfo
+        tinfo.object_fields = [
+            TypeInfoField.new(name=k, type=type_info(t, types), optional=k in optional_fields)
+            for k, t in type_hints.items()
+        ]
+
+    return TypeInfo.new(type="tlink", name=tname)

@@ -279,3 +279,8 @@ def create_app(import_name: str, config: AppConfig):
 def update_message_to_frontend(msg: str):
     assert _config
     _config.MESSAGE_TO_FRONTEND = msg
+
+
+def get_app_config():
+    assert _config
+    return _config

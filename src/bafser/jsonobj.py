@@ -335,7 +335,7 @@ class JsonObj:
             v = v.json()
         elif isinstance(v, datetime):
             v = type(self).__datetime_serializer__(v)
-        elif isinstance(v, list):
+        elif isinstance(v, (list, tuple)):
             r: list[Any] = []
             for i, el in enumerate(v):  # type: ignore
                 _, el = self.__serialize_item__(k, el)  # type: ignore
@@ -365,6 +365,10 @@ class JsonObj:
         mimetype.
         """
         return jsonify(self.json())
+
+    @staticmethod
+    def field():
+        pass
 
 
 class JsonParseError(Exception):
@@ -434,30 +438,43 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         return None, " is undefined"
 
     if torigin is Literal:
-        t = targs[0]
-        if obj == t:
-            return obj, None
+        for t in targs:
+            if obj == t:
+                return obj, None
         return None, f" is not {type_name(otype)}"
 
     # generic list
     if torigin is list and len(targs) == 1:
         t = targs[0]
-        if not isinstance(obj, list):
-            return None, f" is not list[{type_name(t)}]"
+        if not isinstance(obj, (list, tuple)):
+            return None, f" is not {type_name(otype)}"
         l: list[Any] = []
         for i, el in enumerate(obj):  # type: ignore
             o, err = validate_type(el, t, r)
             if err is not None:
-                return None, f"[{i}] {err}"
+                return None, f"[{i}]{err}"
             l.append(o)
         return l, None  # type: ignore
+
+    # tuple
+    if torigin is tuple:
+        if not isinstance(obj, (list, tuple)) or len(obj) != len(targs):  # type: ignore
+            return None, f" is not {type_name(otype)}"
+        t = targs[0]
+        l: list[Any] = []
+        for i, el in enumerate(obj):  # type: ignore
+            o, err = validate_type(el, t, r)
+            if err is not None:
+                return None, f"[{i}]{err}"
+            l.append(o)
+        return tuple(l), None  # type: ignore
 
     # generic dict
     if torigin is dict and len(targs) == 2:
         tk = targs[0]
         tv = targs[1]
         if not isinstance(obj, dict):
-            return None, f" is not dict[{type_name(tk)},{type_name(tv)}]"
+            return None, f" is not {type_name(otype)}"
         d: dict[Any, Any] = {}
         for k, v in obj.items():  # type: ignore
             d[k] = v
@@ -477,7 +494,7 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
             o, err = validate_type(obj, t, r)
             if err is None:
                 return o, None  # type: ignore
-        return None, f" is not {" | ".join(type_name(t) for t in targs)}"
+        return None, f" is not {type_name(otype)}"
 
     # TypedDict
     try:
@@ -487,17 +504,17 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         raise Exception("[bafser] validate_type: unsupported type")
 
     if not isinstance(obj, dict):
-        return None, f"is not {otype}"
+        return None, f" is not {otype}"
     d: dict[Any, Any] = {}
     for k, t in type_hints.items():
         d[k] = obj[k]
         if k not in obj:
             if k in opt_keys:
                 continue
-            return None, f"field is missing '{k}': {type_name(t)}"
+            return None, f" field is missing '{k}': {type_name(t)}"
         d[k], err = validate_type(obj[k], t, r)
         if err is not None:
-            return None, f"field '{k}' {err}"
+            return None, f" field '{k}' {err}"
 
     return d, None  # type: ignore
 
@@ -514,6 +531,8 @@ def type_name(t: Any, json: bool = False) -> str:
                 return f"({type_name(targs[0], json)})[]"
             return f"{type_name(targs[0], json)}[]"
         return f"list[{type_name(targs[0], json)}]"
+    if torigin is tuple:
+        return f"tuple[{", ".join(type_name(v, json) for v in targs)}]"
     if torigin is dict and len(targs) == 2:
         if json:
             return f"{{[key: {type_name(targs[0], json)}]: {type_name(targs[1], json)}}}"
@@ -521,7 +540,7 @@ def type_name(t: Any, json: bool = False) -> str:
     if torigin is UnionType:
         return " | ".join(type_name(v, json) for v in targs)
     if torigin is Literal:
-        return repr(targs[0])
+        return " | ".join(repr(v) for v in targs)
     if torigin is CallableClass and len(targs) == 2:
         if json:
             return f"({", ".join(type_name(v, json) for v in targs[0])}) => {type_name(targs[1], json)}"

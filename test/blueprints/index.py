@@ -8,8 +8,8 @@ from flask_jwt_extended import jwt_required  # type: ignore
 from sqlalchemy.orm import Session
 
 import bafser_config
-from bafser import (JsonObj, JsonOpt, JsonSingleKey, UserDict, doc_api, get_api_docs, get_json_values_from_req, permission_required, response_msg,
-                    use_db_session, use_user)
+from bafser import (JsonObj, JsonOpt, JsonSingleKey, UserDict, doc_api, get_api_docs, get_json_values_from_req, permission_required, render_docs_page,
+                    response_msg, use_db_session, use_user)
 
 blueprint = Blueprint("index", __name__)
 
@@ -17,6 +17,11 @@ blueprint = Blueprint("index", __name__)
 @blueprint.route("/api")
 def docs():
     return get_api_docs()
+
+
+@blueprint.route("/api/docs")
+def docs_page():
+    return render_docs_page()
 
 
 @blueprint.route("/")
