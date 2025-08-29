@@ -3,7 +3,7 @@ import json
 import os
 from collections.abc import Callable as CallableClass
 from types import NoneType, UnionType
-from typing import Any, Literal, Mapping, get_args, get_origin, get_type_hints
+from typing import Any, Literal, Mapping, Union, get_args, get_origin, get_type_hints
 
 import jinja2
 from flask import Flask, render_template
@@ -127,7 +127,7 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
     if torigin is dict:
         type_to_json(targs[1], types, False)
         return type_name(otype, json=True)
-    if torigin is UnionType:
+    if torigin in (UnionType, Union):
         for t in targs:
             type_to_json(t, types, False)
         return type_name(otype, json=True)
@@ -135,6 +135,8 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
         return type_name(otype, json=True)
     if torigin is JsonSingleKey:
         k = targs[0]
+        if get_origin(k) is Literal:
+            k = get_args(k)[0]
         t = targs[1]
         return {k: type_to_json(t, types, verbose)}
 
@@ -147,8 +149,10 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
                 optional_fields = otype.get_optional_fields()
             else:
                 type_hints = get_type_hints(otype)
+                optional_fields = otype.__optional_keys__  # type: ignore
         except Exception:
             type_hints = get_type_hints(otype)
+            optional_fields = otype.__optional_keys__  # type: ignore
     except Exception:
         return type_name(otype, json=True)
 
@@ -213,23 +217,26 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
 
     torigin = get_origin(otype)
     targs = get_args(otype)
-    if torigin is list:
+    if torigin is list or otype is list:
         if len(targs) != 1:
             return TypeInfo.new(type="list", list_type=type_info(Any, types))
         return TypeInfo.new(type="list", list_type=type_info(targs[0], types))
-    if torigin is tuple:
+    if torigin is tuple or otype is tuple:
         return TypeInfo.new(type="tuple", tuple_type=[type_info(t, types) for t in targs])
-    if torigin is dict:
+    if torigin is dict or otype is dict:
         if len(targs) != 2:
             return TypeInfo.new(type="dict", dict_type=(type_info(Any, types), type_info(Any, types)))
         return TypeInfo.new(type="dict", dict_type=(type_info(targs[0], types), type_info(targs[1], types)))
-    if torigin is UnionType:
+    if torigin in (UnionType, Union):
         return TypeInfo.new(type="union", union_type=[type_info(t, types) for t in targs])
     if torigin is Literal:
         return TypeInfo.new(type="literal", literal=targs)
     if torigin is JsonSingleKey:
+        k = targs[0]
+        if get_origin(k) is Literal:
+            k = get_args(k)[0]
         return TypeInfo.new(type="object", object_fields=[
-            TypeInfoField.new(name=targs[0], type=type_info(targs[1], types))
+            TypeInfoField.new(name=k, type=type_info(targs[1], types))
         ])
 
     optional_fields: list[str] = []
@@ -239,10 +246,15 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
             optional_fields = otype.get_optional_fields()
         else:
             type_hints = get_type_hints(otype)
+            optional_fields = otype.__optional_keys__  # type: ignore
     except Exception:
         type_hints = get_type_hints(otype)
+        optional_fields = otype.__optional_keys__  # type: ignore
 
-    _, line = inspect.getsourcelines(otype)
+    try:
+        _, line = inspect.getsourcelines(otype)
+    except Exception:
+        line = 0
     tname = otype.__module__ + "." + otype.__name__
     if tname not in types:
         tinfo = TypeInfo.new(type="object", name=tname, line=line)

@@ -30,7 +30,7 @@ def index():
 
 
 @blueprint.route("/api/user")
-@doc_api(res=UserDict, nojwt=True)
+@doc_api(res=UserDict)
 @use_db_session
 def user(db_sess: Session):
     u = User.get_admin(db_sess)
@@ -63,7 +63,7 @@ class SomeObj2(JsonObj):
 
 class SomeObj(JsonObj):
     name: str
-    keys: list[int | str]
+    keys: JsonOpt[list[int | str]]
     v: list[list[SomeObj2]]
 
 
@@ -79,7 +79,7 @@ class SomeObjRes(JsonObj):
 
 
 @blueprint.post("/api/post2")
-@doc_api(req=list[SomeDict], res=SomeObjRes, desc="The best route")
+@doc_api(req=list[SomeObj], res=SomeObjRes, desc="The best route")
 def test_post2():  # type: ignore
     # objs = get_json_list_from_req(SomeDict)
     objs = SomeObj.get_list_from_req()

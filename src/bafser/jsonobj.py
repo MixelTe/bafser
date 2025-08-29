@@ -2,7 +2,7 @@ import json
 from collections.abc import Callable as CallableClass
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import Any, Callable, Literal, TypeVar, get_args, get_origin, get_type_hints
+from typing import Any, Callable, Literal, TypeVar, Union, get_args, get_origin, get_type_hints
 
 from flask import abort, jsonify
 
@@ -489,7 +489,7 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         return d, None  # type: ignore
 
     # Union
-    if torigin is UnionType:
+    if torigin in (UnionType, Union):
         for t in targs:
             o, err = validate_type(obj, t, r)
             if err is None:
@@ -527,7 +527,7 @@ def type_name(t: Any, json: bool = False) -> str:
     if torigin is list and len(targs) == 1:
         if json:
             to = get_origin(targs[0])
-            if to in (UnionType, CallableClass):
+            if to in (UnionType, Union, CallableClass):
                 return f"({type_name(targs[0], json)})[]"
             return f"{type_name(targs[0], json)}[]"
         return f"list[{type_name(targs[0], json)}]"
@@ -537,7 +537,7 @@ def type_name(t: Any, json: bool = False) -> str:
         if json:
             return f"{{[key: {type_name(targs[0], json)}]: {type_name(targs[1], json)}}}"
         return f"dict[{type_name(targs[0], json)}, {type_name(targs[1], json)}]"
-    if torigin is UnionType:
+    if torigin in (UnionType, Union):
         return " | ".join(type_name(v, json) for v in targs)
     if torigin is Literal:
         return " | ".join(repr(v) for v in targs)

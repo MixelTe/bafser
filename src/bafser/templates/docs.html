@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
     <link rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
     <link rel="shortcut icon" media="(prefers-color-scheme: light)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
     <link rel="shortcut icon" media="(prefers-color-scheme: dark)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAAAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZPs9tbQAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
@@ -22,10 +22,15 @@
 
             --c-t-int: #005fcc;
             --c-t-float: #005fcc;
+            --c-t-number: #098658;
             --c-t-bool: #5204c8;
             --c-t-str: #cc4700;
             --c-t-null: #888a0f;
             --c-t-any: #00a830;
+            --c-t-operator: #0000ff;
+            --c-t-type: #0592bd;
+            --c-t-var: #001080;
+            --c-t-comment: #008000;
 		}
 		@media (prefers-color-scheme: dark) {
 			:root {
@@ -38,10 +43,15 @@
 
                 --c-t-int: #74b5ff;
                 --c-t-float: #74b5ff;
+                --c-t-number: #b5cea8;
                 --c-t-bool: #bd93fd;
                 --c-t-str: #ffaf85;
                 --c-t-null: #fbfd9a;
                 --c-t-any: #70ff99;
+                --c-t-operator: #3095e8;
+                --c-t-type: #2cc3a5;
+                --c-t-var: #9cdcfe;
+                --c-t-comment: #6a9955;
 			}
 		}
         *, *::before, *::after {
@@ -122,6 +132,25 @@
         }
         button:disabled {
             cursor: default;
+        }
+
+        pre {
+            padding: 0.25em;
+            text-wrap-mode: wrap;
+            font-family: "Fira Code", 'Courier New', Courier, monospace;
+            tab-size: 4;
+            font-size: 0.9rem;
+        }
+
+        option {
+            background-color: #eeeeee;
+            color: black;
+        }
+        @media (prefers-color-scheme: dark) {
+            option {
+                background-color: #2b2b2b;
+                color: #d4d4d4;
+            }
         }
 
         ::-webkit-scrollbar {
@@ -273,9 +302,10 @@
             display: flex;
             gap: 0.5rem;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .boxes > * {
+        .boxes > div {
             background-color: var(--c-main-dim);
             padding: 0.25rem 0.5rem;
             border-radius: 0.4em;
@@ -285,8 +315,14 @@
             gap: 0.25em;
         }
 
+        .flexGrow {
+            flex-grow: 1;
+        }
+
+        .checkbox,
         .btn {
             background-color: var(--c-main);
+            color: var(--c-text);
             display: inline-flex;
             justify-content: center;
             align-items: center;
@@ -295,11 +331,46 @@
             transition: box-shadow 100ms;
             box-shadow: 0 0 0 0 var(--c-main);
         }
+        .checkbox:hover,
         .btn:hover {
             box-shadow: 0 0 0 0.1em var(--c-main);
         }
+        .checkbox:active,
         .btn:active {
             box-shadow: 0 0 0 0em var(--c-main);
+        }
+        .btn_small {
+            font-size: 0.8rem;
+            padding: 0;
+        }
+
+        .checkbox {
+            appearance: none;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 1em;
+            height: 1em;
+            background-color: transparent;
+            border: 0.1em solid var(--c-main);
+            cursor: pointer;
+        }
+        .checkbox::after {
+            content: "";
+            width: 55%;
+            height: 55%;
+            border-radius: 50%;
+            background-color: var(--c-main);
+            scale: 0;
+            transition: scale 250ms;
+        }
+        .checkbox:checked::after {
+            scale: 1;
+        }
+
+        .boxes > .btn {
+            width: 1.5em;
+            height: 1.5em;
         }
 
         .quote {
@@ -345,11 +416,26 @@
             padding-left: 0;
         }
 
+        .type_operator {
+            color: var(--c-t-operator);
+        }
+        .type_type {
+            color: var(--c-t-type);
+        }
+        .type_var {
+            color: var(--c-t-var);
+        }
+        .type_comment {
+            color: var(--c-t-comment);
+        }
         .type_int {
             color: var(--c-t-int);
         }
         .type_float {
             color: var(--c-t-float);
+        }
+        .type_number {
+            color: var(--c-t-number);
         }
         .type_bool {
             color: var(--c-t-bool);
@@ -399,6 +485,154 @@
         .type_tuple .type_tuple {
             background: linear-gradient(0, #ffa60008), linear-gradient(0, var(--c-card)), var(--c-box);
         }
+
+        .interface .btn {
+            margin-left: 0.2em;
+            translate: 0 0.2em;
+        }
+    </style>
+    <style>
+        .tform {
+            font-family: "Fira Code", 'Courier New', Courier, monospace;
+            counter-reset: form;
+        }
+        .tfrom_dict,
+        .tfrom_object,
+        .tfrom_list {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5em;
+        }
+        .tfrom_dict__item,
+        .tfrom_list__item,
+        .tfrom_object__item {
+            counter-increment: form;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em;
+            align-items: flex-start;
+        }
+
+        .tfrom_object__item {
+            padding-left: 4ch;
+        }
+
+        .tform .checkbox {
+            translate: 0 0.2em;
+        }
+
+        /* .tfrom_dict, .tfrom_object, .tfrom_list {
+            background: linear-gradient(0, #80808010), linear-gradient(0, var(--c-card)), var(--c-box);
+            border-radius: 0.5em;
+            padding-right: 0.5em;
+        }
+        :is(.tfrom_dict, .tfrom_object, .tfrom_list) :is(.tfrom_dict, .tfrom_object, .tfrom_list) :is(.tfrom_dict, .tfrom_object, .tfrom_list) {
+            background: linear-gradient(0, var(--c-card)), var(--c-box);
+            border-radius: 0.5em;
+            padding-right: 0.5em;
+        } */
+
+        .tfrom_list {
+            counter-reset: list -1;
+        }
+        .tfrom_list__counter::before {
+            counter-increment: list;
+            content: counter(list) ":";
+        }
+
+        .tfrom_number,
+        .tfrom_string > input,
+        .tfrom_string > textarea,
+        .tfrom_literal,
+        .tfrom_any {
+            min-width: 2ch;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--c-main);
+            outline: none;
+        }
+        .tfrom_string > textarea,
+        .tfrom_any {
+            min-width: 10ch;
+            min-height: 4.5ch;
+            field-sizing: content;
+        }
+
+        .tfrom_number {
+            color: var(--c-t-number);
+        }
+        .tfrom_string {
+            color: var(--c-t-str);
+        }
+
+        .tfrom_string {
+            display: flex;
+            align-items: center;
+        }
+        .tfrom_string > .btn {
+            display: none;
+        }
+        .tfrom_string > input:focus ~ .btn,
+        .tfrom_string > textarea ~ .btn,
+        .tfrom_string > .btn:active {
+            display: flex;
+        }
+
+        .tfrom_checkbox {
+            position: relative;
+            width: 2.3em;
+            height: 1.2em;
+            border: 0.0625em solid var(--c-main);
+            border-radius: 1em;
+            cursor: pointer;
+            transition: background-color 100ms;
+        }
+
+        .tfrom_checkbox:has(input:focus-visible) {
+            background-color: rgba(from var(--c-main) r g b / 0.15);
+        }
+
+        .tfrom_checkbox input {
+            appearance: none;
+            width: 100%;
+            height: 100%;
+            border: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .tfrom_checkbox span {
+            position: absolute;
+            display: block;
+            width: 0.9em;
+            height: 0.9em;
+            top: 0.0875em;
+            left: 0.0875em;
+            border: 0.0625em solid var(--c-main);
+            border-radius: 50%;
+            background-color: rgba(255, 99, 71, 0.6);
+            transition-property: left, background-color;
+            transition-duration: 250ms;
+        }
+
+        .tfrom_checkbox input:checked ~ span {
+            background-color: rgba(50, 255, 50, 0.6);
+            left: 1.1875em;
+        }
+
+        .tfrom_union {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 0.5em;
+        }
+        .tfrom_union > :first-child {
+            font-size: 0.75rem;
+            translate: 0 0.2rem;
+        }
+        .tfrom_any {
+            color: var(--c-t-any);
+        }
     </style>
 </head>
 <body>
@@ -436,10 +670,13 @@
             }
             if (children)
             {
-                if (children instanceof Array)
-                    children.forEach(ch => !!ch && el.append(ch));
-                else if (!!children)
-                    el.append(children);
+                appendChildren(children);
+                function appendChildren(children) {
+                    if (children instanceof Array)
+                        children.forEach(appendChildren);
+                    else if (!!children)
+                        el.append(children);
+                }
             }
 
             fn?.(el);
@@ -464,11 +701,29 @@
             if (placeholder) input.placeholder = placeholder;
             return input;
         }
+        function InputAutoWidth(classes, type, placeholder, fn)
+        {
+            const input = initEl("input", classes, undefined, fn);
+            if (type) input.type = type;
+            if (placeholder) input.placeholder = placeholder;
+            function upd() {
+                input.style.width = `${input.value.length + 0.5}ch`;
+            }
+            input.addEventListener("input", upd);
+            upd();
+            return {upd, input};
+        }
         function Button(classes, children, clickListener, fn)
         {
             const button = initEl("button", classes, children, fn);
             if (clickListener) button.addEventListener("click", clickListener.bind(button, button));
             return button;
+        }
+        function OptionEl(classes, value, children, fn)
+        {
+            const opt = initEl("option", classes, children, fn);
+            opt.value = value;
+            return opt;
         }
     </script>
     <!-- vscodeLink -->
@@ -509,6 +764,30 @@
         function IconLink() {
             return Icon("M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z")
         }
+        function IconObj() {
+            return Icon("M600-160q-17 0-28.5-11.5T560-200q0-17 11.5-28.5T600-240h80q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720h-80q-17 0-28.5-11.5T560-760q0-17 11.5-28.5T600-800h80q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560t28.5 11.5Q880-537 880-520v80q0 17-11.5 28.5T840-400t-28.5 11.5Q800-377 800-360v80q0 50-35 85t-85 35h-80Zm-320 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400t-28.5-11.5Q80-423 80-440v-80q0-17 11.5-28.5T120-560t28.5-11.5Q160-583 160-600v-80q0-50 35-85t85-35h80q17 0 28.5 11.5T400-760q0 17-11.5 28.5T360-720h-80q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h80q17 0 28.5 11.5T400-200q0 17-11.5 28.5T360-160h-80Z")
+        }
+        function IconCode() {
+            return Icon("m193-479 155 155q11 11 11 28t-11 28q-11 11-28 11t-28-11L108-452q-6-6-8.5-13T97-480q0-8 2.5-15t8.5-13l184-184q12-12 28.5-12t28.5 12q12 12 12 28.5T349-635L193-479Zm574-2L612-636q-11-11-11-28t11-28q11-11 28-11t28 11l184 184q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13L668-268q-12 12-28 11.5T612-269q-12-12-12-28.5t12-28.5l155-155Z")
+        }
+        function IconCodeOff() {
+            return Icon("m193-479 155 155q11 11 11 28t-11 28q-11 11-28 11t-28-11L108-452q-6-6-8.5-13T97-480q0-8 2.5-15t8.5-13l115-115L83-763q-12-12-12-28.5T83-820q12-12 28.5-12t28.5 12l680 680q12 12 12 28t-12 28q-12 12-28.5 12T763-84L280-566l-87 87Zm516 113q-12-12-12-28.5t12-28.5l58-58-155-155q-11-11-11-28t11-28q11-11 28-11t28 11l184 184q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-87 87q-12 12-28 11.5T709-366Z")
+        }
+        function IconSend() {
+            return Icon("M792-443 176-183q-20 8-38-3.5T120-220v-520q0-22 18-33.5t38-3.5l616 260q25 11 25 37t-25 37ZM200-280l474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z")
+        }
+        function IconAdd() {
+            return Icon("M440-440H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200q-17 0-28.5-11.5T440-240v-200Z")
+        }
+        function IconRemove() {
+            return Icon("M240-440q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h480q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H240Z")
+        }
+        function IconExpand() {
+            return Icon("M280-280h120q17 0 28.5 11.5T440-240q0 17-11.5 28.5T400-200H240q-17 0-28.5-11.5T200-240v-160q0-17 11.5-28.5T240-440q17 0 28.5 11.5T280-400v120Zm400-400H560q-17 0-28.5-11.5T520-720q0-17 11.5-28.5T560-760h160q17 0 28.5 11.5T760-720v160q0 17-11.5 28.5T720-520q-17 0-28.5-11.5T680-560v-120Z")
+        }
+        function IconCollapse() {
+            return Icon("M360-360H240q-17 0-28.5-11.5T200-400q0-17 11.5-28.5T240-440h160q17 0 28.5 11.5T440-400v160q0 17-11.5 28.5T400-200q-17 0-28.5-11.5T360-240v-120Zm240-240h120q17 0 28.5 11.5T760-560q0 17-11.5 28.5T720-520H560q-17 0-28.5-11.5T520-560v-160q0-17 11.5-28.5T560-760q17 0 28.5 11.5T600-720v120Z")
+        }
     </script>
     <!-- renderType -->
     <script>
@@ -519,14 +798,13 @@
             if (type.type == "str") return Div(["type", "type_str"], "string");
             if (type.type == "null") return Div(["type", "type_null"], "null");
             if (type.type == "any") return Div(["type", "type_any"], "any");
-            if (type.type == "literal") return Div(["type", "type_literal"], type.literal.reduce((pv, v) => {
-                    if (pv.length > 0) pv.push(Span([], " | "));
-                    if (typeof v == "number") pv.push(Div("type_int", `${v}`));
-                    else if (typeof v == "string") pv.push(Div("type_str", `"${v}"`));
-                    else if (typeof v == "boolean") pv.push(Div("type_bool", v ? "true" : "false"));
-                    else pv.push(Div("type_null", `${v}`));
-                    return pv;
-                }, []));
+            if (type.type == "literal") return Div(["type", "type_literal"], type.literal.map((v, i) => [
+                    i > 0 && Span([], " | "),
+                    typeof v == "number" ? Div("type_int", `${v}`) :
+                    typeof v == "string" ? Div("type_str", `"${v}"`) :
+                    typeof v == "boolean" ? Div("type_bool", v ? "true" : "false") :
+                        Div("type_null", `${v}`),
+                ]));
             if (type.type == "list") return Div(["type", "type_list"], [
                     Span([], "list["),
                     renderType(type.list_type),
@@ -539,24 +817,22 @@
                     renderType(type.dict_type[1]),
                     Span([], "]"),
                 ]);
-            if (type.type == "union") return Div(["type", "type_union"], type.union_type.reduce((pv, t) => {
-                    if (pv.length > 0) pv.push(Span([], " | "));
-                    pv.push(renderType(t));
-                    return pv;
-                }, []));
+            if (type.type == "union") return Div(["type", "type_union"], type.union_type.map((t, i) => [
+                    i > 0 && Span([], " | "),
+                    renderType(t),
+                ]));
             if (type.type == "tuple") return Div(["type", "type_tuple"], [
                     Span([], "tuple["),
-                    ...type.tuple_type.reduce((pv, t) => {
-                        if (pv.length > 0) pv.push(Span([], ", "));
-                        pv.push(renderType(t));
-                        return pv;
-                    }, []),
+                    type.tuple_type.map((t, i) => [
+                        i > 0 && Span([], ", "),
+                        renderType(t),
+                    ]),
                     Span([], "]"),
                 ]);
             if (type.type == "tlink") return type.name in types ? renderType(types[type.name]) : Div("type", "Unknown");
-            if (type.type != "object") return Div("type", "Unknown");
+            if (type.type != "object") return Div(["type", "type_type"], "unknown");
             let shortEl, fullEl;
-            const name = type.name?.split(".")?.at(-1) || "dict";
+            const name = type.name?.split(".")?.at(-1) || "object";
             const typeEl = Div("type", [
                 Div(["typeShort", "link"], name, el => shortEl = el),
                 Div(["typeFull", "type_object"], [], el => fullEl = el),
@@ -578,7 +854,7 @@
                     fullEl.appendChild(Div([], [
                         Span([], field.name + (field.optional ? "?" : "") + ": "),
                         renderType(field.type),
-                        field.desc && Span("", field.desc),
+                        field.desc && Span("type_comment", "  # " + field.desc),
                     ]));
                 })
                 fullEl.appendChild(Div([], "}"))
@@ -589,6 +865,100 @@
                 typeEl.classList.toggle("type_open");
             }
             return typeEl;
+        }
+        function snakeToCamel(name) {
+            return name.replace(/([-_][a-zA-Z])|(^[a-zA-Z])/g, group =>
+                group.toUpperCase().replace("-", "").replace("_", "")
+            );
+        }
+        function renderTypeInterface(type, routeName="", isReq=false) {
+            if (type.type == "tlink") type = types[type.name];
+            const name = type.name?.split(".")?.at(-1) || snakeToCamel(routeName.split(".").at(-1)) + (isReq ? "Req" : "Res");
+            const el = type.type != "object" ?
+                initEl("pre", [], [
+                    Span("type_operator", "type"),
+                    Span([], " "),
+                    Span("type_type", name),
+                    Span([], " = "),
+                    _renderTypeInterface(type),
+                    Span([], ";"),
+                ]) :
+                initEl("pre", [], [
+                    Span("type_operator", "interface"),
+                    Span([], " "),
+                    Span("type_type", name),
+                    Span([], " "),
+                    _renderTypeInterface(type),
+                ]);
+            return Span("interface", [
+                Button("btn", [IconCopy()], () => navigator.clipboard.writeText(el.innerText)),
+                el,
+            ]);
+        }
+        function _renderTypeInterface(type, indent=0) {
+            if (type.type == "int") return Span("type_type", "number");
+            if (type.type == "float") return Span("type_type", "number");
+            if (type.type == "bool") return Span("type_type", "boolean");
+            if (type.type == "str") return Span("type_type", "string");
+            if (type.type == "null") return Span("type_type", "null");
+            if (type.type == "any") return Span("type_type", "any");
+            if (type.type == "literal") return type.literal.map((v, i) => [
+                i > 0 && Span([], " | "),
+                typeof v == "number" ? Span("type_number", `${v}`) :
+                typeof v == "string" ? Span("type_str", `"${v}"`) :
+                typeof v == "boolean" ? Span("type_bool", v ? "true" : "false") :
+                    Span("type_null", `${v}`),
+            ]);
+            if (type.type == "list") return [
+                (type.list_type.type == "union") && Span([], "("),
+                _renderTypeInterface(type.list_type, indent),
+                (type.list_type.type == "union") && Span([], ")"),
+                Span([], "[]"),
+            ];
+            if (type.type == "dict") return [
+                Span([], "{ ["),
+                Span("type_var", "key"),
+                type.dict_type[0].type == "literal" ? Span("type_operator", " in ") : Span([], ": "),
+                _renderTypeInterface(type.dict_type[0], indent),
+                Span([], "]: "),
+                _renderTypeInterface(type.dict_type[1], indent),
+                Span([], " }"),
+            ];
+            if (type.type == "union") return type.union_type.map((t, i) => [
+                i > 0 && Span([], " | "),
+                _renderTypeInterface(t, indent),
+            ]);
+            if (type.type == "tuple") return [
+                Span([], "["),
+                type.tuple_type.map((t, i) => [
+                    i > 0 && Span([], ", "),
+                    _renderTypeInterface(t, indent),
+                ]),
+                Span([], "]"),
+            ];
+            if (type.type == "tlink") return Span("type_type", type.name.split(".").at(-1));
+            if (type.type != "object") return Span("type_type", "unknown");
+
+            indent++;
+            const indentEl = () => Span([], new Array(indent).fill("\t").join(""));
+            const indentPrevEl = () => Span([], new Array(Math.max(0, indent - 1)).fill("\t").join(""));
+
+            return [
+                Span([], "{\n"),
+                type.object_fields.map(field => [
+                    indentEl(),
+                    Span("type_var", field.name),
+                    Span([], (field.optional ? "?" : "") + ": "),
+                    _renderTypeInterface(field.type, indent),
+                    Span([], ";"),
+                    (field.type.type == "int") && Span("type_comment", " // int"),
+                    (field.type.type == "float") && Span("type_comment", " // float"),
+                    field.desc && Span("type_comment", " // " + field.desc),
+                    Span([], "\n"),
+                ]),
+                indentPrevEl(),
+                Span([], "}"),
+            ]
         }
     </script>
     <!-- Card -->
@@ -616,13 +986,380 @@
             ])
         }
     </script>
+    <!-- state -->
+    <script>
+        function state(v) {
+            const listeners = [];
+            return {
+                v: () => v,
+                set: (nv) => {
+                    v = nv;
+                    listeners.forEach(l => l(v));
+                },
+                elu: (fn) => {
+                    return (el) => {
+                        fn(el, v);
+                        listeners.push((v) => fn(el, v));
+                    }
+                },
+                onupd: (fn) => {
+                    fn(v);
+                    listeners.push(fn)
+                },
+            }
+        }
+        function showIf(state, cfn, el) {
+            if (el instanceof HTMLElement) {
+                state.onupd(v => {
+                    el.style.display = cfn(v) ? "" : "none";
+                })
+            }
+            return el;
+        }
+    </script>
+    <!-- useFetcher -->
+    <script>
+        function useFetcher(route) {
+            const status = Span();
+            const resPre = initEl("pre");
+            const { data, el } = renderFormItem(route.reqtype, true, true);
+            el?.classList?.add("tform");
+            return {
+                req: el,
+                res: Span([], [
+                    status,
+                    resPre,
+                ]),
+                fetch: async () => {
+                    resPre.innerHTML = "";
+                    status.innerText = "";
+                    resPre.appendChild(Span("type_any", "fetching..."));
+                    try {
+                        const body = data();
+                        // console.log(body);
+                        // resPre.innerText = JSON.stringify(body, null, 4);
+                        // return ;
+                        const res = await fetch(route.url, {
+                            method: body === undefined ? "GET" : "POST",
+                            headers: body === undefined ? {} : {
+                                "Content-Type": "application/json"
+                            },
+                            body: body === undefined ? null : JSON.stringify(body),
+                        });
+                        resPre.innerHTML = "";
+                        resPre.innerText = await res.text();
+                        status.innerText = res.statusText;
+                    } catch (e) {
+                        resPre.innerHTML = "";
+                        resPre.appendChild(Span("type_null", e?.message));
+                        resPre.appendChild(Span("type_null", "\n"));
+                        resPre.appendChild(Span("type_null", e?.stack));
+                    }
+                },
+            }
+        }
+        function renderFormItem(type, unfold = false, top = false) {
+            if (!type) return { data: () => undefined, el: null };
+            if (type.type == "dict") {
+                const data = [];
+                function Item() {
+                    const key = renderFormItem(type.dict_type[0], true);
+                    const value = renderFormItem(type.dict_type[1], true);
+                    const d = { key: key.data, value: value.data };
+                    data.push(d);
+                    return Div("tfrom_dict__item", [
+                        Button("btn", [IconRemove()], btn => {
+                            data.splice(data.indexOf(d), 1);
+                            btn.parentNode.parentNode.removeChild(btn.parentNode);
+                        }),
+                        key.el,
+                        Div([], ":"),
+                        value.el,
+                    ]);
+                }
+                const collapsed = state(false);
+                return { data: () => {
+                    const d = {};
+                    for (const field of data) {
+                        d[field.key()] = field.value();
+                    }
+                    return d;
+                }, el: Span([], [
+                    showIf(collapsed, v => !v, Div("tfrom_dict", [
+                        Div([], [
+                            Span([], "{"),
+                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+                        ]),
+                        Div([], [Button("btn", [IconAdd()], btn => {
+                            btn.parentNode.parentNode.insertBefore(Item(), btn.parentNode);
+                        })]),
+                        Div([], "}"),
+                    ])),
+                    showIf(collapsed, v => v, Div("tfrom_dict", [
+                        Div([], [
+                            Span([], "{"),
+                            Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+                            Span([], "}"),
+                        ]),
+                    ])),
+                ]) };
+            }
+            if (type.type == "list") {
+                const items = [];
+                function Item() {
+                    const item = renderFormItem(type.list_type, true);
+                    items.push(item);
+                    return Div("tfrom_list__item", [
+                        Button("btn", [IconRemove()], btn => {
+                            items.splice(items.indexOf(item), 1);
+                            btn.parentNode.parentNode.removeChild(btn.parentNode);
+                        }),
+                        Span("tfrom_list__counter"),
+                        item.el,
+                    ]);
+                }
+                const collapsed = state(false);
+                return { data: () => items.map(it => it.data()), el: Span([], [
+                        showIf(collapsed, v => !v, Div("tfrom_list", [
+                            Div([], [
+                                Span([], "["),
+                                !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+                            ]),
+                            Div([], [Button("btn", [IconAdd()], btn =>
+                            {
+                                btn.parentNode.parentNode.insertBefore(Item(), btn.parentNode);
+                            })]),
+                            Div([], "]"),
+                        ])),
+                        showIf(collapsed, v => v, Div("tfrom_list", [
+                            Div([], [
+                                Span([], "["),
+                                Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+                                Span([], "]"),
+                            ]),
+                        ])),
+                    ])
+                };
+            }
+            if (type.type == "tuple") {
+                const items = [];
+                function Item(t) {
+                    const item = renderFormItem(t);
+                    items.push(item);
+                    return Div("tfrom_list__item", [
+                        Span("tfrom_list__counter"),
+                        item.el,
+                    ]);
+                }
+                const collapsed = state(!top);
+                return { data: () => items.map(it => it.data()), el: Span([], [
+                        showIf(collapsed, v => !v, Div("tfrom_list", [
+                            Div([], [
+                                Span([], "["),
+                                !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+                            ]),
+                            type.tuple_type.map(Item),
+                            Div([], "]"),
+                        ])),
+                        showIf(collapsed, v => v, Div("tfrom_list", [
+                            Div([], [
+                                Span([], "["),
+                                Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+                                Span([], "]"),
+                            ]),
+                        ])),
+                    ]) };
+            }
+            if (type.type == "union") {
+                const select = initEl("select", "tfrom_literal", [
+                    type.union_type.map((v, i) => OptionEl([], i, (() =>
+                        v.type == "dict" ? `dict[${v.dict_type[0].type}, ${v.dict_type[1].type}]` :
+                        v.type == "list" ? `list[${v.list_type.type}]` :
+                        v.type == "tuple" ? `tuple[${v.tuple_type.slice(0, 2).map(t => t.type).join(", ") + (v.tuple_type.length > 2 ? ", ..." : "")}]` :
+                        v.type == "literal" ? v.literal.slice(0, 2).map(lv =>
+                            typeof lv == "number" ? `${lv}` :
+                            typeof lv == "string" ? `"${lv}"` :
+                            typeof lv == "boolean" ? lv ? "true" : "false" :
+                            `${lv}`).join(" | ") + (v.literal.length > 2 ? " | ..." : "") :
+                        v.type
+                    )())),
+                ]);
+                const item = renderFormItem(type.union_type[0]);
+                select.addEventListener("input", () => {
+                    const t = type.union_type[select.value];
+                    const nitem = renderFormItem(t);
+                    item.el.parentNode.insertBefore(nitem.el, item.el);
+                    item.el.parentNode.removeChild(item.el);
+                    item.data = nitem.data;
+                    item.el = nitem.el;
+                });
+                return {
+                    data: () => item.data(),
+                    el: Span("tfrom_union", [
+                        select,
+                        item.el,
+                    ]),
+                };
+            }
+            if (type.type == "int" || type.type == "float") {
+                const {upd, input} = InputAutoWidth("tfrom_number", "text", null, el => {
+                    el.value = 0;
+                    el.addEventListener("input", () => {
+                        if (type.type == "int")
+                            el.value = el.value.replace(/[^\d]/g, "");
+                        else {
+                            el.value = el.value.replace(/[^\d\.,]/g, "").replaceAll(",", ".");
+                            const i = el.value.indexOf(".");
+                            if (i >= 0) el.value = el.value.slice(0, i + 1) + el.value.slice(i + 1).replaceAll(".", "");
+                        }
+                    });
+                });
+
+                return {
+                    data: () => type.type == "int" ?
+                        parseInt(input.value || "0", 10) :
+                        parseFloat(input.value || "0", 10),
+                    el: input,
+                };
+            }
+            if (type.type == "str") {
+                const {upd, input: el} = InputAutoWidth([], "text");
+                const elt = initEl("textarea");
+                el.addEventListener("input", () => elt.value = el.value);
+                elt.addEventListener("input", () => el.value = elt.value);
+                return { data: () => elt.value, el: Span("tfrom_string", [
+                    Span([], '"'),
+                    el,
+                    Span([], '"'),
+                    Button(["btn", "btn_small"], [IconExpand()], btn => {
+                        btn.innerHTML = "";
+                        if (el.parentNode) {
+                            elt.style.width = el.style.width;
+                            el.parentNode.insertBefore(elt, el);
+                            el.parentNode.removeChild(el);
+                            btn.appendChild(IconCollapse());
+                        }
+                        else {
+                            upd();
+                            elt.parentNode.insertBefore(el, elt);
+                            elt.parentNode.removeChild(elt);
+                            btn.appendChild(IconExpand());
+                        }
+                    }),
+                ]) };
+            }
+            if (type.type == "bool") {
+                const cbx = Input([], "checkbox");
+                return {
+                    data: () => cbx.checked,
+                    el: initEl("label", "tfrom_checkbox", [
+                        cbx,
+                        Span(),
+                    ])
+                }
+            }
+            if (type.type == "null") return ({ data: () => null, el: Span("type_null", "null") });
+            if (type.type == "literal") {
+                const el = initEl("select", "tfrom_literal", [
+                    type.literal.map((v, i) =>
+                        typeof v == "number" ? OptionEl([], i, `${v}`) :
+                        typeof v == "string" ? OptionEl([], i, `"${v}"`) :
+                        typeof v == "boolean" ? OptionEl([], i, v ? "true" : "false") :
+                            OptionEl([], i, `${v}`)
+                    ),
+                ]);
+                function onInput() {
+                    const t = typeof type.literal[el.value];
+                    el.className = "tfrom_literal " +
+                        (t == "number" ? "type_number" :
+                        t == "string" ? "type_str" :
+                        t == "boolean" ? "type_bool" :
+                            "type_null")
+                }
+                el.addEventListener("input", onInput);
+                onInput();
+                return { data: () => type.literal[el.value], el };
+            }
+            if (type.type == "any") {
+                const el = initEl("textarea", "tfrom_any");
+                return { data: () => {
+                    try { return JSON.parse(el.value);}
+                    catch { return el.value }
+                }, el };
+            }
+            if (type.type == "tlink") {
+                if (unfold) return renderFormItem(types[type.name], unfold, top);
+                let item;
+                return {
+                    data: () => item?.data(),
+                    el: Span([], [
+                        Span("link", `{<${type.name.split(".").at(-1)}>}`, el => {
+                            el.addEventListener("click", () => {
+                                item = renderFormItem(types[type.name]);
+                                el.parentNode.appendChild(item.el);
+                                el.parentNode.removeChild(el);
+                            });
+                        })
+                    ])
+                }
+            }
+            if (type.type == "object") {
+                const data = {};
+                function Item(field) {
+                    const value = renderFormItem(field.type);
+                    const isUndefined = state(!!field.optional);
+                    data[field.name] = () => isUndefined.v() ? undefined : value.data();
+                    return Div("tfrom_object__item", [
+                        Span("type_var", field.name),
+                        field.optional && Input("checkbox", "checkbox", null, cbx => {
+                            cbx.checked = !isUndefined.v();
+                            cbx.addEventListener("input", () => {
+                                isUndefined.set(!cbx.checked);
+                            })
+                        }),
+                        Span([], ": "),
+                        showIf(isUndefined, v => !v, value.el),
+                        showIf(isUndefined, v => v, Span("type_operator", "undefined")),
+                        field.desc && Span("type_comment", " // " + field.desc),
+                    ]);
+                }
+                const collapsed = state(false);
+                return { data: () => {
+                    const d = {};
+                    for (const field in data) {
+                        d[field] = data[field]();
+                    }
+                    return d;
+                }, el: Span([], [
+                    showIf(collapsed, v => !v, Div("tfrom_object", [
+                        Div([], [
+                            Span([], "{"),
+                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+                        ]),
+                        type.object_fields.map(Item),
+                        Div([], "}"),
+                    ])),
+                    showIf(collapsed, v => v, Div("tfrom_object", [
+                        Div([], [
+                            Span([], "{"),
+                            Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+                            Span([], "}"),
+                        ]),
+                    ])),
+                ])};
+            }
+            return { data: () => undefined, el: Span("type_type", "unknown") };
+        }
+    </script>
     <!-- pages -->
     <script>
         const routesEl = document.getElementById("routes");
         routes.forEach(route => { route.module = route.name.split(".").slice(0, -1).join(".") });
         routes.sort((a, b) => (a.module > b.module) ? 1 : ((b.module > a.module) ? -1 : a.line - b.line))
         routes.forEach((route) => {
-            routesEl.appendChild(Card(route.url, route.url, [
+            const mode = state("send");
+            const fetcher = useFetcher(route);
+            routesEl.appendChild(Card((route.reqtype ? "POST " : "GET ") + route.url, route.url, [
                 Div("boxes", [
                     Div([], [
                         Button("btn", [IconCopy()], () => navigator.clipboard.writeText(route.url)),
@@ -630,6 +1367,11 @@
                     ]),
                     Div([], `route: ${route.route}`),
                     dev && Div([], Link("link", `${route.module}:${route.line}`, vscodeLink(route.name, route.line))),
+                    Span("flexGrow"),
+                    showIf(mode, v => v == "normal", Button("btn", [IconCode()], () => mode.set("send"))),
+                    showIf(mode, v => v != "normal", Button("btn", [IconCodeOff()], () => mode.set("normal"))),
+                    showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
+                    showIf(mode, v => v == "send", Button("btn", [IconSend()], fetcher.fetch)),
                 ]),
                 (route.perms || route.nojwt) && Div("boxes", [
                     route.perms && Div([], [
@@ -642,11 +1384,15 @@
                 Div(),
                 route.reqtype && Div([], [
                     Span([], "Request: "),
-                    renderType(route.reqtype),
+                    showIf(mode, v => v == "normal", renderType(route.reqtype)),
+                    showIf(mode, v => v == "code", renderTypeInterface(route.reqtype, route.name, true)),
+                    showIf(mode, v => v == "send", fetcher.req),
                 ]),
-                route.restype && Div([], [
-                    Span([], "Response: "),
-                    renderType(route.restype),
+                Div([], [
+                    showIf(mode, v => route.restype || v == "send", Span([], "Response: ")),
+                    route.restype && showIf(mode, v => v == "normal", renderType(route.restype)),
+                    route.restype && showIf(mode, v => v == "code", renderTypeInterface(route.restype, route.name, false)),
+                    showIf(mode, v => v == "send", fetcher.res),
                 ]),
             ]));
         });
@@ -657,11 +1403,18 @@
         const typeNames = Object.keys(types);
         typeNames.sort();
         for (const typeName of typeNames) {
-            const module = typeName.split(".").slice(0, -1).join(".")
+            const mode = state("normal");
+            const module = typeName.split(".").slice(0, -1).join(".");
             const type = types[typeName];
             typesEl.appendChild(Card(typeName.split(".").at(-1), typeName, [
-                dev && Div([], Link("link", `${module}:${type.line}`, vscodeLink(typeName, type.line))),
-                renderType(type, true),
+                Div("boxes", [
+                    dev && Span([], Link("link", `${module}:${type.line}`, vscodeLink(typeName, type.line))),
+                    Span("flexGrow"),
+                    showIf(mode, v => v != "normal", Button("btn", [IconCodeOff()], () => mode.set("normal"))),
+                    showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
+                ]),
+                showIf(mode, v => v == "normal", renderType(type, true)),
+                showIf(mode, v => v == "code", renderTypeInterface(type)),
             ]));
         }
     </script>

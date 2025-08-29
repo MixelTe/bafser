@@ -73,6 +73,6 @@ def get_json_list(l: list[Any], otype: type[T]) -> tuple[list[T], error]:
     for i, el in enumerate(l):
         el, err = validate_type(el, otype)
         if err is not None:
-            return [], f"[{i}] {err}"
+            return [], f"[{i}]{err}"
         r.append(el)  # type: ignore
     return r, None
