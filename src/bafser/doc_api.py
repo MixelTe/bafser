@@ -19,10 +19,11 @@ _types_full: dict[str, "TypeInfo"] = {}
 
 _loc = os.path.abspath(os.path.dirname(__file__))
 _templateEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(_loc, "templates")))
-# template_docs = _templateEnv.get_template("docs.html")
+template_docs = _templateEnv.get_template("docs.html")
 
 
 def init_api_docs(app: Flask):
+    from . import M
     for rule in app.url_map.iter_rules():
         fn = app.view_functions[rule.endpoint]
         _, line = inspect.getsourcelines(fn)
@@ -44,18 +45,17 @@ def init_api_docs(app: Flask):
 
         route = str(rule)
         d: dict[str, Any] = {}
-        endpoint = EndpointInfo.new(route=rule.endpoint, url=route, name=fn.__module__ + "." + fn.__name__, line=line)
+        methods = ""
+        if rule.methods is not None:
+            methods = " ".join(rule.methods - set([M.HEAD, M.OPTIONS]))
+        endpoint = EndpointInfo.new(route=rule.endpoint, url=route, name=fn.__module__ + "." + fn.__name__, line=line, methods=methods)
         if desc is not None:
             d["__desc__"] = desc
             endpoint.desc = desc
-        if perms is not None:
-            d["__permsions__"] = perms
-            endpoint.perms = perms
         if nojwt is True:
             d["__nojwt__"] = True
             endpoint.nojwt = True
         if reqtype is not None:
-            route += " POST"
             d["request"] = type_to_json(reqtype, _types, toplvl=True)
             endpoint.reqtype = type_info(reqtype, _types_full)
         if restype is not None:
@@ -63,7 +63,10 @@ def init_api_docs(app: Flask):
             endpoint.restype = type_info(restype, _types_full)
         if d == {}:
             continue
-        _docs.append((route, d))
+        if perms is not None:
+            d["__permsions__"] = perms
+            endpoint.perms = perms
+        _docs.append((route + f" {methods}", d))
         _endpoints.append(endpoint)
 
 
@@ -74,7 +77,8 @@ def get_api_docs() -> dict[str, Any]:
 
 def render_docs_page():
     from . import get_app_config
-    template_docs = _templateEnv.get_template("docs.html")
+
+    # template_docs = _templateEnv.get_template("docs.html")
     routes = [e.json() for e in _endpoints]
     types = {k: v.json() for k, v in _types_full.items()}
     dev = get_app_config().DEV_MODE
@@ -175,6 +179,7 @@ class EndpointInfo(JsonObj):
     url: str
     route: str
     name: str
+    methods: str
     line: int
     reqtype: JsonOpt["TypeInfo"]
     restype: JsonOpt["TypeInfo"]

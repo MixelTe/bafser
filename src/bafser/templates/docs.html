@@ -707,7 +707,7 @@
     <script>
         var url = new URL(window.location.href);
         if (url.hash == "") {
-            url.hash = "pages";
+            url.hash = "routes";
             window.history.replaceState(null, '', url.toString());
         }
     </script>
@@ -1809,7 +1809,7 @@
         routes.forEach((route) => {
             const mode = state("normal");
             const fetcher = useFetcher(route);
-            routesEl.appendChild(Card((route.reqtype ? "POST " : "GET ") + route.url, route.url, [
+            routesEl.appendChild(Card(route.methods + " " + route.url, route.url, [
                 Div("boxes", [
                     Div([], [
                         Button("btn", [IconCopy()], () => navigator.clipboard.writeText(route.url)),
