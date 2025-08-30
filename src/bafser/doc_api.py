@@ -78,7 +78,7 @@ def get_api_docs() -> dict[str, Any]:
 def render_docs_page():
     from . import get_app_config
 
-    # template_docs = _templateEnv.get_template("docs.html")
+    template_docs = _templateEnv.get_template("docs.html")
     routes = [e.json() for e in _endpoints]
     types = {k: v.json() for k, v in _types_full.items()}
     dev = get_app_config().DEV_MODE

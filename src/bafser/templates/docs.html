@@ -1111,7 +1111,11 @@
                     Div([], title),
                     Input([], "checkbox", "", cbx => {
                         cbx.checked = id == _onloadSelectedId;
-                        cbx.addEventListener("input", () => { if (cbx.checked) location.hash = "#" + id })
+                        cbx.addEventListener("input", () => { if (cbx.checked) {
+                                var url = new URL(window.location.href);
+                                url.hash = id;
+                                window.history.replaceState(null, '', url.toString());
+                            }})
                         _cardsCbx.push({ cbx, id })
                     }),
                 ], card => card.id = id),
