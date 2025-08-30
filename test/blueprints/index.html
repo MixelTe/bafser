@@ -190,7 +190,7 @@
             switch (ch) {
                 case "{": v = before + "}" + after; break;
                 case "[": v = before + "]" + after; break;
-                case '"': if (!nch || nch == "\n") v = before + '"' + after; break;
+                case '"': if ((!nch || nch == "\n") && nch != '"' && pch != '"') v = before + '"' + after; break;
                 case "\n":
                     if (pch != "\n") {
                         let indentS = Math.floor((prevline.length - prevline.trimStart(" ").length) / 4);

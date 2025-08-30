@@ -500,22 +500,36 @@
         }
     </style>
     <style>
-        .tform {
+        .tform, .json {
             font-family: "Fira Code", 'Courier New', Courier, monospace;
-            counter-reset: form;
+            font-size: 0.9rem;
+        }
+        .json {
+            white-space-collapse: preserve;
         }
         .tfrom_dict,
         .tfrom_object,
-        .tfrom_list {
+        .tfrom_list,
+        .json_dict,
+        .json_object,
+        .json_list {
             position: relative;
             display: flex;
             flex-direction: column;
-            gap: 0.5em;
+            gap: 0.15em;
         }
+        .json_dict,
+        .json_object,
+        .json_list {
+            gap: 0;
+        }
+
         .tfrom_dict__item,
         .tfrom_list__item,
-        .tfrom_object__item {
-            counter-increment: form;
+        .tfrom_object__item,
+        .json_dict__item,
+        .json_list__item,
+        .json_object__item {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5em;
@@ -524,6 +538,28 @@
 
         .tfrom_object__item {
             padding-left: 4ch;
+        }
+        .json_object__item {
+            padding-left: 2ch;
+        }
+
+        .tfrom_object__item:has(> .checkbox) {
+            padding-left: 0.9em;
+        }
+
+        .json_list_compact {
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0.5em;
+        }
+        .json_list_compact > .json_list__item {
+            gap: 0;
+        }
+        .json_list_compact > .json_list__item::after {
+            content: ",";
+        }
+        .json_list_compact > .json_list__item:nth-last-child(2)::after {
+            content: "";
         }
 
         .tform .checkbox {
@@ -547,6 +583,9 @@
         .tfrom_list__counter::before {
             counter-increment: list;
             content: counter(list) ":";
+        }
+        .json_list_no_counter > * > .json_list_counter {
+            display: none;
         }
 
         .tfrom_number,
@@ -644,6 +683,15 @@
         }
         .tfrom_any {
             color: var(--c-t-any);
+        }
+
+        .json_textarea {
+            display: inline-block;
+            color: var(--c-t-str);
+            border: 1px solid color-mix(in srgb, var(--c-t-str), transparent 60%);
+            padding: 0.2em;
+            border-radius: 0.25em;
+            white-space-collapse: preserve;
         }
     </style>
 </head>
@@ -1108,21 +1156,27 @@
     <script>
         function useFetcher(route) {
             const status = Span();
+            status.style.paddingLeft = "1em"
             const textToReqErr = Div("type_null");
             textToReqErr.style.paddingLeft = "1em"
             const { el: reqPre, set: reqPreSet } = JsonEditor(callFetch);
+            const { el: resJson, setJson } = renderJson();
             const resPre = initEl("pre");
+            const resPreInfo = initEl("pre");
             const { data, setData, el } = renderFormItem(route.reqtype, true, true);
             el?.classList?.add("tform");
-            const textMode = state(false);
+            const textModeReq = state(false);
+            const textModeRes = state(false);
             async function callFetch() {
                 resPre.innerHTML = "";
+                resPreInfo.innerHTML = "";
                 status.innerText = "";
-                resPre.appendChild(Span("type_any", "fetching..."));
+                resPreInfo.appendChild(Span("type_any", "fetching..."));
+                setJson();
                 try
                 {
                     const d = data();
-                    const body = textMode.v() ? reqPre.value : d ? JSON.stringify(d) : undefined;
+                    const body = textModeReq.v() ? reqPre.value : d ? JSON.stringify(d) : undefined;
                     const post = body === undefined;
                     const res = await fetch(route.url, {
                         method: post ? "GET" : "POST",
@@ -1131,25 +1185,32 @@
                         },
                         body: post ? null : body,
                     });
-                    resPre.innerHTML = "";
-                    resPre.innerText = await res.text();
+                    resPreInfo.innerHTML = "";
+                    const resText = await res.text();
+                    resPre.innerText = resText;
                     status.innerText = res.statusText;
+                    try {
+                        setJson(JSON.parse(resText));
+                    } catch (e) {
+                        setJson(e?.message);
+                        resPreInfo.innerText = resText;
+                    }
                 } catch (e)
                 {
-                    resPre.innerHTML = "";
-                    resPre.appendChild(Span("type_null", e?.message));
-                    resPre.appendChild(Span("type_null", "\n"));
-                    resPre.appendChild(Span("type_null", e?.stack));
+                    resPreInfo.innerHTML = "";
+                    resPreInfo.appendChild(Span("type_null", e?.message));
+                    resPreInfo.appendChild(Span("type_null", "\n"));
+                    resPreInfo.appendChild(Span("type_null", e?.stack));
                 }
             }
             return {
                 req: Span([], [
                     Button("btn", [
-                        showIf(textMode, v => !v, IconCode()),
-                        showIf(textMode, v => v, IconCodeOff()),
+                        showIf(textModeReq, v => !v, IconCode()),
+                        showIf(textModeReq, v => v, IconCodeOff()),
                     ], btn => {
                         textToReqErr.innerText = "";
-                        if (textMode.v()) {
+                        if (textModeReq.v()) {
                             let r = true;
                             if (reqPre.value != "") {
                                 try {
@@ -1161,20 +1222,28 @@
                                     textToReqErr.innerText = e?.message;
                                 }
                             }
-                            if (r) textMode.set(false);
+                            if (r) textModeReq.set(false);
                         }
                         else {
                             reqPreSet(JSON.stringify(data(), null, 4));
-                            textMode.set(true);
+                            textModeReq.set(true);
                         }
                     }),
                     textToReqErr,
-                    showIf(textMode, v => !v, el),
-                    showIf(textMode, v => v, reqPre),
+                    showIf(textModeReq, v => !v, el),
+                    showIf(textModeReq, v => v, reqPre),
                 ]),
                 res: Span([], [
+                    Button("btn", [
+                        showIf(textModeRes, v => !v, IconCode()),
+                        showIf(textModeRes, v => v, IconCodeOff()),
+                    ], btn => {
+                        textModeRes.set(!textModeRes.v());
+                    }),
                     status,
-                    resPre,
+                    resPreInfo,
+                    showIf(textModeRes, v => !v, resJson),
+                    showIf(textModeRes, v => v, resPre),
                 ]),
                 fetch: callFetch,
             }
@@ -1563,14 +1632,16 @@
                     };
                     if (field.default !== undefined) value.setData(field.default);
                     return Div("tfrom_object__item", [
-                        Span("type_var", field.name),
                         field.optional && Input("checkbox", "checkbox", null, cbx => {
                             cbx.checked = !isUndefined.v();
                             cbx.addEventListener("input", () => {
                                 isUndefined.set(!cbx.checked);
                             })
                         }),
-                        Span([], ": "),
+                        Span([], [
+                            Span("type_var", field.name),
+                            Span([], ": "),
+                        ]),
                         showIf(isUndefined, v => !v, value.el),
                         showIf(isUndefined, v => v, Span("type_operator", "undefined")),
                         field.desc && Span("type_comment", " // " + field.desc),
@@ -1621,6 +1692,114 @@
             }
             return { data: () => undefined, el: Span("type_type", "unknown"), setData: (d) => null };
         }
+        function renderJson() {
+            let el;
+            return {
+                setJson: (data) => {
+                    el.innerHTML = "";
+                    el.appendChild(Span([], renderJsonItem(data, true)));
+                },
+                el: Div("json", [], v => el = v),
+            }
+        }
+        function renderJsonItem(data, top = false) {
+            if (typeof data == "undefined") return Span("type_operator", "undefined");
+            if (typeof data == "boolean") return Span("type_bool", data ? "true" : "false");
+            if (typeof data == "number") return Span("type_number", `${data}`);
+            if (typeof data == "string") {
+                const ML = 40;
+                if (!data.match(/\n|\t/) && data.length < ML) return Span("type_str", `"${data}"`);
+
+                const collapsed = state(false);
+                return [
+                    showIf(collapsed, v => v, Button(["btn", "btn_small"], IconCollapse(), btn => collapsed.set(false))),
+                    showIf(collapsed, v => !v, Span([], [
+                        Span("type_str", `"${data.slice(0, ML).replaceAll("\t", "\\t").replaceAll("\n", "\\n")}`),
+                        data.length >= ML && Button("link", "<...>", btn => collapsed.set(!collapsed.v())),
+                        Span("type_str", `"`),
+                    ])),
+                    showIf(collapsed, v => v, Span("json_textarea", data)),
+                    data.length < ML && showIf(collapsed, v => !v, Button(["btn", "btn_small"], IconExpand(), btn => collapsed.set(true))),
+                ];
+            };
+            if (data instanceof Array) {
+                const compact = data.every(v => typeof v != "object");
+                const showCountFirst = compact ? 5 : 3;
+                const showCount = compact ? 10 : 5;
+                const parts = [{i: 0, d: data.slice(0, showCountFirst)}];
+                for (let i = showCountFirst; i < data.length; i += showCount) {
+                    parts.push({ i, d: data.slice(i, i + showCount) });
+                }
+                const collapsed = state(false);
+                return Span([], [
+                    showIf(collapsed, v => !v, Div([
+                        "json_list",
+                        compact && "json_list_compact",
+                        compact && "json_list_no_counter",
+                    ], [
+                        Div([], [
+                            Span([], "["),
+                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+                            compact && Button(["btn", "btn_small"], "i",
+                                btn => btn.parentNode.parentNode.classList.toggle("json_list_no_counter"),
+                                btn => {btn.style.width = "0.8em"; btn.style.marginLeft = "0.2em"}),
+                        ]),
+                        parts[0].d.map((v, i) => Div("json_list__item", [
+                            Span("json_list_counter", `${i}:`),
+                            renderJsonItem(v),
+                        ])),
+                        parts.slice(1).map(({ i, d }) => [
+                            Div([], Button("link", compact ? `<${i}-${i + d.length - 1}>` : `${i}-${i + d.length - 1}: <...>`, btn => {
+                                d.forEach((v, j) => {
+                                    btn.parentNode.parentNode.insertBefore(Div("json_list__item", [
+                                        Span("json_list_counter", `${i + j}:`),
+                                        renderJsonItem(v),
+                                    ]), btn.parentNode)
+                                })
+                                btn.parentNode.parentNode.removeChild(btn.parentNode);
+                            })),
+                        ]),
+                        Div([], "]"),
+                    ])),
+                    showIf(collapsed, v => v, Div("json_list", [
+                        Div([], [
+                            Span([], "["),
+                            Button("link", `<...>`, () => collapsed.set(false)),
+                            Span([], "]"),
+                        ]),
+                    ])),
+                ]);
+            }
+            if (typeof data == "object") {
+                const collapsed = state(false);
+                return Span([], [
+                    showIf(collapsed, v => !v, Div("json_object", [
+                        Div([], [
+                            Span([], "{"),
+                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+                        ]),
+                        Object.keys(data).map(key => Div("json_object__item", [
+                            Span([], [
+                                key.match(/^(\s+.*\s*|\s*.*\s+|)$|\n|\t/) ?
+                                Span("type_str", `"${key.replaceAll("\t", "\\t").replaceAll("\n", "\\n")}"`) :
+                                Span("type_var", key),
+                                Span([], ":"),
+                            ]),
+                            renderJsonItem(data[key]),
+                        ])),
+                        Div([], "}"),
+                    ])),
+                    showIf(collapsed, v => v, Div("json_object", [
+                        Div([], [
+                            Span([], "{"),
+                            Button("link", `<...>`, () => collapsed.set(false)),
+                            Span([], "}"),
+                        ]),
+                    ])),
+                ]);
+            }
+            return Span("type_type", "unknown");
+        }
     </script>
     <!-- pages -->
     <script>
@@ -1639,7 +1818,7 @@
                     Div([], `route: ${route.route}`),
                     dev && Div([], Link("link", `${route.module}:${route.line}`, vscodeLink(route.name, route.line))),
                     Span("flexGrow"),
-                    showIf(mode, v => v == "normal", Button("btn", [IconSend()], () => mode.set("send"))),
+                    showIf(mode, v => v == "normal", Button("btn", [IconSend()], () => { mode.set("send"); if (!route.reqtype) fetcher.fetch(); })),
                     showIf(mode, v => v != "normal", Button("btn", [IconCode()], () => mode.set("normal"))),
                     showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
                     showIf(mode, v => v == "send", Button("btn", [IconSend()], fetcher.fetch)),

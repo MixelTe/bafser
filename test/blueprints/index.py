@@ -3,13 +3,13 @@ from test.data.img import ImageJson, Img
 from test.data.user import User
 from typing import Any, Literal, NotRequired, TypedDict
 
-from flask import Blueprint, send_from_directory
+from flask import Blueprint, abort, send_from_directory
 from flask_jwt_extended import jwt_required  # type: ignore
 from sqlalchemy.orm import Session
 
 import bafser_config
-from bafser import (JsonObj, JsonOpt, JsonSingleKey, UserDict, doc_api, get_api_docs, get_json_values_from_req, permission_required, render_docs_page,
-                    response_msg, use_db_session, use_user)
+from bafser import (JsonObj, JsonOpt, JsonSingleKey, UserDict, doc_api, get_api_docs, get_app_config, get_json_values_from_req, permission_required,
+                    render_docs_page, response_msg, use_db_session, use_user)
 
 blueprint = Blueprint("index", __name__)
 
@@ -21,6 +21,8 @@ def docs():
 
 @blueprint.route("/api/docs")
 def docs_page():
+    if not get_app_config().DEV_MODE:
+        abort(404)
     return render_docs_page()
 
 
