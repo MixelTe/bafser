@@ -134,12 +134,20 @@
             cursor: default;
         }
 
-        pre {
+        pre, .code {
             padding: 0.25em;
             text-wrap-mode: wrap;
             font-family: "Fira Code", 'Courier New', Courier, monospace;
             tab-size: 4;
             font-size: 0.9rem;
+        }
+        .code {
+            display: block;
+            width: 100%;
+            outline: none;
+            background-color: transparent;
+            border-radius: 0.25em;
+            field-sizing: content;
         }
 
         option {
@@ -559,6 +567,10 @@
             field-sizing: content;
         }
 
+        span.tfrom_literal {
+            border: none;
+        }
+
         .tfrom_number {
             color: var(--c-t-number);
         }
@@ -636,10 +648,13 @@
     </style>
 </head>
 <body>
+    <script type="text/template" id="data_routes">{{ routes }}</script>
+    <script type="text/template" id="data_types">{{ types }}</script>
+    <script type="text/template" id="data_dev">{{ dev }}</script>
     <script>
-        const routes = {{ routes }};
-        const types = {{ types }};
-        const dev = "{{dev}}" == "True";
+        const routes = JSON.parse(document.getElementById("data_routes").innerText);
+        const types = JSON.parse(document.getElementById("data_types").innerText);
+        const dev = document.getElementById("data_dev").innerText.toLowerCase() == "true";
     </script>
     <script>
         var url = new URL(window.location.href);
@@ -724,6 +739,70 @@
             const opt = initEl("option", classes, children, fn);
             opt.value = value;
             return opt;
+        }
+    </script>
+    <!-- JsonEditor -->
+    <script>
+        function JsonEditor(onEnter = () => {}) {
+            const el = initEl("textarea", "code");
+            let pv = "";
+            el.addEventListener("input", formatJson);
+            el.addEventListener("keydown", e => {
+                if (e.ctrlKey && e.key == "Enter") {
+                    onEnter?.();
+                    return;
+                }
+                if (e.key != "Tab") return;
+                e.preventDefault();
+                const ni = el.selectionStart;
+                const v = el.value.slice(0, ni) + "    " + el.value.slice(ni);
+                el.value = v;
+                pv = v;
+                el.setSelectionRange(ni + 4, ni + 4);
+            });
+            function formatJson() {
+                let v = el.value;
+                if (v.length != pv.length + 1) { pv = v; return; };
+                let ni = el.selectionStart;
+                let pos = ni;
+                const pch = v[ni - 2];
+                const ch = v[ni - 1];
+                const nch = v[ni];
+                // console.log("pv:", pv, "v:", v, "ni:", ni, "ch:", ch);
+                const before = v.slice(0, ni);
+                const after = v.slice(ni);
+                const _blnl = before.lastIndexOf("\n")
+                const line = before.slice(_blnl + 1);
+                const _bl = before.slice(0, _blnl);
+                const prevline = _blnl < 0 ? "" : _bl.slice(_bl.lastIndexOf("\n") + 1);
+                switch (ch) {
+                    case "{": v = before + "}" + after; break;
+                    case "[": v = before + "]" + after; break;
+                    case '"': if ((!nch || nch == "\n") && nch != '"' && pch != '"') v = before + '"' + after; break;
+                    case "\n":
+                        if (pch != "\n") {
+                            let indentS = Math.floor((prevline.length - prevline.trimStart(" ").length) / 4);
+                            if (pch == "{" || pch == "[") indentS++;
+                            if (nch == "}" || nch == "]") indentS--;
+                            const indent = new Array(indentS * 4).fill(" ").join("");
+                            const indent2 = new Array((indentS + 1) * 4).fill(" ").join("");
+                            v = before + indent + after;
+                            pos += indentS * 4;
+                            if (pch == "{" && nch == "}" || pch == "[" && nch == "]") {
+                                v = before + indent2 + "\n" + indent + after;
+                                pos += 4;
+                            }
+                        }
+                        break;
+                }
+                pv = v;
+                el.value = v;
+                el.setSelectionRange(pos, pos);
+            }
+            return { el, set: (v) => {
+                pv = v;
+                el.value = v;
+            } };
         }
     </script>
     <!-- vscodeLink -->
@@ -854,6 +933,14 @@
                     fullEl.appendChild(Div([], [
                         Span([], field.name + (field.optional ? "?" : "") + ": "),
                         renderType(field.type),
+                        field.default !== undefined && Span([], [
+                            Span([], " = "),
+                            typeof field.default == "number" ? Span("type_int", `${field.default}`) :
+                            typeof field.default == "string" ? Span("type_str", `"${field.default}"`) :
+                            typeof field.default == "boolean" ? Span("type_bool", field.default ? "true" : "false") :
+                            field.default == null ? Span("type_null", `${field.default}`) :
+                                Span([], `${JSON.stringify(field.default, null, 4)}`)
+                        ]),
                         field.desc && Span("type_comment", "  # " + field.desc),
                     ]));
                 })
@@ -1009,7 +1096,7 @@
             }
         }
         function showIf(state, cfn, el) {
-            if (el instanceof HTMLElement) {
+            if (el instanceof HTMLElement || el instanceof SVGElement) {
                 state.onupd(v => {
                     el.style.display = cfn(v) ? "" : "none";
                 })
@@ -1021,90 +1108,150 @@
     <script>
         function useFetcher(route) {
             const status = Span();
+            const textToReqErr = Div("type_null");
+            textToReqErr.style.paddingLeft = "1em"
+            const { el: reqPre, set: reqPreSet } = JsonEditor(callFetch);
             const resPre = initEl("pre");
-            const { data, el } = renderFormItem(route.reqtype, true, true);
+            const { data, setData, el } = renderFormItem(route.reqtype, true, true);
             el?.classList?.add("tform");
+            const textMode = state(false);
+            async function callFetch() {
+                resPre.innerHTML = "";
+                status.innerText = "";
+                resPre.appendChild(Span("type_any", "fetching..."));
+                try
+                {
+                    const d = data();
+                    const body = textMode.v() ? reqPre.value : d ? JSON.stringify(d) : undefined;
+                    const post = body === undefined;
+                    const res = await fetch(route.url, {
+                        method: post ? "GET" : "POST",
+                        headers: post ? {} : {
+                            "Content-Type": "application/json"
+                        },
+                        body: post ? null : body,
+                    });
+                    resPre.innerHTML = "";
+                    resPre.innerText = await res.text();
+                    status.innerText = res.statusText;
+                } catch (e)
+                {
+                    resPre.innerHTML = "";
+                    resPre.appendChild(Span("type_null", e?.message));
+                    resPre.appendChild(Span("type_null", "\n"));
+                    resPre.appendChild(Span("type_null", e?.stack));
+                }
+            }
             return {
-                req: el,
+                req: Span([], [
+                    Button("btn", [
+                        showIf(textMode, v => !v, IconCode()),
+                        showIf(textMode, v => v, IconCodeOff()),
+                    ], btn => {
+                        textToReqErr.innerText = "";
+                        if (textMode.v()) {
+                            let r = true;
+                            if (reqPre.value != "") {
+                                try {
+                                    const err = setData(JSON.parse(reqPre.value));
+                                    r = !err;
+                                    if (err) textToReqErr.innerText = "Parse json error: " + err;
+                                } catch (e) {
+                                    r = false;
+                                    textToReqErr.innerText = e?.message;
+                                }
+                            }
+                            if (r) textMode.set(false);
+                        }
+                        else {
+                            reqPreSet(JSON.stringify(data(), null, 4));
+                            textMode.set(true);
+                        }
+                    }),
+                    textToReqErr,
+                    showIf(textMode, v => !v, el),
+                    showIf(textMode, v => v, reqPre),
+                ]),
                 res: Span([], [
                     status,
                     resPre,
                 ]),
-                fetch: async () => {
-                    resPre.innerHTML = "";
-                    status.innerText = "";
-                    resPre.appendChild(Span("type_any", "fetching..."));
-                    try {
-                        const body = data();
-                        // console.log(body);
-                        // resPre.innerText = JSON.stringify(body, null, 4);
-                        // return ;
-                        const res = await fetch(route.url, {
-                            method: body === undefined ? "GET" : "POST",
-                            headers: body === undefined ? {} : {
-                                "Content-Type": "application/json"
-                            },
-                            body: body === undefined ? null : JSON.stringify(body),
-                        });
-                        resPre.innerHTML = "";
-                        resPre.innerText = await res.text();
-                        status.innerText = res.statusText;
-                    } catch (e) {
-                        resPre.innerHTML = "";
-                        resPre.appendChild(Span("type_null", e?.message));
-                        resPre.appendChild(Span("type_null", "\n"));
-                        resPre.appendChild(Span("type_null", e?.stack));
-                    }
-                },
+                fetch: callFetch,
             }
         }
         function renderFormItem(type, unfold = false, top = false) {
             if (!type) return { data: () => undefined, el: null };
             if (type.type == "dict") {
+                const tlname = t => t.type == "tlink" ? t.name : t.type;
                 const data = [];
                 function Item() {
                     const key = renderFormItem(type.dict_type[0], true);
                     const value = renderFormItem(type.dict_type[1], true);
-                    const d = { key: key.data, value: value.data };
+                    const d = { key: key.data, setKey: key.setData, value: value.data, setValue: value.setData };
                     data.push(d);
                     return Div("tfrom_dict__item", [
                         Button("btn", [IconRemove()], btn => {
                             data.splice(data.indexOf(d), 1);
-                            btn.parentNode.parentNode.removeChild(btn.parentNode);
+                            itemBefore.parentNode.removeChild(btn.parentNode);
                         }),
                         key.el,
                         Div([], ":"),
                         value.el,
                     ]);
                 }
+                let itemBefore;
                 const collapsed = state(false);
-                return { data: () => {
-                    const d = {};
-                    for (const field of data) {
-                        d[field.key()] = field.value();
-                    }
-                    return d;
-                }, el: Span([], [
-                    showIf(collapsed, v => !v, Div("tfrom_dict", [
-                        Div([], [
-                            Span([], "{"),
-                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
-                        ]),
-                        Div([], [Button("btn", [IconAdd()], btn => {
-                            btn.parentNode.parentNode.insertBefore(Item(), btn.parentNode);
-                        })]),
-                        Div([], "}"),
-                    ])),
-                    showIf(collapsed, v => v, Div("tfrom_dict", [
-                        Div([], [
-                            Span([], "{"),
-                            Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
-                            Span([], "}"),
-                        ]),
-                    ])),
-                ]) };
+                return {
+                    data: () =>
+                    {
+                        const d = {};
+                        for (const field of data)
+                            d[field.key()] = field.value();
+                        return d;
+                    },
+                    setData: (d) => {
+                        if (typeof d != "object" || d == null) return ` not dict[${tlname(type.dict_type[0])}, ${tlname(type.dict_type[1])}]`;
+                        const keys = Object.keys(d);
+                        while (data.length > keys.length) {
+                            const item = data.pop();
+                            itemBefore.parentNode.removeChild(item.el.parentNode);
+                        }
+                        while (data.length < keys.length) {
+                            itemBefore.parentNode.insertBefore(Item(), itemBefore)
+                        }
+                        let err = null;
+                        for (const key of keys) {
+                            let r = data[key]?.setKey(v);
+                            if (r && err == null) err = ` key ${key}${r}`;
+                            r = data[key]?.setValue(d[v]);
+                            if (r && err == null) err = `.${key}${r}`;
+                        }
+                        return err;
+                    },
+                    el: Span([], [
+                        showIf(collapsed, v => !v, Div("tfrom_dict", [
+                            Div([], [
+                                Span([], "{"),
+                                !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+                            ]),
+                            Div([], [Button("btn", [IconAdd()], btn =>
+                            {
+                                itemBefore.parentNode.insertBefore(Item(), itemBefore);
+                            })], el => itemBefore = el),
+                            Div([], "}"),
+                        ])),
+                        showIf(collapsed, v => v, Div("tfrom_dict", [
+                            Div([], [
+                                Span([], "{"),
+                                Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+                                Span([], "}"),
+                            ]),
+                        ])),
+                    ]),
+                };
             }
             if (type.type == "list") {
+                const tlname = t => t.type == "tlink" ? t.name : t.type;
                 const items = [];
                 function Item() {
                     const item = renderFormItem(type.list_type, true);
@@ -1112,23 +1259,43 @@
                     return Div("tfrom_list__item", [
                         Button("btn", [IconRemove()], btn => {
                             items.splice(items.indexOf(item), 1);
-                            btn.parentNode.parentNode.removeChild(btn.parentNode);
+                            itemBefore.parentNode.removeChild(btn.parentNode);
                         }),
                         Span("tfrom_list__counter"),
                         item.el,
                     ]);
                 }
+                let itemBefore;
                 const collapsed = state(false);
-                return { data: () => items.map(it => it.data()), el: Span([], [
+                return {
+                    data: () => items.map(it => it.data()),
+                    setData: (d) => {
+                        if (!(d instanceof Array)) return ` not list[${tlname(type.list_type)}]`;
+                        while (items.length > d.length) {
+                            const item = items.pop();
+                            itemBefore.parentNode.removeChild(item.el.parentNode);
+                        }
+                        while (items.length < d.length) {
+                            itemBefore.parentNode.insertBefore(Item(), itemBefore)
+                        }
+                        let err = null;
+                        for (let i = 0; i < d.length; i++) {
+                            const v = d[i];
+                            const r = items[i]?.setData(v);
+                            if (r && err == null) err = `[${i}]${r}`;
+                        }
+                        return err;
+                    },
+                    el: Span([], [
                         showIf(collapsed, v => !v, Div("tfrom_list", [
                             Div([], [
                                 Span([], "["),
                                 !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
                             ]),
-                            Div([], [Button("btn", [IconAdd()], btn =>
+                            Div([], [Button("btn", IconAdd(), btn =>
                             {
-                                btn.parentNode.parentNode.insertBefore(Item(), btn.parentNode);
-                            })]),
+                                itemBefore.parentNode.insertBefore(Item(), itemBefore);
+                            })], el => itemBefore = el),
                             Div([], "]"),
                         ])),
                         showIf(collapsed, v => v, Div("tfrom_list", [
@@ -1142,6 +1309,7 @@
                 };
             }
             if (type.type == "tuple") {
+                const tlname = t => t.type == "tlink" ? t.name : t.type;
                 const items = [];
                 function Item(t) {
                     const item = renderFormItem(t);
@@ -1152,7 +1320,20 @@
                     ]);
                 }
                 const collapsed = state(!top);
-                return { data: () => items.map(it => it.data()), el: Span([], [
+                return {
+                    data: () => items.map(it => it.data()),
+                    setData: (d) => {
+                        if (!(d instanceof Array)) return ` not tuple[${type.tuple_type.map(t => tlname(t)).join(", ")}]`;
+                        let err = null;
+                        for (let i = 0; i < d.length; i++) {
+                            const v = d[i];
+                            const r = items[i]?.setData(v);
+                            if (r && err == null) err = `[${i}]${r}`;
+                        }
+                        if (items.length != d.length) err = ` wrong number of els: ${d.length} != ${items.length}`;
+                        return err;
+                    },
+                    el: Span([], [
                         showIf(collapsed, v => !v, Div("tfrom_list", [
                             Div([], [
                                 Span([], "["),
@@ -1171,11 +1352,13 @@
                     ]) };
             }
             if (type.type == "union") {
+                const tlname = t => t.type == "tlink" ? t.name : t.type;
                 const select = initEl("select", "tfrom_literal", [
                     type.union_type.map((v, i) => OptionEl([], i, (() =>
-                        v.type == "dict" ? `dict[${v.dict_type[0].type}, ${v.dict_type[1].type}]` :
-                        v.type == "list" ? `list[${v.list_type.type}]` :
-                        v.type == "tuple" ? `tuple[${v.tuple_type.slice(0, 2).map(t => t.type).join(", ") + (v.tuple_type.length > 2 ? ", ..." : "")}]` :
+                        v.type == "dict" ? `dict[${tlname(v.dict_type[0].type)}, ${tlname(v.dict_type[1].type)}]` :
+                        v.type == "list" ? `list[${tlname(v.list_type.type)}]` :
+                        v.type == "tlink" ? v.name.split(".").at(-1) :
+                        v.type == "tuple" ? `tuple[${v.tuple_type.slice(0, 2).map(t => tlname(t.type)).join(", ") + (v.tuple_type.length > 2 ? ", ..." : "")}]` :
                         v.type == "literal" ? v.literal.slice(0, 2).map(lv =>
                             typeof lv == "number" ? `${lv}` :
                             typeof lv == "string" ? `"${lv}"` :
@@ -1184,17 +1367,44 @@
                         v.type
                     )())),
                 ]);
-                const item = renderFormItem(type.union_type[0]);
-                select.addEventListener("input", () => {
+                let item = renderFormItem(type.union_type[0], true);
+                select.addEventListener("input", updateItem);
+                function updateItem() {
                     const t = type.union_type[select.value];
-                    const nitem = renderFormItem(t);
+                    const nitem = renderFormItem(t, true);
                     item.el.parentNode.insertBefore(nitem.el, item.el);
                     item.el.parentNode.removeChild(item.el);
-                    item.data = nitem.data;
-                    item.el = nitem.el;
-                });
+                    item = nitem;
+                }
                 return {
                     data: () => item.data(),
+                    setData: (d) => {
+                        const dt = typeof d;
+                        const searchFor = dt == "number" ? ["int", "float", "literal"] :
+                            dt == "boolean" ? ["bool", "literal"] :
+                            dt == "string" ? ["str", "literal"] :
+                            dt == null ? ["null", "literal"] :
+                            dt instanceof Array ? ["list", "tuple"] : ["tlink", "object", "dict", "union"];
+                        searchFor.push("any");
+                        const err = [];
+                        for (const tname of searchFor) {
+                            for (let i = 0; i < type.union_type.length; i++) {
+                                const t = type.union_type[i];
+                                if (t.type != tname) continue;
+                                const nitem = renderFormItem(t);
+                                const r = nitem.setData(d);
+                                if (r) {
+                                    err.push(select.children[i].innerText + r);
+                                    continue;
+                                }
+                                select.value = i;
+                                updateItem();
+                                item.setData(d);
+                                return null;
+                            }
+                        }
+                        return " not " + Array.from(select.children).map(el => el.innerText).join(" | ") + (err.length > 0 ? "\n" + err.join("\n") : "");
+                    },
                     el: Span("tfrom_union", [
                         select,
                         item.el,
@@ -1219,6 +1429,12 @@
                     data: () => type.type == "int" ?
                         parseInt(input.value || "0", 10) :
                         parseFloat(input.value || "0", 10),
+                    setData: (d) => {
+                        if (typeof d != "number") return " not " + type.type;
+                        input.value = `${type.type == "int" ? Math.trunc(d) : d}`;
+                        upd();
+                        return null;
+                    },
                     el: input,
                 };
             }
@@ -1227,7 +1443,13 @@
                 const elt = initEl("textarea");
                 el.addEventListener("input", () => elt.value = el.value);
                 elt.addEventListener("input", () => el.value = elt.value);
-                return { data: () => elt.value, el: Span("tfrom_string", [
+                return { data: () => elt.value, setData: (d) => {
+                    if (typeof d != "string") return " not string";
+                    elt.value = d;
+                    el.value = d;
+                    upd();
+                    return null;
+                }, el: Span("tfrom_string", [
                     Span([], '"'),
                     el,
                     Span([], '"'),
@@ -1252,13 +1474,18 @@
                 const cbx = Input([], "checkbox");
                 return {
                     data: () => cbx.checked,
+                    setData: (d) => {
+                        if (typeof d != "boolean") return " not boolean";
+                        cbx.checked = d;
+                        return null;
+                    },
                     el: initEl("label", "tfrom_checkbox", [
                         cbx,
                         Span(),
                     ])
                 }
             }
-            if (type.type == "null") return ({ data: () => null, el: Span("type_null", "null") });
+            if (type.type == "null") return ({ data: () => null, setData: (d) => d == null ? null : " not null", el: Span("type_null", "null") });
             if (type.type == "literal") {
                 const el = initEl("select", "tfrom_literal", [
                     type.literal.map((v, i) =>
@@ -1278,27 +1505,49 @@
                 }
                 el.addEventListener("input", onInput);
                 onInput();
-                return { data: () => type.literal[el.value], el };
+                return {
+                    data: () => type.literal[el.value],
+                    setData: (d) => {
+                        const i = type.literal.indexOf(d);
+                        if (i >= 0) {
+                            el.value = i;
+                            return null;
+                        };
+                        return " not " + type.literal.map(lv =>
+                            typeof lv == "number" ? `${lv}` :
+                            typeof lv == "string" ? `"${lv}"` :
+                            typeof lv == "boolean" ? lv ? "true" : "false" :
+                            `${lv}`).join(" | ");
+                    },
+                    el: type.literal.length > 1 ? el : Span(el.className.split(" "), el.innerText),
+                };
             }
             if (type.type == "any") {
                 const el = initEl("textarea", "tfrom_any");
                 return { data: () => {
                     try { return JSON.parse(el.value);}
                     catch { return el.value }
-                }, el };
+                }, setData: (d) => null, el };
             }
             if (type.type == "tlink") {
                 if (unfold) return renderFormItem(types[type.name], unfold, top);
-                let item;
+                function open() {
+                    if (item) return;
+                    item = renderFormItem(types[type.name]);
+                    el.parentNode.appendChild(item.el);
+                    el.parentNode.removeChild(el);
+                }
+                let el, item;
                 return {
                     data: () => item?.data(),
+                    setData: (d) => {
+                        open();
+                        return item?.setData(d);
+                    },
                     el: Span([], [
-                        Span("link", `{<${type.name.split(".").at(-1)}>}`, el => {
-                            el.addEventListener("click", () => {
-                                item = renderFormItem(types[type.name]);
-                                el.parentNode.appendChild(item.el);
-                                el.parentNode.removeChild(el);
-                            });
+                        Span("link", `{<${type.name.split(".").at(-1)}>}`, btn => {
+                            el = btn;
+                            btn.addEventListener("click", open);
                         })
                     ])
                 }
@@ -1308,7 +1557,11 @@
                 function Item(field) {
                     const value = renderFormItem(field.type);
                     const isUndefined = state(!!field.optional);
-                    data[field.name] = () => isUndefined.v() ? undefined : value.data();
+                    data[field.name] = {
+                        data: () => isUndefined.v() ? undefined : value.data(),
+                        setData: (d) => d === undefined ? isUndefined.set(true) : value.setData(d),
+                    };
+                    if (field.default !== undefined) value.setData(field.default);
                     return Div("tfrom_object__item", [
                         Span("type_var", field.name),
                         field.optional && Input("checkbox", "checkbox", null, cbx => {
@@ -1327,10 +1580,28 @@
                 return { data: () => {
                     const d = {};
                     for (const field in data) {
-                        d[field] = data[field]();
+                        d[field] = data[field].data();
                     }
                     return d;
-                }, el: Span([], [
+                }, setData: (d) => {
+                    if (typeof d != "object") return false;
+                    let err = null;
+                    const opt = type.object_fields.filter(v => v.optional);
+                    const req = type.object_fields.filter(v => !v.optional);
+                    for (const key of Object.keys(d)) {
+                        if (!(key in data)) continue;
+                        const i = opt.findIndex(v => v.name == key);
+                        if (i >= 0) opt.splice(i, 1);
+                        const j = req.findIndex(v => v.name == key);
+                        if (j >= 0) req.splice(j, 1);
+                        const r = data[key].setData(d[key]);
+                        if (r && err == null) err = `${top ? type.name?.split(".")?.at(-1) || "obj" : ""}.${key}${r}`;
+                    }
+                    opt.forEach(v => data[v.name].setData(undefined));
+                    if (req.length > 0) err = ` missing fields: ${req.map(v => v.name).join(", ")}`;
+                    return err;
+                },
+                el: Span([], [
                     showIf(collapsed, v => !v, Div("tfrom_object", [
                         Div([], [
                             Span([], "{"),
@@ -1348,7 +1619,7 @@
                     ])),
                 ])};
             }
-            return { data: () => undefined, el: Span("type_type", "unknown") };
+            return { data: () => undefined, el: Span("type_type", "unknown"), setData: (d) => null };
         }
     </script>
     <!-- pages -->
@@ -1357,7 +1628,7 @@
         routes.forEach(route => { route.module = route.name.split(".").slice(0, -1).join(".") });
         routes.sort((a, b) => (a.module > b.module) ? 1 : ((b.module > a.module) ? -1 : a.line - b.line))
         routes.forEach((route) => {
-            const mode = state("send");
+            const mode = state("normal");
             const fetcher = useFetcher(route);
             routesEl.appendChild(Card((route.reqtype ? "POST " : "GET ") + route.url, route.url, [
                 Div("boxes", [
@@ -1368,8 +1639,8 @@
                     Div([], `route: ${route.route}`),
                     dev && Div([], Link("link", `${route.module}:${route.line}`, vscodeLink(route.name, route.line))),
                     Span("flexGrow"),
-                    showIf(mode, v => v == "normal", Button("btn", [IconCode()], () => mode.set("send"))),
-                    showIf(mode, v => v != "normal", Button("btn", [IconCodeOff()], () => mode.set("normal"))),
+                    showIf(mode, v => v == "normal", Button("btn", [IconSend()], () => mode.set("send"))),
+                    showIf(mode, v => v != "normal", Button("btn", [IconCode()], () => mode.set("normal"))),
                     showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
                     showIf(mode, v => v == "send", Button("btn", [IconSend()], fetcher.fetch)),
                 ]),

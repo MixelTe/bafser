@@ -1,5 +1,6 @@
 import json
 from collections.abc import Callable as CallableClass
+from dataclasses import dataclass
 from datetime import datetime
 from types import NoneType, UnionType
 from typing import Any, Callable, Literal, TypeVar, Union, get_args, get_origin, get_type_hints
@@ -10,6 +11,28 @@ from .utils import get_json_list, response_msg
 from .utils.get_json_values_from_req import get_json_from_req
 
 
+class Undefined:
+    def __repr__(self) -> str:
+        return "Undefined"
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
+
+undefined = Undefined()
+type JsonOpt[T] = T | Undefined
+
+
+class JsonParseError(Exception):
+    pass
+
+
+@dataclass
+class JsonField:
+    default: Any
+    desc: str | None
+
+
 class JsonObj:
     """
     Working with json via obj::
@@ -18,6 +41,8 @@ class JsonObj:
             value: int  # required field
             isCool: JsonOpt[bool]  # optional field
             name: str = "anonym"  # optional field with default value
+            name: str = JsonObj.field("anonym", desc="The name of obj")  # same as prev but with description
+            value: int = JsonObj.field(desc="Required field with description")
             some2: JsonOpt[SomeObj2]  # nested JsonObjs are supported
             some: JsonOpt["SomeObj"]  # recursive JsonObjs are supported
             one = 1  # ignored if no type alias
@@ -89,6 +114,8 @@ class JsonObj:
         get_type_hints() -> dict[str, Any]
         get_field_types() -> dict[str, Any]  # JsonOpt[T] replaced with T
         get_optional_fields() -> list[str]  # list of JsonOpt[T] fields
+        get_field_descriptions() -> dict[str, str]
+        get_field_defaults() -> dict[str, Any]
 
     Unions are supported::
 
@@ -105,6 +132,11 @@ class JsonObj:
     __repr_fields__: list[str] | None = None
     __datetime_parser__: Callable[[Any], datetime] = datetime.fromisoformat
     __datetime_serializer__: Callable[[datetime], Any] = datetime.isoformat
+
+    @staticmethod
+    def field(default_value: Any = undefined, *, desc: str | None = None) -> Any:
+        """Configure object field"""
+        return JsonField(default=default_value, desc=desc)
 
     def __init__(self, json: object):
         """Create obj from `json: dict[str, Any]` (without validation)"""
@@ -182,7 +214,19 @@ class JsonObj:
             cls.__get_type_hints__()
         return cls.__optional_fields__
 
+    @classmethod
+    def get_field_descriptions(cls):
+        if cls.__type_hints__ is None:
+            cls.__get_type_hints__()
+        return {k: v.desc for k, v in cls.__fields__.items() if v.desc is not None}
+
+    @classmethod
+    def get_field_defaults(cls):
+        type_hints = cls.get_type_hints()
+        return {k: getattr(cls, k) for k in type_hints if hasattr(cls, k)}
+
     __type_hints__: dict[str, Any] | None = None
+    __fields__: dict[str, JsonField] = {}
     __field_types__: dict[str, Any] = {}
     __optional_fields__: list[str] = []
 
@@ -202,6 +246,15 @@ class JsonObj:
                 cls.__optional_fields__.append(k)
                 t = targs[0]
             cls.__field_types__[k] = t
+
+        for k in type_hints:
+            if not hasattr(cls, k):
+                continue
+            v = getattr(cls, k)
+            if isinstance(v, JsonField):
+                cls.__fields__[k] = v
+                setattr(cls, k, v.default)
+
         return type_hints
 
     @classmethod
@@ -366,25 +419,6 @@ class JsonObj:
         """
         return jsonify(self.json())
 
-    @staticmethod
-    def field():
-        pass
-
-
-class JsonParseError(Exception):
-    pass
-
-
-class Undefined:
-    def __repr__(self) -> str:
-        return "Undefined"
-
-    def __str__(self) -> str:
-        return self.__repr__()
-
-
-undefined = Undefined()
-type JsonOpt[T] = T | Undefined
 
 type ValidateType = dict[str, ValidateType] | int | float | bool | str | object | None | list[Any]
 TC = TypeVar("TC", bound=ValidateType)
@@ -393,6 +427,8 @@ TC = TypeVar("TC", bound=ValidateType)
 def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None] | tuple[None, str]:
     """Supports int, float, bool, str, object, None, list, dict, list['type'],
     dict['type', 'type'], Union[...], TypedDict, JsonObj, JsonOpt, Literal"""
+    if otype is Any:  # type: ignore
+        return obj, None  # type: ignore
     # simple type
     try:
         isinstance(obj, otype)

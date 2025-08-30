@@ -1,7 +1,7 @@
 from test.data import Operations
 from test.data.img import ImageJson, Img
 from test.data.user import User
-from typing import Literal, NotRequired, TypedDict
+from typing import Any, Literal, NotRequired, TypedDict
 
 from flask import Blueprint, send_from_directory
 from flask_jwt_extended import jwt_required  # type: ignore
@@ -57,14 +57,15 @@ def test_post():  # type: ignore
 
 
 class SomeObj2(JsonObj):
-    value: int
+    value: int = 5
     isCool: JsonOpt[bool]
 
 
 class SomeObj(JsonObj):
-    name: str
+    name: str = JsonObj.field("qq", desc="The name of obj")
+    aa: Any
     keys: JsonOpt[list[int | str]]
-    v: list[list[SomeObj2]]
+    v: list[list[SomeObj2]] = [[SomeObj2.new()]]
 
 
 class SomeDict(TypedDict):

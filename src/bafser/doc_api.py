@@ -8,7 +8,7 @@ from typing import Any, Literal, Mapping, Union, get_args, get_origin, get_type_
 import jinja2
 from flask import Flask, render_template
 
-from .jsonobj import JsonObj, JsonOpt, type_name
+from .jsonobj import JsonObj, JsonOpt, type_name, undefined
 
 type JsonSingleKey[K: str, V] = Mapping[K, V]
 
@@ -77,12 +77,13 @@ def render_docs_page():
     template_docs = _templateEnv.get_template("docs.html")
     routes = [e.json() for e in _endpoints]
     types = {k: v.json() for k, v in _types_full.items()}
+    dev = get_app_config().DEV_MODE
     return render_template(template_docs,
                            routes=json.dumps(routes),
                            types=json.dumps(types),
-                           loc=os.getcwd().replace("\\", "/"),
-                           locb=_loc.replace("\\", "/"),
-                           dev=get_app_config().DEV_MODE
+                           loc=os.getcwd().replace("\\", "/") if dev else "",
+                           locb=_loc.replace("\\", "/") if dev else "",
+                           dev=dev
                            )
 
 
@@ -199,6 +200,7 @@ class TypeInfoField(JsonObj):
     type: TypeInfo
     optional: bool = False
     desc: str | None = None
+    default: JsonOpt[Any]
 
 
 def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
@@ -240,10 +242,14 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         ])
 
     optional_fields: list[str] = []
+    field_descriptions: dict[str, str] = {}
+    field_defaults: dict[str, Any] = {}
     try:
         if issubclass(otype, JsonObj):
             type_hints = otype.get_field_types()
             optional_fields = otype.get_optional_fields()
+            field_descriptions = otype.get_field_descriptions()
+            field_defaults = otype.get_field_defaults()
         else:
             type_hints = get_type_hints(otype)
             optional_fields = otype.__optional_keys__  # type: ignore
@@ -260,7 +266,13 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         tinfo = TypeInfo.new(type="object", name=tname, line=line)
         types[tname] = tinfo
         tinfo.object_fields = [
-            TypeInfoField.new(name=k, type=type_info(t, types), optional=k in optional_fields)
+            TypeInfoField.new(
+                name=k,
+                type=type_info(t, types),
+                optional=k in optional_fields,
+                desc=field_descriptions.get(k, None),
+                default=field_defaults.get(k, undefined),
+            )
             for k, t in type_hints.items()
         ]
 
