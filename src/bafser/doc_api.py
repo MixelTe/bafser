@@ -8,7 +8,7 @@ from typing import Any, Literal, Mapping, Union, get_args, get_origin, get_type_
 import jinja2
 from flask import Flask, render_template
 
-from .jsonobj import JsonObj, JsonOpt, type_name, undefined
+from .jsonobj import JsonObj, JsonOpt, Undefined, type_name
 
 type JsonSingleKey[K: str, V] = Mapping[K, V]
 
@@ -48,7 +48,7 @@ def init_api_docs(app: Flask):
         methods = ""
         if rule.methods is not None:
             methods = " ".join(rule.methods - set([M.HEAD, M.OPTIONS]))
-        endpoint = EndpointInfo.new(route=rule.endpoint, url=route, name=fn.__module__ + "." + fn.__name__, line=line, methods=methods)
+        endpoint = EndpointInfo(route=rule.endpoint, url=route, name=fn.__module__ + "." + fn.__name__, line=line, methods=methods)
         if desc is not None:
             d["__desc__"] = desc
             endpoint.desc = desc
@@ -181,23 +181,23 @@ class EndpointInfo(JsonObj):
     name: str
     methods: str
     line: int
-    reqtype: JsonOpt["TypeInfo"]
-    restype: JsonOpt["TypeInfo"]
-    desc: JsonOpt[str]
-    perms: JsonOpt[str]
-    nojwt: JsonOpt[bool]
+    reqtype: JsonOpt["TypeInfo"] = Undefined
+    restype: JsonOpt["TypeInfo"] = Undefined
+    desc: JsonOpt[str] = Undefined
+    perms: JsonOpt[str] = Undefined
+    nojwt: JsonOpt[bool] = Undefined
 
 
 class TypeInfo(JsonObj):
-    name: JsonOpt[str]
-    line: JsonOpt[int]
+    name: JsonOpt[str] = Undefined
+    line: JsonOpt[int] = Undefined
     type: Literal["tlink", "int", "float", "bool", "str", "null", "any", "literal", "list", "tuple", "dict", "union", "object"]
-    list_type: JsonOpt["TypeInfo"]
-    tuple_type: JsonOpt[list["TypeInfo"]]
-    dict_type: JsonOpt[tuple["TypeInfo", "TypeInfo"]]
-    union_type: JsonOpt[list["TypeInfo"]]
-    literal: JsonOpt[list[str | int | bool | None]]
-    object_fields: JsonOpt[list["TypeInfoField"]]
+    list_type: JsonOpt["TypeInfo"] = Undefined
+    tuple_type: JsonOpt[list["TypeInfo"]] = Undefined
+    dict_type: JsonOpt[tuple["TypeInfo", "TypeInfo"]] = Undefined
+    union_type: JsonOpt[list["TypeInfo"]] = Undefined
+    literal: JsonOpt[list[str | int | bool | None]] = Undefined
+    object_fields: JsonOpt[list["TypeInfoField"]] = Undefined
 
 
 class TypeInfoField(JsonObj):
@@ -205,45 +205,45 @@ class TypeInfoField(JsonObj):
     type: TypeInfo
     optional: bool = False
     desc: str | None = None
-    default: JsonOpt[Any]
+    default: JsonOpt[Any] = Undefined
 
 
 def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
     if otype == int:
-        return TypeInfo.new(type="int")
+        return TypeInfo(type="int")
     if otype == float:
-        return TypeInfo.new(type="float")
+        return TypeInfo(type="float")
     if otype == bool:
-        return TypeInfo.new(type="bool")
+        return TypeInfo(type="bool")
     if otype == str:
-        return TypeInfo.new(type="str")
+        return TypeInfo(type="str")
     if otype in (None, NoneType):
-        return TypeInfo.new(type="null")
+        return TypeInfo(type="null")
     if otype == Any:
-        return TypeInfo.new(type="any")
+        return TypeInfo(type="any")
 
     torigin = get_origin(otype)
     targs = get_args(otype)
     if torigin is list or otype is list:
         if len(targs) != 1:
-            return TypeInfo.new(type="list", list_type=type_info(Any, types))
-        return TypeInfo.new(type="list", list_type=type_info(targs[0], types))
+            return TypeInfo(type="list", list_type=type_info(Any, types))
+        return TypeInfo(type="list", list_type=type_info(targs[0], types))
     if torigin is tuple or otype is tuple:
-        return TypeInfo.new(type="tuple", tuple_type=[type_info(t, types) for t in targs])
+        return TypeInfo(type="tuple", tuple_type=[type_info(t, types) for t in targs])
     if torigin is dict or otype is dict:
         if len(targs) != 2:
-            return TypeInfo.new(type="dict", dict_type=(type_info(Any, types), type_info(Any, types)))
-        return TypeInfo.new(type="dict", dict_type=(type_info(targs[0], types), type_info(targs[1], types)))
+            return TypeInfo(type="dict", dict_type=(type_info(Any, types), type_info(Any, types)))
+        return TypeInfo(type="dict", dict_type=(type_info(targs[0], types), type_info(targs[1], types)))
     if torigin in (UnionType, Union):
-        return TypeInfo.new(type="union", union_type=[type_info(t, types) for t in targs])
+        return TypeInfo(type="union", union_type=[type_info(t, types) for t in targs])
     if torigin is Literal:
-        return TypeInfo.new(type="literal", literal=targs)
+        return TypeInfo(type="literal", literal=[(v if type(v) in (str, int, bool, None) else str(v)) for v in targs])
     if torigin is JsonSingleKey:
         k = targs[0]
         if get_origin(k) is Literal:
             k = get_args(k)[0]
-        return TypeInfo.new(type="object", object_fields=[
-            TypeInfoField.new(name=k, type=type_info(targs[1], types))
+        return TypeInfo(type="object", object_fields=[
+            TypeInfoField(name=k, type=type_info(targs[1], types))
         ])
 
     optional_fields: list[str] = []
@@ -268,17 +268,17 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         line = 0
     tname = otype.__module__ + "." + otype.__name__
     if tname not in types:
-        tinfo = TypeInfo.new(type="object", name=tname, line=line)
+        tinfo = TypeInfo(type="object", name=tname, line=line)
         types[tname] = tinfo
         tinfo.object_fields = [
-            TypeInfoField.new(
+            TypeInfoField(
                 name=k,
                 type=type_info(t, types),
                 optional=k in optional_fields,
                 desc=field_descriptions.get(k, None),
-                default=field_defaults.get(k, undefined),
+                default=field_defaults.get(k, Undefined),
             )
             for k, t in type_hints.items()
         ]
 
-    return TypeInfo.new(type="tlink", name=tname)
+    return TypeInfo(type="tlink", name=tname)

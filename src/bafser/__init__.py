@@ -38,7 +38,7 @@ from .utils.use_user import use_user
 from .app import AppConfig, create_app, update_message_to_frontend, get_app_config
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
-from .jsonobj import JsonObj, JsonOpt, undefined as Undefined, JsonParseError
+from .jsonobj import JsonObj, JsonOpt, Undefined, JsonParseError
 from .doc_api import doc_api, get_api_docs, JsonSingleKey, render_docs_page
 
 from .db_session import SqlAlchemyBase

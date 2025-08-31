@@ -8,8 +8,8 @@ from flask_jwt_extended import jwt_required  # type: ignore
 from sqlalchemy.orm import Session
 
 import bafser_config
-from bafser import (JsonObj, JsonOpt, JsonSingleKey, UserDict, doc_api, get_api_docs, get_app_config, get_json_values_from_req, permission_required,
-                    render_docs_page, response_msg, use_db_session, use_user)
+from bafser import (JsonObj, JsonOpt, JsonSingleKey, Undefined, UserDict, doc_api, get_api_docs, get_app_config, get_json_values_from_req,
+                    permission_required, render_docs_page, response_msg, use_db_session, use_user)
 
 blueprint = Blueprint("index", __name__)
 
@@ -60,14 +60,14 @@ def test_post():  # type: ignore
 
 class SomeObj2(JsonObj):
     value: int = 5
-    isCool: JsonOpt[bool]
+    isCool: JsonOpt[bool] = Undefined
 
 
 class SomeObj(JsonObj):
-    name: str = JsonObj.field("qq", desc="The name of obj")
+    name: str = JsonObj.field(default="qq", desc="The name of obj")
     aa: Any
-    keys: JsonOpt[list[int | str]]
-    v: list[list[SomeObj2]] = [[SomeObj2.new()]]
+    keys: JsonOpt[list[int | str]] = Undefined
+    v: list[list[SomeObj2]] = JsonObj.field(default_factory=lambda: [[SomeObj2()]])
 
 
 class SomeDict(TypedDict):
@@ -86,7 +86,7 @@ class SomeObjRes(JsonObj):
 def test_post2():  # type: ignore
     # objs = get_json_list_from_req(SomeDict)
     objs = SomeObj.get_list_from_req()
-    return SomeObjRes.new(a=1, objs=objs).json()
+    return SomeObjRes(a=1, objs=objs).json()
 
 
 class SomeObj3(JsonObj):
