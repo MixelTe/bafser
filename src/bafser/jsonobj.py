@@ -329,7 +329,7 @@ class JsonObj:
             if key not in data:
                 abort(response_msg(f"{key} is undefined", 400))
             data = data[key]  # type: ignore
-        obj = cls(data)  # type: ignore
+        obj = cls.new(data)  # type: ignore
         err = obj.validate()
         if err is not None:
             abort(response_msg(err, 400))

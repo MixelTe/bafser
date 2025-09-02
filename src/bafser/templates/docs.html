@@ -1774,6 +1774,7 @@
                     ])),
                 ]);
             }
+            if (data == null) return Span("type_null", "null");
             if (typeof data == "object") {
                 const collapsed = state(false);
                 return Span([], [
