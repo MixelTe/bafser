@@ -14,30 +14,36 @@ from bafser import (JsonObj, JsonOpt, JsonSingleKey, Undefined, UserDict, doc_ap
 blueprint = Blueprint("index", __name__)
 
 
-@blueprint.route("/api")
+@blueprint.get("/api")
 def docs():
     return get_api_docs()
 
 
-@blueprint.route("/api/docs")
+@blueprint.get("/api/docs")
 def docs_page():
     if not get_app_config().DEV_MODE:
         abort(404)
     return render_docs_page()
 
 
-@blueprint.route("/")
+@blueprint.get("/")
 def index():
     return send_from_directory(bafser_config.blueprints_folder, "index.html")
 
 
-@blueprint.route("/api/user")
-@doc_api(res=UserDict)
+@blueprint.get("/api/user")
+@doc_api(res=UserDict, desc="Get current user")
+@jwt_required()
 @use_db_session
-def user(db_sess: Session):
-    u = User.get_admin(db_sess)
-    assert u
-    return u.get_dict()
+@use_user()
+def user(db_sess: Session, user: User):
+    return user.get_dict()
+
+
+@blueprint.get("/api/item/<int:itemId>/<name>")
+@doc_api(desc="Test params in url")
+def item(itemId: int, name: str):  # type: ignore
+    return {"itemId": itemId, "name": name}  # type: ignore
 
 
 class SomeDict2(TypedDict):
@@ -53,7 +59,7 @@ class SomeDict1(TypedDict):
 
 @blueprint.post("/api/post")
 def test_post():  # type: ignore
-    a, b, c, d, e, f, g, h = get_json_values_from_req(("a", int), ("b", str, "def"), ("c", bool), ("d", list, []),  # type: ignore
+    a, b, c, d, e, f, g, h = get_json_values_from_req(("a", int), ("b", str, "def"), ("c", bool), ("d", list, []),
                                                       ("e", list[int], []), ("f", dict, {}), ("g", dict[str, int], {}), ("h", SomeDict1))
     return {"a": a, "b": b, "c": c, "d": d, "e": e, "f": f, "g": g, "h": h}  # type: ignore
 

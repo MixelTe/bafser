@@ -32,7 +32,7 @@ class JsonParseError(Exception):
 @dataclass
 class JsonField:
     default: Any
-    default_factory: Callable[[], Any] | None  # add to docs
+    default_factory: Callable[[], Any] | None
     desc: str | None
     repr: bool
 
@@ -76,24 +76,26 @@ class JsonObj:
         class SomeObj(JsonObj):
             value: int  # required field
             isCool: JsonOpt[bool]  # optional field
+            isCool: JsonOpt[bool] = Undefined  # optional field in __init__ also
             name: str = "anonym"  # optional field with default value
-            name: str = JsonObj.field("anonym", desc="The name of obj")  # same as prev but with description
+            name: str = JsonObj.field(default="anonym", desc="The name of obj")  # same as prev but with description
             value: int = JsonObj.field(desc="Required field with description")
             some2: JsonOpt[SomeObj2]  # nested JsonObjs are supported
             some: JsonOpt["SomeObj"]  # recursive JsonObjs are supported
             one = 1  # ignored if no type alias
             _one: int = 1  # ignored if starts with _
+            _one: int = JsonObj.noinit_value(1)  # same but removed from __init__ type check
 
     Usage::
 
         from bafser import JsonObj, JsonOpt, Undefined, JsonParseError
 
         # no validation, only parsing
-        obj = SomeObj({"a": 1, ...})
+        obj = SomeObj(a=1, ...})
+        obj = SomeObj.new({"a": 1, ...})
         obj = SomeObj.parse('json string')
 
         # with validation
-        obj = SomeObj.new(a=1, ...)
         obj = SomeObj.get_from_req()
         obj = SomeObj.get_from_req("some_obj")
         objs = SomeObj.get_list_from_req()
@@ -104,22 +106,24 @@ class JsonObj:
         is_valid = obj.is_valid()
         # or
         obj.valid()  # raises JsonParseError if not valid
-        obj = SomeObj(json).valid()  # can be chained
+        obj = SomeObj.new(json).valid()  # can be chained
 
         # get values
         name = obj.name
-        obj.items()  # list[tuple[key, value]]
-        obj.dict()  # dict[key, value] (dont call nested JsonObj.dict())
+        obj.items()  # -> list[tuple[key, value]]
+        obj.dict()  # -> dict[key, value] (doesnt call nested JsonObj.dict())
 
         # convert to json
-        obj.json()  # dict[key, value] (call nested JsonObj.json())
-        obj.dumps()  # str
-        obj.jsonify()  # Response
+        obj.json()  # -> dict[key, value] (calls nested JsonObj.json())
+        obj.dumps()  # -> str
+        obj.jsonify()  # -> Response
 
     Override `__repr_fields__` to change __repr__::
 
         __repr_fields__ = ["name"]
         # str(obj) -> SomeObj(name='anonym')
+        # or use repr param in JsonObj.field:
+        value: int = JsonObj.field(repr=False)
 
     Override `__datetime_parser__` and `__datetime_serializer__`. Called if `_parse` and `_serialize` dont convert value::
 
@@ -170,6 +174,7 @@ class JsonObj:
     __datetime_serializer__: Callable[[datetime], Any] = _noinit_value(datetime.isoformat)
 
     field = _field
+    noinit_value = _noinit_value
 
     def __init_subclass__(cls):
         type_hints = inspect.get_annotations(cls)
@@ -320,7 +325,7 @@ class JsonObj:
     @classmethod
     def get_from_req(cls, key: str | None = None):
         """
-        Create and validate obj from request body
+        Create obj from request body. Calls `flask.abort` on validation fail.
 
         :param key: if `key` is specified, the obj data will be obtained from the json field `key` in the request body
         """
@@ -337,7 +342,7 @@ class JsonObj:
 
     @classmethod
     def get_list_from_req(cls):
-        """Create and validate list of objs from request body"""
+        """Create list of objs from request body. Calls `flask.abort` on validation fail."""
         data = get_json_from_req(list)  # type: ignore
         data, err = get_json_list(data, cls)  # type: ignore
         if err is not None:

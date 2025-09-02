@@ -224,6 +224,110 @@
         }
     </style>
     <style>
+        .group {
+            position: relative;
+        }
+        .group::before,
+        .group::after {
+            content: "";
+            z-index: 2;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0.5em;
+            height: 0.5em;
+            background: var(--c-box);
+        }
+        .group::after {
+            border: 1px solid var(--c-main);
+            border-top: none;
+            border-right: none;
+            border-bottom-left-radius: 0.5em;
+        }
+
+        .group__title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            cursor: pointer;
+        }
+        .group__title > :first-child {
+            position: relative;
+            padding: 0.2rem 1rem;
+            border: 1px solid var(--c-main);
+            border-bottom: none;
+            background: var(--c-box);
+            margin-bottom: -1px;
+            border-radius: 0.5em 0.5em 0 0;
+        }
+        .group__title > :first-child::before,
+        .group__title > :first-child::after {
+            content: "";
+            position: absolute;
+            right: -0.5em;
+            bottom: 0;
+            width: 0.5em;
+            height: 0.5em;
+            background: var(--c-box);
+        }
+        .group__title > :first-child::after {
+            border: 1px solid var(--c-main);
+            border-top: none;
+            border-right: none;
+            border-bottom-left-radius: 0.5em;
+        }
+
+        .group__title input {
+            appearance: none;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1em;
+            height: 1em;
+            cursor: pointer;
+            margin-right: 0.3em;
+        }
+        .group__title input::after {
+            content: "";
+            z-index: 2;
+            display: flex;
+            width: 45%;
+            height: 45%;
+            border: 0.15em solid var(--c-main);
+            border-top: none;
+            border-left: none;
+            border-radius: 0.1em;
+            rotate: -45deg;
+            transition: rotate 150ms;
+        }
+        .group__title input:checked::after {
+            rotate: 45deg;
+        }
+
+        .group__body {
+            display: grid;
+            grid-template-rows: 0fr;
+            overflow: hidden;
+            transition: grid-template-rows 150ms, padding 150ms;
+            padding: 0 0.5rem;
+            border-radius: 0.5em;
+            border: 1px solid var(--c-main);
+            border-top-left-radius: 0;
+        }
+        .group__title:has(*:checked) ~ .group__body {
+            grid-template-rows: 1fr;
+            padding: 0.5rem;
+        }
+        .group__body > div {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+
         .card {
             border-radius: 0.5em;
             background-color: var(--c-card);
@@ -536,11 +640,12 @@
             align-items: flex-start;
         }
 
+        .json_object__item,
         .tfrom_object__item {
             padding-left: 4ch;
         }
-        .json_object__item {
-            padding-left: 2ch;
+        .json_object__item > :first-child {
+            margin-left: -2ch;
         }
 
         .tfrom_object__item:has(> .checkbox) {
@@ -550,7 +655,7 @@
         .json_list_compact {
             flex-direction: row;
             flex-wrap: wrap;
-            gap: 0.5em;
+            gap: 0 0.5em;
         }
         .json_list_compact > .json_list__item {
             gap: 0;
@@ -693,6 +798,29 @@
             border-radius: 0.25em;
             white-space-collapse: preserve;
         }
+
+        .urlBuilder > :first-child {
+            margin-right: 1ch;
+        }
+        .urlBuilder > :last-child {
+            color: var(--c-t-str);
+            font-family: "Fira Code", 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+        }
+        .inp_number,
+        .inp_string {
+            min-width: 2ch;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--c-main);
+            outline: none;
+        }
+        .inp_number {
+            color: var(--c-t-number);
+        }
+        .inp_string {
+            color: var(--c-t-str);
+        }
     </style>
 </head>
 <body>
@@ -770,11 +898,39 @@
             if (type) input.type = type;
             if (placeholder) input.placeholder = placeholder;
             function upd() {
-                input.style.width = `${input.value.length + 0.5}ch`;
+                let ln = input.value.length;
+                if (ln == 0 && placeholder) ln = placeholder.length;
+                input.style.width = `${ln + 0.5}ch`;
             }
             input.addEventListener("input", upd);
             upd();
             return {upd, input};
+        }
+        function InputNumber(classes, float = false) {
+            const {upd, input} = InputAutoWidth(classes, "text", "0", el => {
+                el.value = 0;
+                el.addEventListener("input", () => {
+                    if (!float)
+                        el.value = el.value.replace(/[^\d]/g, "");
+                    else {
+                        el.value = el.value.replace(/[^\d\.,]/g, "").replaceAll(",", ".");
+                        const i = el.value.indexOf(".");
+                        if (i >= 0) el.value = el.value.slice(0, i + 1) + el.value.slice(i + 1).replaceAll(".", "");
+                    }
+                });
+            });
+
+            return {
+                value: () => float ?
+                    parseFloat(input.value || "0", 10) :
+                    parseInt(input.value || "0", 10),
+                set: (v) => {
+                    if (typeof v != "number" || !isFinite(v)) v = 0;
+                    input.value = `${float ? v : Math.trunc(v)}`;
+                    upd();
+                },
+                el: input,
+            };
         }
         function Button(classes, children, clickListener, fn)
         {
@@ -1100,11 +1256,12 @@
     <script>
         const _cardsCbx = [];
         addEventListener("hashchange", () => {
-            const id = location.hash.slice(1);
+            const id = decodeURIComponent(location.hash.slice(1));
             const cbx = _cardsCbx.find(v => v.id == id)?.cbx;
+            console.log(id, cbx);
             if (cbx) cbx.checked = true;
         });
-        const _onloadSelectedId = location.hash.slice(1);
+        const _onloadSelectedId = decodeURIComponent(location.hash.slice(1));
         function Card(title, id, body) {
             return Div("card", [
                 initEl("label", "card__title", [
@@ -1159,6 +1316,7 @@
     <!-- useFetcher -->
     <script>
         function useFetcher(route) {
+            const url = urlBuilder(route.url);
             const status = Span();
             status.style.paddingLeft = "1em"
             const textToReqErr = Div("type_null");
@@ -1181,13 +1339,13 @@
                 {
                     const d = data();
                     const body = textModeReq.v() ? reqPre.value : d ? JSON.stringify(d) : undefined;
-                    const post = body === undefined;
-                    const res = await fetch(route.url, {
-                        method: post ? "GET" : "POST",
-                        headers: post ? {} : {
+                    const get = !route.methods.includes("POST");
+                    const res = await fetch(url.get(), {
+                        method: get ? "GET" : "POST",
+                        headers: get ? {} : {
                             "Content-Type": "application/json"
                         },
-                        body: post ? null : body,
+                        body: get ? null : body,
                     });
                     resPreInfo.innerHTML = "";
                     const resText = await res.text();
@@ -1208,6 +1366,7 @@
                 }
             }
             return {
+                urlBuilder: url.el,
                 req: Span([], [
                     Button("btn", [
                         showIf(textModeReq, v => !v, IconCode()),
@@ -1251,6 +1410,32 @@
                 ]),
                 fetch: callFetch,
             }
+        }
+        function urlBuilder(url) {
+            if (!url.includes("<")) return { el: null, get: () => url };
+            const parts = [];
+            return { el: Div("urlBuilder", [
+                Span([], "Url: "),
+                Span([], [
+                    url.split("/").map(part => {
+                        const match = part.match(/<((([a-z])+):)?(([a-z_\d])+)>/i);
+                        if (!match) {
+                            parts.push(() => part);
+                            return Span([], part);
+                        }
+                        const type = match[2] || "string";
+                        const name = match[4] || "param";
+                        if (type == "int" || type == "float") {
+                            const { value, set, el } = InputNumber("inp_number", type == "float");
+                            parts.push(() => value());
+                            return el;
+                        }
+                        const { upd, input } = InputAutoWidth("inp_string", "text", name);
+                        parts.push(() => input.value || name);
+                        return input;
+                    }).map((el, i) => i == 0 ? el : [Span([], "/"), el]),
+                ]),
+            ]), get: () => parts.map(fn => fn()).join("/") };
         }
         function renderFormItem(type, unfold = false, top = false) {
             if (!type) return { data: () => undefined, el: null };
@@ -1485,30 +1670,16 @@
                 };
             }
             if (type.type == "int" || type.type == "float") {
-                const {upd, input} = InputAutoWidth("tfrom_number", "text", null, el => {
-                    el.value = 0;
-                    el.addEventListener("input", () => {
-                        if (type.type == "int")
-                            el.value = el.value.replace(/[^\d]/g, "");
-                        else {
-                            el.value = el.value.replace(/[^\d\.,]/g, "").replaceAll(",", ".");
-                            const i = el.value.indexOf(".");
-                            if (i >= 0) el.value = el.value.slice(0, i + 1) + el.value.slice(i + 1).replaceAll(".", "");
-                        }
-                    });
-                });
+                const { value, set, el } = InputNumber("tfrom_number", type.type == "float");
 
                 return {
-                    data: () => type.type == "int" ?
-                        parseInt(input.value || "0", 10) :
-                        parseFloat(input.value || "0", 10),
+                    data: value,
                     setData: (d) => {
                         if (typeof d != "number") return " not " + type.type;
-                        input.value = `${type.type == "int" ? Math.trunc(d) : d}`;
-                        upd();
+                        set(d);
                         return null;
                     },
-                    el: input,
+                    el,
                 };
             }
             if (type.type == "str") {
@@ -1727,6 +1898,7 @@
                 ];
             };
             if (data instanceof Array) {
+                if (data.length == 0) return Span([], "[]");
                 const compact = data.every(v => typeof v != "object");
                 const showCountFirst = compact ? 5 : 3;
                 const showCount = compact ? 10 : 5;
@@ -1810,11 +1982,14 @@
     <script>
         const routesEl = document.getElementById("routes");
         routes.forEach(route => { route.module = route.name.split(".").slice(0, -1).join(".") });
-        routes.sort((a, b) => (a.module > b.module) ? 1 : ((b.module > a.module) ? -1 : a.line - b.line))
+        routes.sort((a, b) => (a.module > b.module) ? 1 : ((b.module > a.module) ? -1 : a.line - b.line));
+        const groups = [[]];
         routes.forEach((route) => {
+            if (groups.at(-1)[0] && groups.at(-1)[0].gname != route.module)
+                groups.push([]);
             const mode = state("normal");
             const fetcher = useFetcher(route);
-            routesEl.appendChild(Card(route.methods + " " + route.url, route.url, [
+            groups.at(-1).push({ gname: route.module, el: Card(route.methods + " " + route.url, route.url, [
                 Div("boxes", [
                     Div([], [
                         Button("btn", [IconCopy()], () => navigator.clipboard.writeText(route.url)),
@@ -1823,7 +1998,7 @@
                     Div([], `route: ${route.route}`),
                     dev && Div([], Link("link", `${route.module}:${route.line}`, vscodeLink(route.name, route.line))),
                     Span("flexGrow"),
-                    showIf(mode, v => v == "normal", Button("btn", [IconSend()], () => { mode.set("send"); if (!route.reqtype) fetcher.fetch(); })),
+                    showIf(mode, v => v == "normal", Button("btn", [IconSend()], () => { mode.set("send"); if (!route.reqtype && !fetcher.urlBuilder) fetcher.fetch(); })),
                     showIf(mode, v => v != "normal", Button("btn", [IconCode()], () => mode.set("normal"))),
                     showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
                     showIf(mode, v => v == "send", Button("btn", [IconSend()], fetcher.fetch)),
@@ -1837,6 +2012,7 @@
                 ]),
                 route.desc && Div("quote", route.desc),
                 Div(),
+                showIf(mode, v => v == "send", fetcher.urlBuilder),
                 route.reqtype && Div([], [
                     Span([], "Request: "),
                     showIf(mode, v => v == "normal", renderType(route.reqtype)),
@@ -1849,7 +2025,25 @@
                     route.restype && showIf(mode, v => v == "code", renderTypeInterface(route.restype, route.name, false)),
                     showIf(mode, v => v == "send", fetcher.res),
                 ]),
-            ]));
+            ])});
+        });
+        groups.forEach((group) => {
+            if (group.length == 0) return;
+            const name = group[0].gname.split(".").at(-1);
+            let cbx;
+            routesEl.appendChild(Div("group", [
+                initEl("label", "group__title", [
+                    Div([], name),
+                    Input([], "checkbox", "", el => cbx = el),
+                ]),
+                Div("group__body", [
+                    Div([], [
+                        group.map(el => el.el),
+                    ])
+                ]),
+            ], el => {
+                cbx.checked = !!el.querySelector("input:checked");
+            }));
         });
     </script>
     <!-- types -->
