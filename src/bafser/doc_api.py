@@ -1,3 +1,4 @@
+from datetime import datetime
 import inspect
 import json
 import os
@@ -108,6 +109,10 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
         return "boolean"
     if otype == str:
         return "string"
+    if otype == object:
+        return "object"
+    if otype == datetime:
+        return "datetime"
     if otype in (None, NoneType):
         return "null"
 
@@ -191,7 +196,7 @@ class EndpointInfo(JsonObj):
 class TypeInfo(JsonObj):
     name: JsonOpt[str] = Undefined
     line: JsonOpt[int] = Undefined
-    type: Literal["tlink", "int", "float", "bool", "str", "null", "any", "literal", "list", "tuple", "dict", "union", "object"]
+    type: Literal["tlink", "int", "float", "bool", "str", "null", "any", "literal", "list", "tuple", "dict", "union", "object", "unknown"]
     list_type: JsonOpt["TypeInfo"] = Undefined
     tuple_type: JsonOpt[list["TypeInfo"]] = Undefined
     dict_type: JsonOpt[tuple["TypeInfo", "TypeInfo"]] = Undefined
@@ -221,6 +226,8 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         return TypeInfo(type="null")
     if otype == Any:
         return TypeInfo(type="any")
+    if otype == object:
+        return TypeInfo(type="object", object_fields=[])
 
     torigin = get_origin(otype)
     targs = get_args(otype)
@@ -250,17 +257,20 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
     field_descriptions: dict[str, str] = {}
     field_defaults: dict[str, Any] = {}
     try:
-        if issubclass(otype, JsonObj):
-            type_hints = otype.get_field_types()
-            optional_fields = otype.get_optional_fields()
-            field_descriptions = otype.get_field_descriptions()
-            field_defaults = otype.get_field_defaults()
-        else:
+        try:
+            if issubclass(otype, JsonObj):
+                type_hints = otype.get_field_types()
+                optional_fields = otype.get_optional_fields()
+                field_descriptions = otype.get_field_descriptions()
+                field_defaults = otype.get_field_defaults()
+            else:
+                type_hints = get_type_hints(otype)
+                optional_fields = otype.__optional_keys__  # type: ignore
+        except Exception:
             type_hints = get_type_hints(otype)
             optional_fields = otype.__optional_keys__  # type: ignore
     except Exception:
-        type_hints = get_type_hints(otype)
-        optional_fields = otype.__optional_keys__  # type: ignore
+        return TypeInfo(type="unknown")
 
     try:
         _, line = inspect.getsourcelines(otype)

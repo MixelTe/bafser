@@ -18,11 +18,25 @@ class UndefinedMeta(type):
 
 
 class Undefined(metaclass=UndefinedMeta):
+    type T = type[Undefined]
+
     def __init__(self):
         raise Exception("bafser: Undefined cant be instantiated")
 
+    @staticmethod
+    def cast[T](v: T | type["Undefined"]) -> T:
+        """Remove Undefined from type hint"""
+        return v  # type: ignore
 
-type JsonOpt[T] = T | type[Undefined]
+    @staticmethod
+    def defined[T](v: T | type["Undefined"]) -> tuple[T, bool]:
+        """Returns same value with Undefined removed from type hint and True if value is not Undefined"""
+        if v is Undefined:
+            return v, False  # type: ignore
+        return v, True  # type: ignore
+
+
+type JsonOpt[T] = T | Undefined.T
 
 
 class JsonParseError(Exception):

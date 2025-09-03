@@ -1114,6 +1114,7 @@
                 ]);
             if (type.type == "tlink") return type.name in types ? renderType(types[type.name]) : Div("type", "Unknown");
             if (type.type != "object") return Div(["type", "type_type"], "unknown");
+            if (type.object_fields.length == 0) return Div(["type", "type_type"], "object");
             let shortEl, fullEl;
             const name = type.name?.split(".")?.at(-1) || "object";
             const typeEl = Div("type", [
@@ -1165,7 +1166,7 @@
         function renderTypeInterface(type, routeName="", isReq=false) {
             if (type.type == "tlink") type = types[type.name];
             const name = type.name?.split(".")?.at(-1) || snakeToCamel(routeName.split(".").at(-1)) + (isReq ? "Req" : "Res");
-            const el = type.type != "object" ?
+            const el = type.type != "object" || type.object_fields.length == 0 ?
                 initEl("pre", [], [
                     Span("type_operator", "type"),
                     Span([], " "),
@@ -1229,6 +1230,7 @@
             ];
             if (type.type == "tlink") return Span("type_type", type.name.split(".").at(-1));
             if (type.type != "object") return Span("type_type", "unknown");
+            if (type.object_fields.length == 0) return Span("type_type", "object");
 
             indent++;
             const indentEl = () => Span([], new Array(indent).fill("\t").join(""));
@@ -1797,6 +1799,7 @@
                 }
             }
             if (type.type == "object") {
+                if (type.object_fields.length == 0) return renderFormItem({type: "dict", dict_type: [{type: "str"}, {type: "any"}]}, unfold, top);
                 const data = {};
                 function Item(field) {
                     const value = renderFormItem(field.type);
