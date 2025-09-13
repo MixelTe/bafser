@@ -1,10 +1,12 @@
 import os
 import re
+
 from alembic import command
 from alembic.script import ScriptDirectory
-from ..alembic import create_alembic_config
 
 import bafser_config
+
+from ..alembic import create_alembic_config
 
 
 def init(args: list[str]):
@@ -35,10 +37,16 @@ def revision(args: list[str]):
     command.revision(alembic_cfg, name, True)
 
 
+def upgrade(args: list[str]):
+    alembic_cfg = create_alembic_config(dev=True)
+    command.upgrade(alembic_cfg, "head")
+
+
 def run(args: list[str]):
     scripts = [
         ("init", "create folders and files", init),
         ("revision", "[name] : autogenerate migration script", revision),
+        ("upgrade", "upgrade head", upgrade),
     ]
 
     if len(args) == 0 or args[0] not in map(lambda v: v[0], scripts):

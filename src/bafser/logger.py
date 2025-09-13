@@ -201,14 +201,14 @@ class ParametrizedLogger:
     def _get_args(self) -> object:
         raise Exception("not implemented")
 
-    def info(self, msg: str):
+    def info(self, msg: object):
         self.__log(self.logger.info, msg)
 
-    def error(self, msg: str):
+    def error(self, msg: object):
         self.__log(self.logger.error, msg)
 
-    def warning(self, msg: str):
+    def warning(self, msg: object):
         self.__log(self.logger.warning, msg)
 
-    def __log(self, fn: Any, msg: str):
+    def __log(self, fn: Any, msg: object):
         fn(msg, self._get_args(), stacklevel=3)

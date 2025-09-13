@@ -22,7 +22,7 @@ or manually
 
 copy `bafser_config.example.py` to project root as `bafser_config.py`
 
-init alimbic `bafser alimbic init`
+init alimbic `bafser alembic init`
 
 ### create files:
 

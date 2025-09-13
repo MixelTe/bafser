@@ -103,9 +103,9 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def is_admin(self):
         return self.has_role(RolesBase.admin)
 
-    @classmethod
-    def get_fake_system(cls):
-        u = cls(name="System", login="system")
+    @staticmethod
+    def get_fake_system():
+        u = UserBase(name="System", login="system")
         u.id = 1
         return u
 

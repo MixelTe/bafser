@@ -236,6 +236,8 @@
             bottom: 0;
             width: 0.5em;
             height: 0.5em;
+        }
+        .group::before {
             background: var(--c-box);
         }
         .group::after {
@@ -243,6 +245,7 @@
             border-top: none;
             border-right: none;
             border-bottom-left-radius: 0.5em;
+            width: calc(100% - 0.5em);
         }
 
         .group__title {
@@ -1341,13 +1344,13 @@
                 {
                     const d = data();
                     const body = textModeReq.v() ? reqPre.value : d ? JSON.stringify(d) : undefined;
-                    const get = !route.methods.includes("POST");
+                    const method = route.methods.split(" ")[0].toUpperCase();
                     const res = await fetch(url.get(), {
-                        method: get ? "GET" : "POST",
-                        headers: get ? {} : {
+                        method: method,
+                        headers: method == "GET" ? {} : {
                             "Content-Type": "application/json"
                         },
-                        body: get ? null : body,
+                        body: method == "GET" ? null : body,
                     });
                     resPreInfo.innerHTML = "";
                     const resText = await res.text();

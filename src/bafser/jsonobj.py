@@ -4,7 +4,7 @@ from collections.abc import Callable as CallableClass
 from dataclasses import dataclass
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import Any, Callable, Literal, TypeVar, Union, dataclass_transform, get_args, get_origin, get_type_hints, overload
+from typing import Any, Callable, Literal, TypeGuard, TypeVar, Union, dataclass_transform, get_args, get_origin, get_type_hints, overload
 
 from flask import abort, jsonify
 
@@ -29,11 +29,11 @@ class Undefined(metaclass=UndefinedMeta):
         return v  # type: ignore
 
     @staticmethod
-    def defined[T](v: T | type["Undefined"]) -> tuple[T, bool]:
-        """Returns same value with Undefined removed from type hint and True if value is not Undefined"""
+    def defined[T](v: T | type["Undefined"]) -> TypeGuard[T]:
+        """Returns true if value is not Undefined"""
         if v is Undefined:
-            return v, False  # type: ignore
-        return v, True  # type: ignore
+            return False
+        return True
 
 
 type JsonOpt[T] = T | Undefined.T
