@@ -250,12 +250,12 @@ class JsonObj:
             if r is not None:
                 k, v = r
                 t = type_hints.get(k, None)
+                if k not in type_hints:
+                    return k, v
         # except Exception as x:
         except JsonParseError as x:
             self.__exceptions__.append((k, x))
-
-        if k not in type_hints:
-            return None, v
+            return k, v
 
         if isinstance(t, TypeAliasType):
             t = t.__value__
