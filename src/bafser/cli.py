@@ -9,7 +9,7 @@ def cli():
         ("add_user", "login password name roleId [dev]"),
         ("change_user_password", "login new_password [dev]"),
         ("remove_user_role", "userId roleId [dev]"),
-        ("alembic", "<init | revision>"),
+        ("alembic", "<init | revision | upgrade>"),
     ]
 
     if len(sys.argv) < 2 or sys.argv[1] not in map(lambda v: v[0], scripts):

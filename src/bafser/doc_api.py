@@ -20,7 +20,7 @@ _types_full: dict[str, "TypeInfo"] = {}
 
 _loc = os.path.abspath(os.path.dirname(__file__))
 _templateEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(_loc, "templates")))
-template_docs = _templateEnv.get_template("docs.html")
+_template_docs = _templateEnv.get_template("docs.html")
 
 
 def init_api_docs(app: Flask):
@@ -79,11 +79,11 @@ def get_api_docs() -> dict[str, Any]:
 def render_docs_page():
     from . import get_app_config
 
-    template_docs = _templateEnv.get_template("docs.html")
+    # _template_docs = _templateEnv.get_template("docs.html")
     routes = [e.json() for e in _endpoints]
     types = {k: v.json() for k, v in _types_full.items()}
     dev = get_app_config().DEV_MODE
-    return render_template(template_docs,
+    return render_template(_template_docs,
                            routes=json.dumps(routes),
                            types=json.dumps(types),
                            loc=os.getcwd().replace("\\", "/") if dev else "",

@@ -35,6 +35,13 @@ class Undefined(metaclass=UndefinedMeta):
             return False
         return True
 
+    @staticmethod
+    def none[T](v: T | type["Undefined"]) -> T | None:
+        """Returns None if value is Undefined"""
+        if v is Undefined:
+            return None
+        return Undefined.cast(v)
+
 
 type JsonOpt[T] = T | Undefined.T
 
@@ -139,7 +146,7 @@ class JsonObj:
         # or use repr param in JsonObj.field:
         value: int = JsonObj.field(repr=False)
 
-    Override `__datetime_parser__` and `__datetime_serializer__`. Called if `_parse` and `_serialize` dont convert value::
+    Override `__datetime_parser__` and `__datetime_serializer__`. Called if `_parse` and `_serialize` didt convert value::
 
         __datetime_parser__ = datetime.fromisoformat
         __datetime_serializer__ = datetime.isoformat
@@ -214,11 +221,11 @@ class JsonObj:
         # self._exceptions: list[tuple[str, Exception]] = []
         self.__exceptions__: list[tuple[str, JsonParseError]] = []
 
-        type_hints = self.get_type_hints()
         for k, v in self.__fields__.items():
             if v.default_factory:
                 setattr(self, k, v.default_factory())
 
+        type_hints = self.get_field_types()
         for k, v in data.items():
             if not isinstance(v, object):
                 continue
@@ -236,7 +243,7 @@ class JsonObj:
         return cls()
 
     def __parse_item__(self, k: str, v: object, t: Any, json: dict[str, Any]) -> tuple[str | None, Any]:
-        type_hints = self.get_type_hints()
+        type_hints = self.get_field_types()
         try:
             r = self._parse(k, v, json)
             if r is not None:
@@ -254,7 +261,7 @@ class JsonObj:
         if isinstance(t, type) and issubclass(t, JsonObj):
             if not isinstance(v, JsonObj):
                 v = t.new(v)
-        elif torigin is list and len(targs) == 1 and isinstance(v, list):
+        elif torigin in (list, tuple) and len(targs) == 1 and isinstance(v, (list, tuple)):
             t = targs[0]
             l: list[Any] = []
             for el in v:  # pyright: ignore[reportUnknownVariableType]
@@ -264,6 +271,24 @@ class JsonObj:
                 if el is not Undefined and k2 is not None:
                     l.append(el)
             v = l
+            if torigin is tuple:
+                v = tuple(v)
+        elif torigin is dict and len(targs) == 2 and isinstance(v, dict):
+            t = targs[1]
+            d: dict[Any, Any] = {}
+            for elk, el in v.items():  # pyright: ignore[reportUnknownVariableType]
+                if not isinstance(el, object):
+                    continue
+                k2, el = self.__parse_item__(k, el, t, json)
+                if el is not Undefined and k2 is not None:
+                    d[elk] = el
+            v = d
+        elif torigin in (UnionType, Union):
+            for t in targs:
+                _, err = validate_type(v, t)
+                if err is None:
+                    _, v = self.__parse_item__(k, v, t, json)
+                    break
         elif t == datetime and not isinstance(v, datetime):
             try:
                 v = self.__datetime_parser__(v)
