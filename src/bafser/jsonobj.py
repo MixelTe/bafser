@@ -4,7 +4,8 @@ from collections.abc import Callable as CallableClass
 from dataclasses import dataclass
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import Any, Callable, Literal, TypeGuard, TypeVar, Union, dataclass_transform, get_args, get_origin, get_type_hints, overload
+from typing import (Any, Callable, Literal, TypeAliasType, TypeGuard, TypeVar, Union, dataclass_transform, get_args, get_origin, get_type_hints,
+                    overload)
 
 from flask import abort, jsonify
 
@@ -256,30 +257,44 @@ class JsonObj:
         if k not in type_hints:
             return None, v
 
+        if isinstance(t, TypeAliasType):
+            t = t.__value__
+
         torigin = get_origin(t)
         targs = get_args(t)
         if isinstance(t, type) and issubclass(t, JsonObj):
             if not isinstance(v, JsonObj):
                 v = t.new(v)
-        elif torigin in (list, tuple) and len(targs) == 1 and isinstance(v, (list, tuple)):
+        elif torigin is list and len(targs) == 1 and isinstance(v, list):
             t = targs[0]
             l: list[Any] = []
-            for el in v:  # pyright: ignore[reportUnknownVariableType]
+            for i, el in enumerate(v):  # type: ignore
                 if not isinstance(el, object):
                     continue
-                k2, el = self.__parse_item__(k, el, t, json)
+                k2, el = self.__parse_item__(k + f".{i}", el, t, json)
                 if el is not Undefined and k2 is not None:
                     l.append(el)
             v = l
-            if torigin is tuple:
-                v = tuple(v)
+        elif torigin is tuple and isinstance(v, list):
+            l: list[Any] = []
+            for i in range(min(len(targs), len(v))):  # type: ignore
+                t = targs[i]
+                el = v[i]  # type: ignore
+                if not isinstance(el, object):
+                    continue
+                k2, el = self.__parse_item__(k + f".{i}", el, t, json)
+                if el is not Undefined and k2 is not None:
+                    l.append(el)
+            while len(l) < len(targs):
+                l.append(Undefined)
+            v = tuple(l)
         elif torigin is dict and len(targs) == 2 and isinstance(v, dict):
             t = targs[1]
             d: dict[Any, Any] = {}
             for elk, el in v.items():  # pyright: ignore[reportUnknownVariableType]
                 if not isinstance(el, object):
                     continue
-                k2, el = self.__parse_item__(k, el, t, json)
+                k2, el = self.__parse_item__(k + f".{elk}", el, t, json)
                 if el is not Undefined and k2 is not None:
                     d[elk] = el
             v = d
@@ -287,7 +302,7 @@ class JsonObj:
             for t in targs:
                 _, err = validate_type(v, t)
                 if err is None:
-                    _, v = self.__parse_item__(k, v, t, json)
+                    _, v = self.__parse_item__(k + f".{type_name(t)}", v, t, json)
                     break
         elif t == datetime and not isinstance(v, datetime):
             try:
@@ -509,6 +524,8 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         return obj, None  # type: ignore
     # simple type
     try:
+        if isinstance(otype, TypeAliasType):  # type: ignore
+            otype = otype.__value__
         isinstance(obj, otype)
         good_type = True
     except Exception:
