@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import bafser_config
 from bafser.scripts import alembic_init
@@ -75,7 +76,7 @@ class Operations(OperationsBase):
     pass
 """
 data_roles = """from bafser import RolesBase
-# from test.data._operations import Operations
+# from data import Operations
 
 
 class Roles(RolesBase):
@@ -110,7 +111,7 @@ class User(UserBase):
 """
 data_user_tgapi = """from bafser_tgapi import TgUserBase
 
-from data._roles import Roles
+from data import Roles
 
 
 class User(TgUserBase):
@@ -181,14 +182,14 @@ from data.user import User
 class Bot(tgapi.BotWithDB[User]):
     _userCls = User
 """
-tgapi_config_dev = """bot_token = 1234567890:AAAAAAAAAA_AAAAAAAAA_AAAAAAAAAAAAAA
+tgapi_config_dev = f"""bot_token = 1234567890:AAAAAAAAAA_AAAAAAAAA_AAAAAAAAAAAAAA
 bot_name = @Bot
-webhook_token = 36919ad5-fbaf-450f-8fd5-2442acb770ca
+webhook_token = {uuid.uuid4()}
 url = https://example.com/
 """
 tgapi_data_msg = """from bafser_tgapi import MsgBase
 
-from data._tables import Tables
+from data import Tables
 
 
 class Msg(MsgBase):
