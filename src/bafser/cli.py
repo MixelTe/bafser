@@ -12,6 +12,12 @@ def cli():
         ("alembic", "<init | revision | upgrade>"),
     ]
 
+    try:
+        import bafser_tgapi  # type: ignore
+        scripts.append(("configure_webhook", "<set | delete> [dev]"))
+    except Exception:
+        pass
+
     if len(sys.argv) < 2 or sys.argv[1] not in map(lambda v: v[0], scripts):
         ml = max(map(lambda v: len(v[0]), scripts))
         ml2 = max(map(lambda v: len(v[1]), scripts))
