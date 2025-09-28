@@ -1,5 +1,6 @@
 import os
 import uuid
+from typing import cast
 
 import bafser_config
 from bafser.scripts import alembic_init
@@ -26,9 +27,11 @@ def init_project():
         os.makedirs(bafser_config.blueprints_folder, exist_ok=True)
         write_file(os.path.join(bafser_config.blueprints_folder, "docs.py"), blueprints_docs_py)
     if with_tgapi:
-        os.makedirs(tgapi_import_folder, exist_ok=True)
-        write_file(os.path.join(tgapi_import_folder, "bot.py"), tgapi_bot_py)
-        write_file(tgapi_config_dev_path, tgapi_config_dev)
+        bot_folder = cast(str, bafser_config.bot_folder)  # type: ignore
+        config_dev_path = cast(str, bafser_config.config_dev_path)  # type: ignore
+        os.makedirs(bot_folder, exist_ok=True)
+        write_file(os.path.join(bot_folder, "bot.py"), tgapi_bot_py)
+        write_file(config_dev_path, tgapi_config_dev)
         write_file(os.path.join(bafser_config.data_tables_folder, "msg.py"), tgapi_data_msg)
     write_file("main.py", main_tgapi if with_tgapi else main)
     if not os.path.exists(".gitignore"):
@@ -42,8 +45,9 @@ def init_project():
             bafser_config.jwt_key_file_path,
             bafser_config.images_folder if bafser_config.images_folder[-1] == "/" else bafser_config.images_folder + "/",
         ] + ([
-            tgapi_config_path,
-            tgapi_config_dev_path,
+            cast(str, bafser_config.log_bot_path),  # type: ignore
+            cast(str, bafser_config.config_path),  # type: ignore
+            cast(str, bafser_config.config_dev_path),  # type: ignore
         ] if with_tgapi else []))
         write_file(".gitignore", gitignore)
     if bafser_config.use_alembic:
@@ -142,10 +146,7 @@ app, run = create_app(__name__, AppConfig(
 
 run(__name__ == "__main__")
 """
-tgapi_import_folder = "bot"
-tgapi_config_path = "config.txt"
-tgapi_config_dev_path = "config_dev.txt"
-main_tgapi = f"""import sys
+main_tgapi = """import sys
 
 import bafser_tgapi as tgapi
 from bafser import AppConfig, create_app
@@ -153,13 +154,7 @@ from bafser import AppConfig, create_app
 from bot.bot import Bot
 
 app, run = create_app(__name__, AppConfig(DEV_MODE="dev" in sys.argv))
-
-tgapi.setup(
-    config_path="{tgapi_config_dev_path}" if __name__ == "__main__" else "{tgapi_config_path}",
-    botCls=Bot,
-    import_folder="{tgapi_import_folder}",
-    app=app,
-)
+tgapi.setup(botCls=Bot, app=app)
 
 run(False)
 

@@ -14,6 +14,15 @@ except ModuleNotFoundError:
         cfg_src = os.path.join(current, "bafser_config.example.py")
         cfg_dst = os.path.join(os.getcwd(), "bafser_config.py")
         shutil.copy(cfg_src, cfg_dst)
+        try:
+            import bafser_tgapi  # type: ignore
+            cfg_tg_src = os.path.join(current, "bafser_config.tgapi.py")
+            with open(cfg_tg_src, encoding="utf8") as f:
+                cfg_tg = f.read()
+            with open(cfg_dst, "a", encoding="utf8") as f:
+                f.write("\n" + cfg_tg)
+        except Exception:
+            pass
 
 from .utils.response_msg import response_msg
 from .utils.get_json_values import get_json_values, get_json_list
