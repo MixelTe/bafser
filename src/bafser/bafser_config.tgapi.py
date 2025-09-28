@@ -1,3 +1,4 @@
+# ---------- tgapi ----------
 log_bot_path = "logs/bot.csv"
 bot_folder = "bot"
 config_path = "config.txt"
