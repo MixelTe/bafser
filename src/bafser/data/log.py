@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import Any, TypedDict
 
-from sqlalchemy import String, JSON
-from sqlalchemy.orm import Session, Mapped, mapped_column
+from sqlalchemy import JSON, String
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from .. import SqlAlchemyBase, UserBase, IdMixin, get_datetime_now
+from .. import IdMixin, SqlAlchemyBase, UserBase, get_datetime_now
 
 FieldName = str
 NewValue = Any
@@ -58,8 +58,7 @@ class Log(SqlAlchemyBase, IdMixin):
     ):
         if actor is None:
             actor = UserBase.get_fake_system()
-        db_sess = db_sess if db_sess else Session.object_session(actor)
-        assert db_sess
+        db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(
@@ -93,8 +92,7 @@ class Log(SqlAlchemyBase, IdMixin):
     ):
         if actor is None:
             actor = UserBase.get_fake_system()
-        db_sess = db_sess if db_sess else Session.object_session(actor)
-        assert db_sess
+        db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(
@@ -122,8 +120,7 @@ class Log(SqlAlchemyBase, IdMixin):
     ):
         if actor is None:
             actor = UserBase.get_fake_system()
-        db_sess = db_sess if db_sess else Session.object_session(actor)
-        assert db_sess
+        db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(
@@ -151,8 +148,7 @@ class Log(SqlAlchemyBase, IdMixin):
     ):
         if actor is None:
             actor = UserBase.get_fake_system()
-        db_sess = db_sess if db_sess else Session.object_session(actor)
-        assert db_sess
+        db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
         log = Log(

@@ -2,10 +2,11 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 
 from .. import SqlAlchemyBase
 from ._tables import TablesBase
+
 if TYPE_CHECKING:
     from .. import Role, UserBase
 
@@ -24,8 +25,7 @@ class UserRole(SqlAlchemyBase):
     @staticmethod
     def new(creator: "UserBase", userId: int, roleId: int, now: datetime | None = None, commit: bool = True, db_sess: Session | None = None):
         from .. import Log
-        db_sess = db_sess if db_sess else Session.object_session(creator)
-        assert db_sess
+        db_sess = db_sess if db_sess else creator.db_sess
 
         user_role = UserRole(userId=userId, roleId=roleId)
         db_sess.add(user_role)
@@ -42,8 +42,7 @@ class UserRole(SqlAlchemyBase):
 
     def delete(self, actor: "UserBase"):
         from .. import Log
-        db_sess = Session.object_session(self)
-        assert db_sess
+        db_sess = actor.db_sess
         db_sess.delete(self)
         Log.deleted(self, actor, [
             ("userId", self.userId),

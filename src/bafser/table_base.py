@@ -1,10 +1,10 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
-from typing_extensions import Annotated
 
 from sqlalchemy import MetaData
-from sqlalchemy.orm import Session, DeclarativeBase, MappedAsDataclass, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, Session, mapped_column
 from sqlalchemy_serializer import SerializerMixin
+from typing_extensions import Annotated
 
 if TYPE_CHECKING:
     from . import UserBase
@@ -28,6 +28,15 @@ class TableBase(SerializerMixin, MappedAsDataclass, DeclarativeBase):
 
     def get_dict(self) -> object:
         return {}
+
+    def get_session(self):
+        return Session.object_session(self)
+
+    @property
+    def db_sess(self):
+        db_sess = self.get_session()
+        assert db_sess, "object is not bound to session"
+        return db_sess
 
 
 intpk = Annotated[int, mapped_column(primary_key=True, unique=True, autoincrement=True)]
@@ -78,8 +87,7 @@ class ObjMixin(IdMixin):
     def delete(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
         from . import Log, get_datetime_now
         now = get_datetime_now() if now is None else now
-        db_sess = db_sess if db_sess else Session.object_session(actor)
-        assert db_sess
+        db_sess = db_sess if db_sess else actor.db_sess
         if not self._on_delete(db_sess, actor, now, commit):
             return False
         self.deleted = True
@@ -93,8 +101,7 @@ class ObjMixin(IdMixin):
     def restore(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None) -> bool:
         from . import Log, get_datetime_now
         now = get_datetime_now() if now is None else now
-        db_sess = db_sess if db_sess else Session.object_session(actor)
-        assert db_sess
+        db_sess = db_sess if db_sess else actor.db_sess
         if not self._on_restore(db_sess, actor, now, commit):
             return False
         self.deleted = False

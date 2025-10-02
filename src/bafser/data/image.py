@@ -1,13 +1,13 @@
-from datetime import datetime
-from typing import Any, Optional, Type, TypeVar, TypedDict, override
 import base64
 import os
+from datetime import datetime
+from typing import Any, Optional, Type, TypedDict, TypeVar, override
 
 from flask import current_app
-from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Session, Mapped, mapped_column
+from sqlalchemy import ForeignKey, String
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from .. import SqlAlchemyBase, ObjMixin, UserBase, Log, get_json_values, get_datetime_now, create_file_response
+from .. import Log, ObjMixin, SqlAlchemyBase, UserBase, create_file_response, get_datetime_now, get_json_values
 from ._tables import TablesBase
 
 
@@ -63,14 +63,13 @@ class Image(SqlAlchemyBase, ObjMixin):
 
         type = mimetype.split("/")[1]
 
-        db_sess = Session.object_session(creator)
-        assert db_sess
         now = get_datetime_now()
         img, add_changes, err = cls._new(creator, json, {"name": name, "type": type, "createdById": creator.id, "creationDate": now})
         if err:
             return None, err
         assert img
         assert add_changes is not None
+        db_sess = creator.db_sess
         db_sess.add(img)
         db_sess.commit()
 

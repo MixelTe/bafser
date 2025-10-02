@@ -1,10 +1,10 @@
-from typing import Any, List, Type, TypeVar, TypedDict
+from typing import Any, List, Type, TypedDict, TypeVar
 
 from sqlalchemy import String
-from sqlalchemy.orm import Session, Mapped, mapped_column, relationship, declared_attr, lazyload
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship
+from werkzeug.security import check_password_hash, generate_password_hash
 
-from .. import SqlAlchemyBase, ObjMixin, UserRole, listfind
+from .. import ObjMixin, SqlAlchemyBase, UserRole, listfind
 from ..utils import get_datetime_now
 from ._roles import RolesBase
 from ._tables import TablesBase
@@ -49,8 +49,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     @classmethod
     def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], *_: Any, db_sess: Session | None = None, **kwargs: Any):  # noqa: E501
         from .. import Log
-        db_sess = db_sess if db_sess else Session.object_session(creator)
-        assert db_sess
+        db_sess = db_sess if db_sess else creator.db_sess
         user, add_changes = cls._new(db_sess, {"login": login, "name": name}, **kwargs)
         user.set_password(password)
         db_sess.add(user)
