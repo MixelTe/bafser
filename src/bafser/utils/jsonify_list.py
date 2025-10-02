@@ -1,4 +1,5 @@
 from typing import Any
+
 from flask import jsonify
 
 
@@ -11,7 +12,7 @@ def jsonify_list(items: list[Any], field_get_dict: str = "get_dict"):
     return jsonify([_getjson(x, field_get_dict) for x in items])
 
 
-def _getjson(item: Any, f: str):
+def _getjson(item: Any, f: str) -> Any:
     from .. import JsonObj
     if isinstance(item, JsonObj):
         return item.json()

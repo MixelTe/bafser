@@ -156,12 +156,17 @@ from bot.bot import Bot
 app, run = create_app(__name__, AppConfig(DEV_MODE="dev" in sys.argv))
 tgapi.setup(botCls=Bot, app=app)
 
-run(False)
-
-if __name__ == "__main__":
-    tgapi.run_long_polling()
-else:
+DEVSERVER = "devServer" in sys.argv
+if DEVSERVER:
     tgapi.set_webhook()
+run(DEVSERVER)
+
+if not DEVSERVER:
+    if __name__ == "__main__":
+        tgapi.run_long_polling()
+    else:
+        tgapi.set_webhook()
+
 """
 
 gitignore_base = """.venv/

@@ -7,8 +7,8 @@ from typing import Any
 
 from flask import g, has_request_context, request
 
-from bafser import create_folder_for_file, ip_to_emoji
 import bafser_config
+from bafser import create_folder_for_file, ip_to_emoji
 
 
 def customTime(*args: Any):
@@ -30,6 +30,14 @@ class RequestFormatter(logging.Formatter):
     outer_args: list[str] = []
 
     def format(self, record: Any):
+        def set_if_lack(name: str):
+            if not hasattr(record, name):
+                setattr(record, name, f"[{name}]")
+
+        def get_if_has(name: str):
+            if hasattr(record, name):
+                return getattr(record, name)
+            return ""
         if has_request_context():
             url_start = request.url.find(bafser_config.api_url)
             record.url = request.url[url_start:] if url_start >= 0 else request.url
@@ -37,21 +45,21 @@ class RequestFormatter(logging.Formatter):
             remote_addr = request.headers.get("X-Real-IP", request.remote_addr or "")
             record.ip = remote_addr
             record.ip_emoji = ip_to_emoji(remote_addr)
-            record.req_id = g.get("req_id", "")
-            record.uid = g.get("userId", "")
+            record.req_id = g.get("req_id", get_if_has("req_id"))
+            record.uid = g.get("userId", get_if_has("uid"))
             g_json = g.get("json", None)
             if g_json is not None and g_json[1]:
                 record.json = json.dumps(g_json[0], indent=self.json_indent)
             else:
-                record.json = "[no json]"
+                set_if_lack("json")
         else:
-            record.url = "[url]"
-            record.method = "[method]"
-            record.ip = "[ip]"
-            record.ip_emoji = "[ip_emoji]"
-            record.req_id = "[req_id]"
-            record.json = "[json]"
-            record.uid = "[uid]"
+            set_if_lack("url")
+            set_if_lack("method")
+            set_if_lack("ip")
+            set_if_lack("ip_emoji")
+            set_if_lack("req_id")
+            set_if_lack("json")
+            set_if_lack("uid")
 
         if self.max_msg_len > 0 and len(record.msg) > self.max_msg_len:
             record.msg = record.msg[:self.max_msg_len] + "..."

@@ -1,10 +1,10 @@
-from datetime import datetime
 import inspect
 import json
 import os
 from collections.abc import Callable as CallableClass
+from datetime import datetime
 from types import NoneType, UnionType
-from typing import Any, Literal, Mapping, Union, get_args, get_origin, get_type_hints
+from typing import Any, Callable, Literal, Mapping, TypeVar, Union, get_args, get_origin, get_type_hints
 
 import jinja2
 from flask import Flask, render_template
@@ -21,6 +21,8 @@ _types_full: dict[str, "TypeInfo"] = {}
 _loc = os.path.abspath(os.path.dirname(__file__))
 _templateEnv = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.join(_loc, "templates")))
 _template_docs = _templateEnv.get_template("docs.html")
+
+TFn = TypeVar("TFn", bound=Callable[..., Any])
 
 
 def init_api_docs(app: Flask):
@@ -93,11 +95,11 @@ def render_docs_page():
 
 
 def doc_api(*, req: Any = None, res: Any = None, desc: str | None = None, nojwt: bool = False):
-    def decorator(fn: Any) -> Any:
-        fn._doc_api_reqtype = req
-        fn._doc_api_restype = res
-        fn._doc_api_desc = desc
-        fn._doc_api_nojwt = nojwt
+    def decorator(fn: TFn) -> TFn:
+        fn._doc_api_reqtype = req  # type: ignore
+        fn._doc_api_restype = res  # type: ignore
+        fn._doc_api_desc = desc  # type: ignore
+        fn._doc_api_nojwt = nojwt  # type: ignore
         return fn
     return decorator
 
