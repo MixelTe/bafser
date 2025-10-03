@@ -15,6 +15,7 @@ def cli():
     try:
         import bafser_tgapi  # type: ignore
         scripts.append(("configure_webhook", "<set | delete> [dev]"))
+        scripts.append(("stickers", ""))
     except Exception:
         pass
 
