@@ -125,9 +125,9 @@ def create_app(import_name: str, config: AppConfig):
         db_session.global_init(config.DEV_MODE)
         with db_session.create_session() as db_sess:
             is_initialized = DBState.is_initialized(db_sess)
+            Role.update_roles_permissions(db_sess)
             if not is_initialized:
                 print("initialize database")
-                Role.update_roles_permissions(db_sess)
                 UserBase._create_admin(db_sess)  # type: ignore
                 if init_db is not None:
                     print("init_db")
