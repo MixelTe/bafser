@@ -1,13 +1,14 @@
-from typing import TYPE_CHECKING, Any, List, Optional, override
-from sqlalchemy import ForeignKey
-from bafser import UserBase, UserKwargs
-from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
-
 from test.data import Roles, Tables
+from typing import TYPE_CHECKING, Any, List, Optional, override
+
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
+
+from bafser import UserBase, UserKwargs
 
 if TYPE_CHECKING:
-    from test.data.img import Img
     from test.data.apple import Apple
+    from test.data.img import Img
 
 
 class User(UserBase):
@@ -22,15 +23,13 @@ class User(UserBase):
 
     @classmethod
     @override
-    def new(cls, creator: UserBase, login: str, password: str, name: str, roles: list[int], balance: int, *, db_sess: Session | None = None):  # noqa: E501
+    def new(cls, creator: UserBase, login: str, password: str, name: str, roles: list[int], balance: int, *, db_sess: Session | None = None):
         return super().new(creator, login, password, name, roles, db_sess=db_sess, balance=balance)
 
     @classmethod
     @override
     def _new(cls, db_sess: Session, user_kwargs: UserKwargs, *, balance: int, **kwargs: Any):
-        user = User(**user_kwargs, balance=balance)
-        changes = [("balance", balance)]
-        return user, changes
+        return User(**user_kwargs, balance=balance)
 
     @classmethod
     @override

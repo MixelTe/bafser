@@ -3,6 +3,7 @@ from typing import Any, TypedDict
 
 from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, Session, mapped_column
+from sqlalchemy.orm.attributes import get_history
 
 from .. import IdMixin, SqlAlchemyBase, UserBase, get_datetime_now
 
@@ -42,7 +43,7 @@ class Log(SqlAlchemyBase, IdMixin):
     changes: Mapped[Changes] = mapped_column(JSON)
 
     def __repr__(self):
-        return f"<Log> [{self.id}] {self.date} {self.actionCode}"
+        return f"<Log> [{self.id}] {self.date} {self.actionCode} {self.tableName}[{self.recordId}]"
 
     def get_dict(self) -> LogDict:
         return self.to_dict(only=("id", "date", "actionCode", "userId", "userName", "tableName", "recordId", "changes"))  # type: ignore
@@ -51,7 +52,7 @@ class Log(SqlAlchemyBase, IdMixin):
     def added(
         record: SqlAlchemyBase,
         actor: UserBase | None,
-        changes: list[tuple[FieldName, NewValue]],
+        changes: list[tuple[FieldName, NewValue]] | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
@@ -61,6 +62,10 @@ class Log(SqlAlchemyBase, IdMixin):
         db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
+        if changes is None:
+            _changes = Log._get_obj_changes(record)
+        else:
+            _changes = [(key, None, v) for key, v in changes]
         log = Log(
             date=now,
             actionCode=Actions.added,
@@ -68,7 +73,7 @@ class Log(SqlAlchemyBase, IdMixin):
             userName=actor.name,
             tableName=record.__tablename__,
             recordId=-1,
-            changes=list(map(lambda v: (v[0], None, v[1]), changes))
+            changes=Log._serialize_changes(_changes)
         )
         db_sess.add(log)
         if isinstance(record, IdMixin):
@@ -85,7 +90,7 @@ class Log(SqlAlchemyBase, IdMixin):
     def updated(
         record: SqlAlchemyBase,
         actor: UserBase | None,
-        changes: Changes,
+        changes: Changes | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
@@ -95,6 +100,8 @@ class Log(SqlAlchemyBase, IdMixin):
         db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
+        if changes is None:
+            changes = Log._get_obj_changes(record)
         log = Log(
             date=now,
             actionCode=Actions.updated,
@@ -102,7 +109,7 @@ class Log(SqlAlchemyBase, IdMixin):
             userName=actor.name,
             tableName=record.__tablename__,
             recordId=record.id if isinstance(record, IdMixin) else -1,
-            changes=changes
+            changes=Log._serialize_changes(changes)
         )
         db_sess.add(log)
         if commit:
@@ -113,7 +120,7 @@ class Log(SqlAlchemyBase, IdMixin):
     def deleted(
         record: SqlAlchemyBase,
         actor: UserBase | None,
-        changes: list[tuple[FieldName, OldValue]] = [],
+        changes: list[tuple[FieldName, OldValue]] | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
@@ -123,6 +130,10 @@ class Log(SqlAlchemyBase, IdMixin):
         db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
+        if changes is None:
+            _changes = Log._get_obj_changes(record)
+        else:
+            _changes = [(key, v, None) for key, v in changes]
         log = Log(
             date=now,
             actionCode=Actions.deleted,
@@ -130,7 +141,7 @@ class Log(SqlAlchemyBase, IdMixin):
             userName=actor.name,
             tableName=record.__tablename__,
             recordId=record.id if isinstance(record, IdMixin) else -1,
-            changes=list(map(lambda v: (v[0], v[1], None), changes))
+            changes=Log._serialize_changes(_changes)
         )
         db_sess.add(log)
         if commit:
@@ -141,7 +152,7 @@ class Log(SqlAlchemyBase, IdMixin):
     def restored(
         record: SqlAlchemyBase,
         actor: UserBase | None,
-        changes: Changes = [],
+        changes: Changes | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
@@ -151,6 +162,8 @@ class Log(SqlAlchemyBase, IdMixin):
         db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
+        if changes is None:
+            changes = Log._get_obj_changes(record)
         log = Log(
             date=now,
             actionCode=Actions.restored,
@@ -158,9 +171,34 @@ class Log(SqlAlchemyBase, IdMixin):
             userName=actor.name,
             tableName=record.__tablename__,
             recordId=record.id if isinstance(record, IdMixin) else -1,
-            changes=changes
+            changes=Log._serialize_changes(changes)
         )
         db_sess.add(log)
         if commit:
             db_sess.commit()
         return log
+
+    @staticmethod
+    def _serialize(v: Any):
+        if isinstance(v, datetime):
+            return v.isoformat()
+        return v
+
+    @staticmethod
+    def _serialize_changes(changes: Changes) -> Changes:
+        return [(key, Log._serialize(old), Log._serialize(new)) for key, old, new in changes]
+
+    @staticmethod
+    def _get_obj_changes(obj: SqlAlchemyBase):
+        changes: Changes = []
+        for attr in obj.__mapper__.columns:
+            hist = get_history(obj, attr.key)
+            if hist.has_changes():
+                old = hist.deleted[0] if hist.deleted else None
+                new = hist.added[0] if hist.added else None
+                if old != new:
+                    if attr.key in obj.__fields_hidden_in_log__:
+                        old = "***" if old else None
+                        new = "***" if new else None
+                    changes.append((attr.key, old, new))
+        return changes

@@ -65,7 +65,7 @@ class RequestFormatter(logging.Formatter):
             record.msg = record.msg[:self.max_msg_len] + "..."
 
         if self.max_json_len > 0 and len(record.json) > self.max_json_len:
-            record.json = record.json[:1024] + "..."
+            record.json = record.json[:self.max_json_len] + "..."
 
         for arg in self.outer_args:
             setattr(record, arg, record.args.get(arg, f"[{arg}]"))

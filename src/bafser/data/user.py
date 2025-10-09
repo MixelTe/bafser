@@ -29,6 +29,7 @@ def get_user_table():
 class UserBase(ObjMixin, SqlAlchemyBase):
     __tablename__ = TablesBase.User
     __abstract__ = True
+    __fields_hidden_in_log__ = ["password"]
 
     login: Mapped[str] = mapped_column(String(64), index=True, unique=True)
     password: Mapped[str] = mapped_column(String(256), init=False)
@@ -50,17 +51,12 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], *_: Any, db_sess: Session | None = None, **kwargs: Any):  # noqa: E501
         from .. import Log
         db_sess = db_sess if db_sess else creator.db_sess
-        user, add_changes = cls._new(db_sess, {"login": login, "name": name}, **kwargs)
+        user = cls._new(db_sess, {"login": login, "name": name}, **kwargs)
         user.set_password(password)
         db_sess.add(user)
 
         now = get_datetime_now()
-        Log.added(user, creator, [
-            ("login", user.login),
-            ("name", user.name),
-            ("password", "***"),
-            *add_changes,
-        ], now, db_sess=db_sess)
+        Log.added(user, creator, None, now, db_sess=db_sess)
 
         for roleId in roles:
             UserRole.new(creator, user.id, roleId, now=now, commit=False, db_sess=db_sess)
@@ -70,9 +66,8 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return user
 
     @classmethod
-    def _new(cls: Type[T], db_sess: Session, user_kwargs: UserKwargs, **kwargs: Any) -> tuple[T, list[tuple[TFieldName, TValue]]]:
-        user = cls(**user_kwargs)
-        return user, []
+    def _new(cls: Type[T], db_sess: Session, user_kwargs: UserKwargs, **kwargs: Any) -> T:
+        return cls(**user_kwargs)
 
     @classmethod
     def get_lazy(cls, db_sess: Session, id: int, includeDeleted: bool = False, *, for_update: bool = False):
@@ -115,13 +110,12 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def update_password(self, actor: "UserBase", password: str):
         from .. import Log
         self.set_password(password)
-        Log.updated(self, actor, [("password", "***", "***")])
+        Log.updated(self, actor)
 
     def update_name(self, actor: "UserBase", name: str):
         from .. import Log
-        oldname = self.name
         self.name = name
-        Log.updated(self, actor, [("name", oldname, name)])
+        Log.updated(self, actor)
 
     def set_password(self, password: str):
         self.password = generate_password_hash(password)

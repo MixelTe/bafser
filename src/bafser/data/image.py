@@ -64,37 +64,25 @@ class Image(SqlAlchemyBase, ObjMixin):
         type = mimetype.split("/")[1]
 
         now = get_datetime_now()
-        img, add_changes, err = cls._new(creator, json, {"name": name, "type": type, "createdById": creator.id, "creationDate": now})
+        img, err = cls._new(creator, json, {"name": name, "type": type, "createdById": creator.id, "creationDate": now})
         if err:
             return None, err
         assert img
-        assert add_changes is not None
         db_sess = creator.db_sess
         db_sess.add(img)
-        db_sess.commit()
 
         path = img.get_path()
         with open(path, "wb") as f:
             f.write(base64.b64decode(img_data + '=='))
 
-        Log.added(img, creator, [
-            ("name", img.name),
-            ("type", img.type),
-            ("creationDate", img.creationDate.isoformat()),
-            ("createdById", img.createdById),
-            *add_changes,
-        ], now)
+        Log.added(img, creator, now=now)
 
         return img, None
 
     @classmethod
-    def _new(cls: Type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> \
-            tuple[None, None, TError] | tuple[T, list[tuple[TFieldName, TValue]], None]:
+    def _new(cls: Type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> tuple[None, TError] | tuple[T, None]:
         img = cls(**image_kwargs)
-        return img, [], None
-
-    def create_file_response(self):
-        return create_file_response(self.get_path(), f"image/{self.type}", self.get_filename())
+        return img, None
 
     @override
     def _on_delete(self, db_sess: Session, actor: UserBase, now: datetime, commit: bool):
@@ -104,6 +92,9 @@ class Image(SqlAlchemyBase, ObjMixin):
     @override
     def _on_restore(self, db_sess: Session, actor: UserBase, now: datetime, commit: bool):
         return os.path.exists(self.get_path())
+
+    def create_file_response(self):
+        return create_file_response(self.get_path(), f"image/{self.type}", self.get_filename())
 
     def get_path(self):
         return os.path.join(current_app.config["IMAGES_FOLDER"], f"{self.id}.{self.type}")  # type: ignore

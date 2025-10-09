@@ -21,13 +21,14 @@ convention = {
 class TableBase(SerializerMixin, MappedAsDataclass, DeclarativeBase):
     __abstract__ = True
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_unicode_ci"}
+    __fields_hidden_in_log__ = [""]
     metadata = MetaData(naming_convention=convention)
 
     def __repr__(self):
         return f"<{self.__class__.__name__}>"
 
     def get_dict(self) -> object:
-        return {}
+        return self.to_dict()
 
     def get_session(self):
         return Session.object_session(self)
@@ -112,17 +113,24 @@ class ObjMixin(IdMixin):
     def _on_restore(self, db_sess: Session, actor: "UserBase", now: datetime, commit: bool) -> bool:
         return True
 
+    def __repr__(self):
+        r = f"<{self.__class__.__name__}> [{self.id}]"
+        if self.deleted:
+            r += " deleted"
+        return r
+
 
 class SingletonMixin:
+    _ID = 1
     id: Mapped[intpk] = mapped_column(init=False)
 
     @classmethod
     def get(cls, db_sess: Session):
-        obj = db_sess.get(cls, 1)
+        obj = db_sess.get(cls, cls._ID)
         if obj:
             return obj
         obj = cls()
-        obj.id = 1
+        obj.id = cls._ID
         obj.init()
         db_sess.add(obj)
         db_sess.commit()
