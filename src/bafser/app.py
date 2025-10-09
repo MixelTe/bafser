@@ -206,6 +206,16 @@ def create_app(import_name: str, config: AppConfig):
 
         return response
 
+    @app.teardown_appcontext
+    def teardown(exception: BaseException | None):  # pyright: ignore[reportUnusedFunction]
+        g.pop("user", None)
+        db_sess = g.pop("db_session", None)
+        if db_sess:
+            try:
+                db_sess.close()
+            except Exception as x:
+                logging.error("Error: %s", x)
+
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def frontend(path: str):  # type: ignore

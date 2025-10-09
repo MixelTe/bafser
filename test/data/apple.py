@@ -1,12 +1,12 @@
 from datetime import datetime
+from test.data._tables import Tables
+from test.data.user import User
 from typing import Optional
 
 from sqlalchemy import ForeignKey, String
-from bafser import SqlAlchemyBase, ObjMixin
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from test.data._tables import Tables
-from test.data.user import User
+from bafser import Log, ObjMixin, SqlAlchemyBase
 
 
 class Apple(SqlAlchemyBase, ObjMixin):
@@ -17,3 +17,9 @@ class Apple(SqlAlchemyBase, ObjMixin):
     ownerId: Mapped[int] = mapped_column(ForeignKey(f"{Tables.User}.id"))
 
     owner: Mapped["User"] = relationship(back_populates="apples", init=False)
+
+    @staticmethod
+    def new(name: str):
+        apple = Apple(name=name, ownerId=1)
+        Log.added(apple)
+        return apple

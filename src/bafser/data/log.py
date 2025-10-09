@@ -51,112 +51,74 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def added(
         record: SqlAlchemyBase,
-        actor: UserBase | None,
+        actor: UserBase | None = None,
         changes: list[tuple[FieldName, NewValue]] | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
     ):
-        if actor is None:
-            actor = UserBase.get_fake_system()
-        db_sess = db_sess if db_sess else actor.db_sess
-        if now is None:
-            now = get_datetime_now()
-        if changes is None:
-            _changes = Log._get_obj_changes(record)
-        else:
+        _changes = None
+        if changes is not None:
             _changes = [(key, None, v) for key, v in changes]
-        log = Log(
-            date=now,
-            actionCode=Actions.added,
-            userId=actor.id,
-            userName=actor.name,
-            tableName=record.__tablename__,
-            recordId=-1,
-            changes=Log._serialize_changes(_changes)
-        )
-        db_sess.add(log)
-        if isinstance(record, IdMixin):
-            if record.id is not None:  # type: ignore
-                log.recordId = record.id
-            elif commit:
-                db_sess.commit()
-                log.recordId = record.id
+        log = Log._create(record, actor, _changes, now, False, db_sess, Actions.added)
+        db_sess = log.db_sess
+        db_sess.add(record)
         if commit:
+            if isinstance(record, IdMixin):
+                if record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
+                    db_sess.commit()
+                    log.recordId = record.id
             db_sess.commit()
         return log
 
     @staticmethod
     def updated(
         record: SqlAlchemyBase,
-        actor: UserBase | None,
+        actor: UserBase | None = None,
         changes: Changes | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
     ):
-        if actor is None:
-            actor = UserBase.get_fake_system()
-        db_sess = db_sess if db_sess else actor.db_sess
-        if now is None:
-            now = get_datetime_now()
-        if changes is None:
-            changes = Log._get_obj_changes(record)
-        log = Log(
-            date=now,
-            actionCode=Actions.updated,
-            userId=actor.id,
-            userName=actor.name,
-            tableName=record.__tablename__,
-            recordId=record.id if isinstance(record, IdMixin) else -1,
-            changes=Log._serialize_changes(changes)
-        )
-        db_sess.add(log)
-        if commit:
-            db_sess.commit()
-        return log
+        return Log._create(record, actor, changes, now, commit, db_sess, Actions.updated)
 
     @staticmethod
     def deleted(
         record: SqlAlchemyBase,
-        actor: UserBase | None,
+        actor: UserBase | None = None,
         changes: list[tuple[FieldName, OldValue]] | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
     ):
-        if actor is None:
-            actor = UserBase.get_fake_system()
-        db_sess = db_sess if db_sess else actor.db_sess
-        if now is None:
-            now = get_datetime_now()
-        if changes is None:
-            _changes = Log._get_obj_changes(record)
-        else:
+        _changes = None
+        if changes is not None:
             _changes = [(key, v, None) for key, v in changes]
-        log = Log(
-            date=now,
-            actionCode=Actions.deleted,
-            userId=actor.id,
-            userName=actor.name,
-            tableName=record.__tablename__,
-            recordId=record.id if isinstance(record, IdMixin) else -1,
-            changes=Log._serialize_changes(_changes)
-        )
-        db_sess.add(log)
-        if commit:
-            db_sess.commit()
-        return log
+        return Log._create(record, actor, _changes, now, commit, db_sess, Actions.deleted)
 
     @staticmethod
     def restored(
         record: SqlAlchemyBase,
-        actor: UserBase | None,
+        actor: UserBase | None = None,
         changes: Changes | None = None,
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
     ):
+        return Log._create(record, actor, changes, now, commit, db_sess, Actions.restored)
+
+    @staticmethod
+    def _create(
+        record: SqlAlchemyBase,
+        actor: UserBase | None,
+        changes: Changes | None,
+        now: datetime | None,
+        commit: bool,
+        db_sess: Session | None,
+        actionCode: str,
+    ):
+        if actor is None:
+            actor = UserBase.get_current(lazyload=True)
         if actor is None:
             actor = UserBase.get_fake_system()
         db_sess = db_sess if db_sess else actor.db_sess
@@ -166,11 +128,11 @@ class Log(SqlAlchemyBase, IdMixin):
             changes = Log._get_obj_changes(record)
         log = Log(
             date=now,
-            actionCode=Actions.restored,
+            actionCode=actionCode,
             userId=actor.id,
             userName=actor.name,
             tableName=record.__tablename__,
-            recordId=record.id if isinstance(record, IdMixin) else -1,
+            recordId=record.id if isinstance(record, IdMixin) and record.id is not None else -1,  # pyright: ignore[reportUnnecessaryComparison]
             changes=Log._serialize_changes(changes)
         )
         db_sess.add(log)

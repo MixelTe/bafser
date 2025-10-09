@@ -3,13 +3,13 @@ from test.data.img import ImageJson, Img
 from test.data.user import User
 from typing import Any, Literal, NotRequired, TypedDict
 
-from flask import Blueprint, abort, send_from_directory
-from flask_jwt_extended import jwt_required  # type: ignore
+from flask import Blueprint, abort, jsonify, send_from_directory
+from flask_jwt_extended import jwt_required, set_access_cookies  # type: ignore
 from sqlalchemy.orm import Session
 
 import bafser_config
-from bafser import (JsonObj, JsonOpt, JsonSingleKey, Undefined, UserDict, doc_api, get_api_docs, get_app_config, get_json_values_from_req,
-                    permission_required, render_docs_page, response_msg, use_db_session, use_user)
+from bafser import (JsonObj, JsonOpt, JsonSingleKey, Undefined, UserDict, create_access_token, doc_api, get_api_docs, get_app_config,
+                    get_json_values_from_req, permission_required, render_docs_page, response_msg, use_db_session, use_user)
 
 blueprint = Blueprint("index", __name__)
 
@@ -34,10 +34,29 @@ def index():
 @blueprint.get("/api/user")
 @doc_api(res=UserDict, desc="Get current user")
 @jwt_required()
+def user():
+    return User.current.get_dict()
+
+
+class LoginJson(JsonObj):
+    login: str
+    password: str
+
+
+@blueprint.post("/api/auth")
+@doc_api(req=LoginJson, res=UserDict, desc="Get auth cookie")
 @use_db_session
-@use_user()
-def user(db_sess: Session, user: User):
-    return user.get_dict()
+def login(db_sess: Session):
+    data = LoginJson.get_from_req()
+    user = User.get_by_login(db_sess, data.login)
+
+    if not user or not user.check_password(data.password):
+        return response_msg("Неправильный логин или пароль", 400)
+
+    response = jsonify(user.get_dict())
+    access_token = create_access_token(user)
+    set_access_cookies(response, access_token)
+    return response
 
 
 @blueprint.get("/api/item/<int:itemId>/<name>")

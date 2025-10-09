@@ -1,5 +1,7 @@
 from typing import Any, List, Type, TypedDict, TypeVar
 
+from flask import abort, g
+from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request  # type: ignore
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -76,6 +78,36 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     @classmethod
     def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False, *, for_update: bool = False):
         return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.login == login).first()
+
+    @classmethod
+    def get_current(cls: Type[T], *, lazyload: bool = False, for_update: bool = False) -> T | None:
+        from .. import get_db_session, get_user_by_jwt_identity
+        try:
+            if "user" in g:
+                return g.user
+            verify_jwt_in_request()
+            db_sess = get_db_session()
+            user = get_user_by_jwt_identity(db_sess, get_jwt_identity(), lazyload=lazyload, for_update=for_update)
+            g.user = user
+            return user  # type: ignore
+        except Exception:
+            try:
+                g.user = None
+            except Exception:
+                pass
+            return None
+
+    @classmethod
+    @property
+    def current(cls):  # pyright: ignore[reportDeprecated]
+        from .. import response_msg
+        user = cls.get_current()
+        if user is not None:
+            return user
+
+        response = response_msg("The JWT has expired", 401)
+        unset_jwt_cookies(response)
+        abort(response)
 
     @classmethod
     def create_admin(cls, db_sess: Session):
