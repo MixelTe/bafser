@@ -4,7 +4,7 @@ from collections.abc import Callable as CallableClass
 from dataclasses import dataclass
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import (Any, Callable, Literal, TypeAliasType, TypeGuard, TypeVar, Union, dataclass_transform, get_args, get_origin, get_type_hints,
+from typing import (Any, Callable, Literal, TypeAliasType, TypeGuard, TypeVar, Union, cast, dataclass_transform, get_args, get_origin, get_type_hints,
                     overload)
 
 from flask import abort, jsonify
@@ -157,9 +157,10 @@ class JsonObj:
         @override
         def _parse(self, key: str, v: Any, json: dict[str, Any]):
             if key == "from":
-                return "frm", v
+                return "frm"  # remap key, keep default parser
             if key == "char":
                 if not isinstance(v, str) or len(v) != 1:
+                    # exception will be rerised on validate call
                     raise JsonParseError("must be a single character string")
                 return key, v.lower()
             return None
@@ -248,7 +249,9 @@ class JsonObj:
         try:
             r = self._parse(k, v, json)
             if r is not None:
-                k, v = r
+                if not isinstance(r, str):
+                    return r
+                k = r
                 t = type_hints.get(k, None)
                 if k not in type_hints:
                     return k, v
@@ -266,9 +269,10 @@ class JsonObj:
             if not isinstance(v, JsonObj):
                 v = t.new(v)
         elif torigin is list and len(targs) == 1 and isinstance(v, list):
+            v = cast(list[Any], v)
             t = targs[0]
             l: list[Any] = []
-            for i, el in enumerate(v):  # type: ignore
+            for i, el in enumerate(v):
                 if not isinstance(el, object):
                     continue
                 k2, el = self.__parse_item__(k + f".{i}", el, t, json)
@@ -276,10 +280,11 @@ class JsonObj:
                     l.append(el)
             v = l
         elif torigin is tuple and isinstance(v, list):
+            v = cast(list[Any], v)
             l: list[Any] = []
-            for i in range(min(len(targs), len(v))):  # type: ignore
+            for i in range(min(len(targs), len(v))):
                 t = targs[i]
-                el = v[i]  # type: ignore
+                el = v[i]
                 if not isinstance(el, object):
                     continue
                 k2, el = self.__parse_item__(k + f".{i}", el, t, json)
@@ -289,9 +294,10 @@ class JsonObj:
                 l.append(Undefined)
             v = tuple(l)
         elif torigin is dict and len(targs) == 2 and isinstance(v, dict):
+            v = cast(dict[Any, Any], v)
             t = targs[1]
             d: dict[Any, Any] = {}
-            for elk, el in v.items():  # pyright: ignore[reportUnknownVariableType]
+            for elk, el in v.items():
                 if not isinstance(el, object):
                     continue
                 k2, el = self.__parse_item__(k + f".{elk}", el, t, json)
@@ -309,9 +315,21 @@ class JsonObj:
                 v = self.__datetime_parser__(v)
             except Exception:
                 pass
+        elif isinstance(v, dict):
+            v = cast(dict[Any, Any], v)
+            try:
+                type_hints = get_type_hints(t)  # type: ignore
+                for elk, t in type_hints.items():
+                    if elk not in v:
+                        continue
+                    _, el = self.__parse_item__(k + f".{elk}", v[elk], t, json)
+                    if el is not Undefined:
+                        v[elk] = el
+            except (TypeError, AttributeError):
+                pass
         return k, v
 
-    def _parse(self, key: str, v: Any, json: dict[str, Any]) -> tuple[str, Any] | None:
+    def _parse(self, key: str, v: Any, json: dict[str, Any]) -> str | tuple[str, Any] | None:
         return None
 
     @classmethod
@@ -513,7 +531,7 @@ class JsonObj:
         return jsonify(self.json())
 
 
-type ValidateType = dict[str, ValidateType] | int | float | bool | str | object | None | list[Any]
+type ValidateType = dict[str, ValidateType] | int | float | bool | str | object | None | list[ValidateType]
 TC = TypeVar("TC", bound=ValidateType)
 
 
@@ -560,10 +578,7 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         t = targs[0]
         if obj is Undefined:
             return obj, None  # type: ignore
-        obj, err = validate_type(obj, t, r)
-        if err is None:
-            return obj, None
-        return None, f" is not {type_name(t)}"
+        return validate_type(obj, t, r)
 
     if obj is Undefined:
         return None, " is undefined"
@@ -579,8 +594,9 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         t = targs[0]
         if not isinstance(obj, (list, tuple)):
             return None, f" is not {type_name(otype)}"
+        obj = cast(list[Any], obj)
         l: list[Any] = []
-        for i, el in enumerate(obj):  # type: ignore
+        for i, el in enumerate(obj):
             o, err = validate_type(el, t, r)
             if err is not None:
                 return None, f"[{i}]{err}"
@@ -591,9 +607,10 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
     if torigin is tuple:
         if not isinstance(obj, (list, tuple)) or len(obj) != len(targs):  # type: ignore
             return None, f" is not {type_name(otype)}"
+        obj = cast(list[Any], obj)
         t = targs[0]
         l: list[Any] = []
-        for i, el in enumerate(obj):  # type: ignore
+        for i, el in enumerate(obj):
             o, err = validate_type(el, t, r)
             if err is not None:
                 return None, f"[{i}]{err}"
@@ -606,8 +623,9 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         tv = targs[1]
         if not isinstance(obj, dict):
             return None, f" is not {type_name(otype)}"
+        obj = cast(dict[Any, Any], obj)
         d: dict[Any, Any] = {}
-        for k, v in obj.items():  # type: ignore
+        for k, v in obj.items():
             d[k] = v
             if tk != Any:
                 _, err = validate_type(k, tk, r)
@@ -621,21 +639,24 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
 
     # Union
     if torigin in (UnionType, Union):
+        errs: list[str] = []
         for t in targs:
             o, err = validate_type(obj, t, r)
             if err is None:
                 return o, None  # type: ignore
-        return None, f" is not {type_name(otype)}"
+            errs.append(type_name(t) + ": " + err)
+        return None, f" is not {type_name(otype)} tried:\n\t{"\n\t".join(errs)}"
 
     # TypedDict
     try:
         type_hints = get_type_hints(otype)
         opt_keys: frozenset[str] = otype.__optional_keys__  # type: ignore
     except (TypeError, AttributeError):
-        raise Exception("[bafser] validate_type: unsupported type")
+        raise Exception(f"[bafser] validate_type: unsupported type: {type_name(otype)}")
 
     if not isinstance(obj, dict):
-        return None, f" is not {otype}"
+        return None, f" is not {type_name(otype)}"
+    obj = cast(dict[Any, Any], obj)
     d: dict[Any, Any] = {}
     for k, t in type_hints.items():
         d[k] = obj[k]
