@@ -1,6 +1,6 @@
-from typing import Any, List, Type, TypedDict, TypeVar
+from typing import Any, Callable, List, Type, TypedDict, TypeVar, final
 
-from flask import abort, g
+from flask import abort, g, has_request_context
 from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request  # type: ignore
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship
@@ -16,6 +16,9 @@ _User: "Type[UserBase] | None" = None
 TFieldName = str
 TValue = Any
 
+type defaultGetter = Callable[[bool, bool], "UserBase | None"]
+_current_user_getter: Callable[[defaultGetter, bool, bool], "UserBase | None"] = lambda get, lazyload, for_update: get(lazyload, for_update)
+
 
 class UserKwargs(TypedDict):
     login: str
@@ -26,6 +29,12 @@ def get_user_table():
     if _User is None:
         raise Exception("[bafser] No class inherited from UserBase")
     return _User
+
+
+def override_get_current_user(getter: Callable[[defaultGetter, bool, bool], "UserBase | None"]):
+    """def get_current_user(getter: defaultGetter, lazyload: bool, for_update: bool)"""
+    global _current_user_getter
+    _current_user_getter = getter
 
 
 class UserBase(ObjMixin, SqlAlchemyBase):
@@ -79,8 +88,14 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False, *, for_update: bool = False):
         return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.login == login).first()
 
+    @final
     @classmethod
     def get_current(cls: Type[T], *, lazyload: bool = False, for_update: bool = False) -> T | None:
+        return _current_user_getter(UserBase._get_current, lazyload, for_update)  # pyright: ignore[reportReturnType]
+
+    @final
+    @staticmethod
+    def _get_current(lazyload: bool, for_update: bool):
         from .. import get_db_session, get_user_by_jwt_identity
         try:
             if "user" in g:
@@ -97,6 +112,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
                 pass
             return None
 
+    @final
     @classmethod
     @property
     def current(cls):  # pyright: ignore[reportDeprecated]
@@ -105,15 +121,18 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         if user is not None:
             return user
 
-        response = response_msg("The JWT has expired", 401)
-        unset_jwt_cookies(response)
-        abort(response)
+        if has_request_context():
+            response = response_msg("The JWT has expired", 401)
+            unset_jwt_cookies(response)
+            abort(response)
+        raise Exception("[bafser] No current user")
 
     @classmethod
     def create_admin(cls, db_sess: Session):
         fake_creator = UserBase.get_fake_system()
         return cls.new(fake_creator, "admin", "admin", "Admin", [RolesBase.admin], db_sess=db_sess)
 
+    @final
     @staticmethod
     def _create_admin(db_sess: Session):
         User = get_user_table()
@@ -129,6 +148,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def is_admin(self):
         return self.has_role(RolesBase.admin)
 
+    @final
     @staticmethod
     def get_fake_system():
         u = UserBase(name="System", login="system")

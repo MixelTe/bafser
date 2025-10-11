@@ -34,7 +34,7 @@ from .utils.get_json_values import get_json_values, get_json_list
 from .utils.create_file_response import create_file_response
 from .utils.create_folder_for_file import create_folder_for_file
 from .utils.get_datetime_now import get_datetime_now
-from .utils.get_db_session import get_db_session
+from .utils.get_db_session import get_db_session, override_get_db_session
 from .utils.get_json import get_json
 from .utils.get_json_values_from_req import get_json_values_from_req, get_json_list_from_req
 from .utils.get_userId import get_userId_required, get_userId
@@ -62,7 +62,7 @@ from .data._tables import TablesBase
 from .data._roles import RolesBase
 from .data.operation import OperationsBase, OperationDict
 from .data.user_role import UserRole
-from .data.user import UserBase, UserKwargs, UserDict, UserDictFull
+from .data.user import UserBase, UserKwargs, UserDict, UserDictFull, override_get_current_user
 from .data.log import Log, LogDict
 from .data.role import Role, RoleDict
 from .data.image import Image, ImageKwargs, ImageDict, ImageJson
@@ -87,7 +87,7 @@ __all__ = [
     "create_folder_for_file",
     "create_permission_required_decorator",
     "get_datetime_now",
-    "get_db_session",
+    "get_db_session", "override_get_db_session",
     "get_json",
     "get_json_values_from_req", "get_json_list_from_req",
     "get_userId_required", "get_userId",
@@ -114,7 +114,7 @@ __all__ = [
     "RolesBase",
     "OperationsBase", "OperationDict",
     "UserRole",
-    "UserBase", "UserKwargs", "UserDict", "UserDictFull",
+    "UserBase", "UserKwargs", "UserDict", "UserDictFull", "override_get_current_user",
     "Log", "LogDict",
     "Role", "RoleDict",
     "Image", "ImageKwargs", "ImageDict", "ImageJson",

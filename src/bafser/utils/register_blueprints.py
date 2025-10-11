@@ -2,6 +2,7 @@ import importlib
 import os
 
 from flask import Flask
+
 import bafser_config
 
 
@@ -13,6 +14,7 @@ def register_blueprints(app: Flask):
     for file in os.listdir(bafser_config.blueprints_folder):
         if not file.endswith(".py"):
             continue
-        module = blueprints_module + "." + file[:-3]
-        blueprint = importlib.import_module(module).blueprint
+        module_name = blueprints_module + "." + file[:-3]
+        module = importlib.import_module(module_name)
+        blueprint = module.blueprint if hasattr(module, "blueprint") else module.bp
         app.register_blueprint(blueprint)

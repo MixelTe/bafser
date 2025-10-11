@@ -55,7 +55,7 @@ class IdMixin:
 
     @classmethod
     def query2(cls, *, for_update: bool = False):
-        """Calls self.query with db session from global context"""
+        """Calls cls.query with db session from global context"""
         from . import get_db_session
         return cls.query(get_db_session(), for_update=for_update)
 
@@ -65,7 +65,7 @@ class IdMixin:
 
     @classmethod
     def get2(cls, id: int, *, for_update: bool = False):
-        """Calls self.get with db session from global context"""
+        """Calls cls.get with db session from global context"""
         from . import get_db_session
         return cls.get(get_db_session(), id, for_update=for_update)
 
@@ -75,7 +75,7 @@ class IdMixin:
 
     @classmethod
     def all2(cls, *, for_update: bool = False):
-        """Calls self.all with db session from global context"""
+        """Calls cls.all with db session from global context"""
         from . import get_db_session
         return cls.all(get_db_session(), for_update=for_update)
 
@@ -97,7 +97,7 @@ class ObjMixin(IdMixin):
 
     @classmethod
     def query2(cls, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Calls self.query with db session from global context"""
+        """Calls cls.query with db session from global context"""
         from . import get_db_session
         return cls.query(get_db_session(), includeDeleted, for_update=for_update)
 
@@ -107,7 +107,7 @@ class ObjMixin(IdMixin):
 
     @classmethod
     def get2(cls, id: int, includeDeleted: bool = False, *, for_update: bool = False):
-        """Calls self.get with db session from global context"""
+        """Calls cls.get with db session from global context"""
         from . import get_db_session
         return cls.get(get_db_session(), id, includeDeleted, for_update=for_update)
 
@@ -117,7 +117,7 @@ class ObjMixin(IdMixin):
 
     @classmethod
     def all2(cls, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Calls self.all with db session from global context"""
+        """Calls cls.all with db session from global context"""
         from . import get_db_session
         return cls.all(get_db_session(), includeDeleted, for_update=for_update)
 

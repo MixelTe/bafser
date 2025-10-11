@@ -330,6 +330,20 @@ class JsonObj:
         return k, v
 
     def _parse(self, key: str, v: Any, json: dict[str, Any]) -> str | tuple[str, Any] | None:
+        """
+        Override `_parse` to map keys and add custom parser::
+
+            @override
+            def _parse(self, key: str, v: Any, json: dict[str, Any]):
+                if key == "from":
+                    return "frm"  # remap key, keep default parser
+                if key == "char":
+                    if not isinstance(v, str) or len(v) != 1:
+                        # exception will be rerised on validate call
+                        raise JsonParseError("must be a single character string")
+                    return key, v.lower()
+                return None
+        """
         return None
 
     @classmethod
@@ -516,6 +530,14 @@ class JsonObj:
         return k, v
 
     def _serialize(self, key: str, v: Any) -> tuple[str, Any] | None:
+        """
+        Override `_serialize` to map keys and add custom serializer::
+
+            @override
+            def _serialize(self, key: str, v: Any):
+                if key == "rect" and isinstance(v, MyRect):
+                    return key, v.get_dict()
+        """
         return None
 
     def dumps(self, indent: int | str | None = None):

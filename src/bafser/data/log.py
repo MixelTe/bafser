@@ -121,6 +121,8 @@ class Log(SqlAlchemyBase, IdMixin):
             actor = UserBase.get_current(lazyload=True)
         if actor is None:
             actor = UserBase.get_fake_system()
+            from .. import get_db_session
+            db_sess = db_sess if db_sess else get_db_session()
         db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
             now = get_datetime_now()
