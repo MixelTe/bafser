@@ -126,10 +126,10 @@ blueprints_docs_py = """from flask import Blueprint
 from bafser import get_api_docs
 
 
-blueprint = Blueprint("docs", __name__)
+bp = Blueprint("docs", __name__)
 
 
-@blueprint.route("/api")
+@bp.route("/api")
 def docs():
     return get_api_docs()
 """

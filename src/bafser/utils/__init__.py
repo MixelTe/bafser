@@ -21,9 +21,9 @@ from .permission_required import permission_required, permission_required_any
 from .randstr import randstr
 from .register_blueprints import register_blueprints
 from .response_not_found import response_not_found
-from .use_db_session import use_db_session
-from .use_user import use_user
-from .use_userId import use_userId
+from .use_db_session import use_db_session, use_db_sess
+from .use_user import use_user  # pyright: ignore[reportDeprecated]
+from .use_userId import use_userId  # pyright: ignore[reportDeprecated]
 
 __all__ = [
     "response_msg",
@@ -48,7 +48,7 @@ __all__ = [
     "randstr",
     "register_blueprints",
     "response_not_found",
-    "use_db_session",
+    "use_db_session", "use_db_sess",
     "use_user",
     "use_userId",
 ]

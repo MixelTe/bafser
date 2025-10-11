@@ -46,9 +46,9 @@ from .utils.permission_required import create_permission_required_decorator
 from .utils.permission_required import permission_required, permission_required_any
 from .utils.randstr import randstr
 from .utils.response_not_found import response_not_found
-from .utils.use_db_session import use_db_session
-from .utils.use_user import use_user
-from .utils.use_userId import use_userId
+from .utils.use_db_session import use_db_session, use_db_sess
+from .utils.use_user import use_user  # pyright: ignore[reportDeprecated]
+from .utils.use_userId import use_userId  # pyright: ignore[reportDeprecated]
 
 from .app import AppConfig, create_app, update_message_to_frontend, get_app_config
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
@@ -98,7 +98,7 @@ __all__ = [
     "permission_required", "permission_required_any",
     "randstr",
     "response_not_found",
-    "use_db_session",
+    "use_db_session", "use_db_sess",
     "use_user",
     "use_userId",
 
