@@ -118,7 +118,10 @@ class Log(SqlAlchemyBase, IdMixin):
         actionCode: str,
     ):
         if actor is None:
-            actor = UserBase.get_current(lazyload=True)
+            from .. import get_db_session
+            db_sess = db_sess if db_sess else get_db_session()
+            with db_sess.no_autoflush:
+                actor = UserBase.get_current(lazyload=True)
         if actor is None:
             actor = UserBase.get_fake_system()
             from .. import get_db_session
@@ -128,11 +131,14 @@ class Log(SqlAlchemyBase, IdMixin):
             now = get_datetime_now()
         if changes is None:
             changes = Log._get_obj_changes(record)
+        with db_sess.no_autoflush:
+            userId = actor.id
+            userName = actor.name
         log = Log(
             date=now,
             actionCode=actionCode,
-            userId=actor.id,
-            userName=actor.name,
+            userId=userId,
+            userName=userName,
             tableName=record.__tablename__,
             recordId=record.id if isinstance(record, IdMixin) and record.id is not None else -1,  # pyright: ignore[reportUnnecessaryComparison]
             changes=Log._serialize_changes(changes)

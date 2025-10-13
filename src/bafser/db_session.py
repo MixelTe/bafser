@@ -2,6 +2,8 @@ from typing import Any
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from sqlalchemy.ext.compiler import compiles  # type: ignore
 from sqlalchemy.sql.expression import FunctionFilter
 from sqlalchemy.sql.functions import Function
@@ -21,14 +23,14 @@ def global_init(dev: bool):
         return
 
     if dev:
-        create_folder_for_file(bafser_config.db_dev_path)
+        setup_sqlite(bafser_config.db_dev_path)
         conn_str = f"sqlite:///{bafser_config.db_dev_path}"
     else:
         db_path = get_db_path(bafser_config.db_path)
         if bafser_config.db_mysql:
             conn_str = f"mysql+pymysql://{db_path}?charset=UTF8mb4"
         else:
-            create_folder_for_file(db_path)
+            setup_sqlite(db_path)
             conn_str = f"sqlite:///{db_path}"
     print(f"Connecting to the database at {conn_str}")
 
@@ -44,11 +46,6 @@ def create_session() -> orm.Session:
     return __factory()  # type: ignore
 
 
-# @sa.event.listens_for(sa.engine.Engine, "connect")
-# def sqlite_engine_connect(dbapi_conn, connection_record):
-#     dbapi_conn.create_function("lower", 1, str.lower)
-
-
 @compiles(FunctionFilter, "mysql")
 def compile_functionfilter_mysql(element: Any, compiler: Any, **kwgs: Any):
     # Support unary functions only
@@ -62,3 +59,14 @@ def compile_functionfilter_mysql(element: Any, compiler: Any, **kwgs: Any):
         bind=element.func._bind)
 
     return new_func._compiler_dispatch(compiler, **kwgs)  # type: ignore
+
+
+def setup_sqlite(db_path: str):
+    create_folder_for_file(db_path)
+
+    @event.listens_for(Engine, "connect")
+    def _(dbapi_connection: Any, connection_record: Any):
+        dbapi_connection.create_function("lower", 1, str.lower)
+        cursor = dbapi_connection.cursor()
+        cursor.execute('PRAGMA foreign_keys=ON')
+        cursor.close()
