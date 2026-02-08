@@ -54,30 +54,30 @@ class IdMixin:
         return q
 
     @classmethod
-    def query2(cls, *, for_update: bool = False):
+    def query2(cls, *, for_update: bool = False, db_sess: Session | None = None):
         """Calls cls.query with db session from global context"""
         from . import get_db_session
-        return cls.query(get_db_session(), for_update=for_update)
+        return cls.query(db_sess or get_db_session(), for_update=for_update)
 
     @classmethod
     def get(cls, db_sess: Session, id: int, *, for_update: bool = False):
         return cls.query(db_sess, for_update=for_update).filter(cls.id == id).first()
 
     @classmethod
-    def get2(cls, id: int, *, for_update: bool = False):
+    def get2(cls, id: int, *, for_update: bool = False, db_sess: Session | None = None):
         """Calls cls.get with db session from global context"""
         from . import get_db_session
-        return cls.get(get_db_session(), id, for_update=for_update)
+        return cls.get(db_sess or get_db_session(), id, for_update=for_update)
 
     @classmethod
     def all(cls, db_sess: Session, *, for_update: bool = False):
         return cls.query(db_sess, for_update=for_update).all()
 
     @classmethod
-    def all2(cls, *, for_update: bool = False):
+    def all2(cls, *, for_update: bool = False, db_sess: Session | None = None):
         """Calls cls.all with db session from global context"""
         from . import get_db_session
-        return cls.all(get_db_session(), for_update=for_update)
+        return cls.all(db_sess or get_db_session(), for_update=for_update)
 
     def __repr__(self):
         return f"<{self.__class__.__name__}> [{self.id}]"
@@ -96,30 +96,30 @@ class ObjMixin(IdMixin):
         return items
 
     @classmethod
-    def query2(cls, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def query2(cls, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Calls cls.query with db session from global context"""
         from . import get_db_session
-        return cls.query(get_db_session(), includeDeleted, for_update=for_update)
+        return cls.query(db_sess or get_db_session(), includeDeleted, for_update=for_update)
 
     @classmethod
     def get(cls, db_sess: Session, id: int, includeDeleted: bool = False, *, for_update: bool = False):
         return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.id == id).first()
 
     @classmethod
-    def get2(cls, id: int, includeDeleted: bool = False, *, for_update: bool = False):
+    def get2(cls, id: int, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):
         """Calls cls.get with db session from global context"""
         from . import get_db_session
-        return cls.get(get_db_session(), id, includeDeleted, for_update=for_update)
+        return cls.get(db_sess or get_db_session(), id, includeDeleted, for_update=for_update)
 
     @classmethod
     def all(cls, db_sess: Session, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
         return cls.query(db_sess, includeDeleted, for_update=for_update).all()
 
     @classmethod
-    def all2(cls, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def all2(cls, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Calls cls.all with db session from global context"""
         from . import get_db_session
-        return cls.all(get_db_session(), includeDeleted, for_update=for_update)
+        return cls.all(db_sess or get_db_session(), includeDeleted, for_update=for_update)
 
     def delete(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
         from . import Log, get_datetime_now
@@ -132,9 +132,9 @@ class ObjMixin(IdMixin):
             Log.deleted(self, actor, now=now, commit=commit, db_sess=db_sess)
         return True
 
-    def delete2(self, commit: bool = True, now: datetime | None = None):
+    def delete2(self, commit: bool = True, now: datetime | None = None, *, actor: "UserBase | None" = None, db_sess: Session | None = None):
         """Calls self.delete with UserBase.current as actor"""
-        return self.delete(UserBase.current, commit, now, None)
+        return self.delete(actor or UserBase.current, commit, now, db_sess)
 
     def _on_delete(self, db_sess: Session, actor: "UserBase", now: datetime, commit: bool) -> bool:
         """override to add logic on delete, return True if obj can be deleted"""
@@ -151,9 +151,9 @@ class ObjMixin(IdMixin):
             Log.restored(self, actor, now=now, commit=commit, db_sess=db_sess)
         return True
 
-    def restore2(self, commit: bool = True, now: datetime | None = None):
+    def restore2(self, commit: bool = True, now: datetime | None = None, *, actor: "UserBase | None" = None, db_sess: Session | None = None):
         """Calls self.restore with UserBase.current as actor"""
-        return self.restore(UserBase.current, commit, now, None)
+        return self.restore(actor or UserBase.current, commit, now, db_sess)
 
     def _on_restore(self, db_sess: Session, actor: "UserBase", now: datetime, commit: bool) -> bool:
         """override to add logic on restore, return True if obj can be restored"""
@@ -167,6 +167,7 @@ class ObjMixin(IdMixin):
 
 
 class SingletonMixin:
+    """Create table with one row. Method `init` can be overriten"""
     _ID = 1
     id: Mapped[intpk] = mapped_column(init=False)
 
@@ -183,9 +184,9 @@ class SingletonMixin:
         return obj
 
     @classmethod
-    def get2(cls):
+    def get2(cls, *, db_sess: Session | None = None):
         from . import get_db_session
-        return cls.get(get_db_session())
+        return cls.get(db_sess or get_db_session())
 
     def init(self):
         pass

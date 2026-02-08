@@ -38,7 +38,7 @@ class Undefined(metaclass=UndefinedMeta):
 
     @staticmethod
     def default[T, K](v: T | type["Undefined"], default: K = None) -> T | K:
-        """Returns None if value is Undefined"""
+        """Returns `default` if value is Undefined"""
         if v is Undefined:
             return default
         return Undefined.cast(v)
