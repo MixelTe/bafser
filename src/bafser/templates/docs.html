@@ -324,7 +324,9 @@
             padding: 0.5rem;
         }
         .group__body > div {
+            max-width: 100%;
             min-height: 0;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             gap: 1rem;
@@ -394,6 +396,7 @@
             overflow: hidden;
             transition: grid-template-rows 150ms, padding 150ms;
             padding: 0 1rem;
+            overflow: auto;
         }
         .card__title:has(*:checked) ~ .card__body {
             grid-template-rows: 1fr;
@@ -2009,12 +2012,12 @@
                     showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
                     showIf(mode, v => v == "send", Button("btn", [IconSend()], fetcher.fetch)),
                 ]),
-                (route.perms || route.nojwt) && Div("boxes", [
+                (route.perms || !route.jwt) && Div("boxes", [
                     route.perms && Div([], [
                         IconCard(),
                         Span([], route.perms),
                     ]),
-                    route.nojwt && Div([], "nojwt"),
+                    !route.jwt && Div([], "nojwt"),
                 ]),
                 route.desc && Div("quote", route.desc),
                 Div(),

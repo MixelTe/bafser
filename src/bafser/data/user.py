@@ -6,7 +6,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .. import ObjMixin, SqlAlchemyBase, UserRole, listfind
+from .. import ObjMixin, SqlAlchemyBase, TOperation, UserRole, listfind
 from ..utils import get_datetime_now
 from ._roles import RolesBase
 from ._tables import TablesBase
@@ -61,6 +61,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     @classmethod
     def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], *_: Any, db_sess: Session | None = None, **kwargs: Any):  # noqa: E501
         from .. import Log
+
         db_sess = db_sess if db_sess else creator.db_sess
         user = cls._new(db_sess, {"login": login, "name": name}, **kwargs)
         user.set_password(password)
@@ -97,6 +98,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     @staticmethod
     def _get_current(lazyload: bool, for_update: bool):
         from .. import get_db_session, get_user_by_jwt_identity
+
         try:
             if "user" in g:
                 return g.user
@@ -117,6 +119,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     @property
     def current(cls):  # pyright: ignore[reportDeprecated]
         from .. import response_msg
+
         user = cls.get_current()
         if user is not None:
             return user
@@ -161,11 +164,13 @@ class UserBase(ObjMixin, SqlAlchemyBase):
 
     def update_password(self, actor: "UserBase", password: str):
         from .. import Log
+
         self.set_password(password)
         Log.updated(self, actor)
 
     def update_name(self, actor: "UserBase", name: str):
         from .. import Log
+
         self.name = name
         Log.updated(self, actor)
 
@@ -175,7 +180,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def check_password(self, password: str):
         return check_password_hash(self.password, password)
 
-    def check_permission(self, operation: tuple[str, str]):
+    def check_permission(self, operation: TOperation):
         return operation[0] in self.get_operations()
 
     def add_role(self, actor: "UserBase", roleId: int):

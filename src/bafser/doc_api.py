@@ -27,6 +27,7 @@ TFn = TypeVar("TFn", bound=Callable[..., Any])
 
 def init_api_docs(app: Flask):
     from . import M
+
     for rule in app.url_map.iter_rules():
         fn = app.view_functions[rule.endpoint]
         _, line = inspect.getsourcelines(fn)
@@ -34,7 +35,7 @@ def init_api_docs(app: Flask):
         restype: Any = None
         desc: Any = None
         perms: Any = None
-        nojwt: Any = None
+        jwt: Any = None
         if hasattr(fn, "_doc_api_reqtype"):
             reqtype = fn._doc_api_reqtype  # type: ignore
         if hasattr(fn, "_doc_api_restype"):
@@ -43,8 +44,8 @@ def init_api_docs(app: Flask):
             desc = fn._doc_api_desc  # type: ignore
         if hasattr(fn, "_doc_api_perms"):
             perms = fn._doc_api_perms  # type: ignore
-        if hasattr(fn, "_doc_api_nojwt"):
-            nojwt = fn._doc_api_nojwt  # type: ignore
+        if hasattr(fn, "_doc_api_jwt"):
+            jwt = fn._doc_api_jwt  # type: ignore
 
         route = str(rule)
         d: dict[str, Any] = {}
@@ -55,9 +56,9 @@ def init_api_docs(app: Flask):
         if desc is not None:
             d["__desc__"] = desc
             endpoint.desc = desc
-        if nojwt is True:
-            d["__nojwt__"] = True
-            endpoint.nojwt = True
+        if jwt is not True:
+            d["__jwt__"] = False
+            endpoint.jwt = False
         if reqtype is not None:
             d["request"] = type_to_json(reqtype, _types, toplvl=True)
             endpoint.reqtype = type_info(reqtype, _types_full)
@@ -85,33 +86,36 @@ def render_docs_page():
     routes = [e.json() for e in _endpoints]
     types = {k: v.json() for k, v in _types_full.items()}
     dev = get_app_config().DEV_MODE
-    return render_template(_template_docs,
-                           routes=json.dumps(routes),
-                           types=json.dumps(types),
-                           loc=os.getcwd().replace("\\", "/") if dev else "",
-                           locb=_loc.replace("\\", "/") if dev else "",
-                           dev=dev
-                           )
+    return render_template(
+        _template_docs,
+        routes=json.dumps(routes),
+        types=json.dumps(types),
+        loc=os.getcwd().replace("\\", "/") if dev else "",
+        locb=_loc.replace("\\", "/") if dev else "",
+        dev=dev,
+    )
 
 
-def doc_api(*, req: Any = None, res: Any = None, desc: str | None = None, nojwt: bool = False):
+def doc_api(*, req: Any = None, res: Any = None, desc: str | None = None, jwt: bool | None = None):
     def decorator(fn: TFn) -> TFn:
         fn._doc_api_reqtype = req  # type: ignore
         fn._doc_api_restype = res  # type: ignore
         fn._doc_api_desc = desc  # type: ignore
-        fn._doc_api_nojwt = nojwt  # type: ignore
+        if jwt is not None:
+            fn._doc_api_jwt = jwt  # type: ignore
         return fn
+
     return decorator
 
 
 def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl: bool = False) -> Any:
     if otype in (int, float):
         return "number"
-    if otype == bool:
+    if otype is bool:
         return "boolean"
-    if otype == str:
+    if otype is str:
         return "string"
-    if otype == object:
+    if otype is object:
         return "object"
     if otype == datetime:
         return "datetime"
@@ -192,7 +196,7 @@ class EndpointInfo(JsonObj):
     restype: JsonOpt["TypeInfo"] = Undefined
     desc: JsonOpt[str] = Undefined
     perms: JsonOpt[str] = Undefined
-    nojwt: JsonOpt[bool] = Undefined
+    jwt: bool = True
 
 
 class TypeInfo(JsonObj):
@@ -216,19 +220,19 @@ class TypeInfoField(JsonObj):
 
 
 def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
-    if otype == int:
+    if otype is int:
         return TypeInfo(type="int")
-    if otype == float:
+    if otype is float:
         return TypeInfo(type="float")
-    if otype == bool:
+    if otype is bool:
         return TypeInfo(type="bool")
-    if otype == str:
+    if otype is str:
         return TypeInfo(type="str")
     if otype in (None, NoneType):
         return TypeInfo(type="null")
     if otype == Any:
         return TypeInfo(type="any")
-    if otype == object:
+    if otype is object:
         return TypeInfo(type="object", object_fields=[])
 
     torigin = get_origin(otype)
@@ -251,9 +255,7 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         k = targs[0]
         if get_origin(k) is Literal:
             k = get_args(k)[0]
-        return TypeInfo(type="object", object_fields=[
-            TypeInfoField(name=k, type=type_info(targs[1], types))
-        ])
+        return TypeInfo(type="object", object_fields=[TypeInfoField(name=k, type=type_info(targs[1], types))])
 
     optional_fields: list[str] = []
     field_descriptions: dict[str, str] = {}

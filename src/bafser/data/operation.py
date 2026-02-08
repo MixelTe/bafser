@@ -6,6 +6,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .. import SqlAlchemyBase
 from ..utils import get_all_fields, get_all_values
 
+TOperation = tuple[str, str]
+
 
 class Operation(SqlAlchemyBase):
     __tablename__ = "Operation"

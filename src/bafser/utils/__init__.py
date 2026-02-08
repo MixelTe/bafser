@@ -16,8 +16,9 @@ from .ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .jsonify_list import jsonify_list
 from .listfind import listfind
 from .parse_date import parse_date
-from .permission_required import create_permission_required_decorator
-from .permission_required import permission_required, permission_required_any
+from .permission_required import create_permission_required_decorator  # pyright: ignore[reportDeprecated]
+from .permission_required import permission_required, permission_required_any  # pyright: ignore[reportDeprecated]
+from .protected_route import protected_route
 from .randstr import randstr
 from .register_blueprints import register_blueprints
 from .response_not_found import response_not_found
@@ -45,6 +46,7 @@ __all__ = [
     "listfind",
     "parse_date",
     "permission_required", "permission_required_any",
+    "protected_route",
     "randstr",
     "register_blueprints",
     "response_not_found",

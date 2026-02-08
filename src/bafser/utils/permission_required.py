@@ -1,5 +1,6 @@
 from functools import wraps
 from typing import Any, Callable, TypeVar, TYPE_CHECKING
+from typing_extensions import deprecated
 
 from flask import abort
 if TYPE_CHECKING:
@@ -9,6 +10,7 @@ if TYPE_CHECKING:
 TFn = TypeVar("TFn", bound=Callable[..., Any])
 
 
+@deprecated("Now useless with protected_route")
 def create_permission_required_decorator(*, permission_desc: str | None = None) -> \
         Callable[[Callable[["Session", "UserBase", dict[str, Any]], bool]], Callable[[TFn], TFn]]:
     def creator(check_permission: Callable[["Session", "UserBase", dict[str, Any]], bool]):
@@ -30,8 +32,9 @@ def create_permission_required_decorator(*, permission_desc: str | None = None) 
     return creator
 
 
+@deprecated("Use protected_route instead")
 def permission_required(*operations: tuple[str, str]):
-    @create_permission_required_decorator(permission_desc=" && ".join(v[0] for v in operations))
+    @create_permission_required_decorator(permission_desc=" && ".join(v[0] for v in operations))  # pyright: ignore[reportDeprecated]
     def check(db_sess: "Session", user: "UserBase", kwargs: dict[str, Any]):
         for operation in operations:
             if not user.check_permission(operation):
@@ -41,8 +44,9 @@ def permission_required(*operations: tuple[str, str]):
     return check
 
 
+@deprecated("Use protected_route instead")
 def permission_required_any(*operations: tuple[str, str]):
-    @create_permission_required_decorator(permission_desc=" || ".join(v[0] for v in operations))
+    @create_permission_required_decorator(permission_desc=" || ".join(v[0] for v in operations))  # pyright: ignore[reportDeprecated]
     def check(db_sess: "Session", user: "UserBase", kwargs: dict[str, Any]):
         for operation in operations:
             if user.check_permission(operation):

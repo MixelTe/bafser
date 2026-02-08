@@ -117,6 +117,7 @@ class Log(SqlAlchemyBase, IdMixin):
         db_sess: Session | None,
         actionCode: str,
     ):
+        db_sess = db_sess if db_sess else record.get_session()
         if actor is None:
             from .. import get_db_session
             db_sess = db_sess if db_sess else get_db_session()

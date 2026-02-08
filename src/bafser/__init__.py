@@ -42,8 +42,9 @@ from .utils.ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .utils.jsonify_list import jsonify_list
 from .utils.listfind import listfind
 from .utils.parse_date import parse_date
-from .utils.permission_required import create_permission_required_decorator
-from .utils.permission_required import permission_required, permission_required_any
+from .utils.permission_required import create_permission_required_decorator  # pyright: ignore[reportDeprecated]
+from .utils.permission_required import permission_required, permission_required_any  # pyright: ignore[reportDeprecated]
+from .utils.protected_route import protected_route
 from .utils.randstr import randstr
 from .utils.response_not_found import response_not_found
 from .utils.use_db_session import use_db_session, use_db_sess
@@ -60,7 +61,7 @@ from .db_session import SqlAlchemyBase
 from .table_base import IdMixin, ObjMixin, SingletonMixin
 from .data._tables import TablesBase
 from .data._roles import RolesBase
-from .data.operation import OperationsBase, OperationDict
+from .data.operation import OperationsBase, OperationDict, TOperation
 from .data.user_role import UserRole
 from .data.user import UserBase, UserKwargs, UserDict, UserDictFull, override_get_current_user
 from .data.log import Log, LogDict
@@ -96,6 +97,7 @@ __all__ = [
     "listfind",
     "parse_date",
     "permission_required", "permission_required_any",
+    "protected_route",
     "randstr",
     "response_not_found",
     "use_db_session", "use_db_sess",
@@ -112,7 +114,7 @@ __all__ = [
     "IdMixin", "ObjMixin", "SingletonMixin",
     "TablesBase",
     "RolesBase",
-    "OperationsBase", "OperationDict",
+    "OperationsBase", "OperationDict", "TOperation",
     "UserRole",
     "UserBase", "UserKwargs", "UserDict", "UserDictFull", "override_get_current_user",
     "Log", "LogDict",

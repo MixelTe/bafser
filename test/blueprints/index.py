@@ -1,14 +1,25 @@
-from test.data import Operations
-from test.data.img import ImageJson, Img
-from test.data.user import User
 from typing import Any, Literal, NotRequired, TypedDict
 
 from flask import Blueprint, abort, send_from_directory
-from flask_jwt_extended import jwt_required  # pyright: ignore[reportUnknownVariableType]
 
 import bafser_config
-from bafser import (JsonObj, JsonOpt, JsonSingleKey, Undefined, UserDict, doc_api, get_api_docs, get_app_config, get_json_values_from_req,
-                    permission_required, render_docs_page, response_msg)
+from bafser import (
+    JsonObj,
+    JsonOpt,
+    JsonSingleKey,
+    Undefined,
+    UserDict,
+    doc_api,
+    get_api_docs,
+    get_app_config,
+    get_json_values_from_req,
+    protected_route,
+    render_docs_page,
+    response_msg,
+)
+from test.data import Operations
+from test.data.img import ImageJson, Img
+from test.data.user import User
 
 bp = Blueprint("index", __name__)
 
@@ -32,7 +43,7 @@ def index():
 
 @bp.get("/api/user")
 @doc_api(res=UserDict, desc="Get current user")
-@jwt_required()
+@protected_route()
 def user():
     return User.current.get_dict()
 
@@ -56,8 +67,16 @@ class SomeDict1(TypedDict):
 
 @bp.post("/api/post")
 def test_post():  # type: ignore
-    a, b, c, d, e, f, g, h = get_json_values_from_req(("a", int), ("b", str, "def"), ("c", bool), ("d", list, []),
-                                                      ("e", list[int], []), ("f", dict, {}), ("g", dict[str, int], {}), ("h", SomeDict1))
+    a, b, c, d, e, f, g, h = get_json_values_from_req(
+        ("a", int),
+        ("b", str, "def"),
+        ("c", bool),
+        ("d", list, []),
+        ("e", list[int], []),
+        ("f", dict, {}),
+        ("g", dict[str, int], {}),
+        ("h", SomeDict1),
+    )
     return {"a": a, "b": b, "c": c, "d": d, "e": e, "f": f, "g": g, "h": h}  # type: ignore
 
 
@@ -123,8 +142,7 @@ def test_post4():  # type: ignore
 
 @bp.post("/api/img")
 @doc_api(req=JsonSingleKey["img", ImageJson], res=JsonSingleKey["id", int])
-@jwt_required()
-@permission_required(Operations.upload_img)
+@protected_route(perms=Operations.upload_img)
 def upload_img():
     img_data = get_json_values_from_req(("img", ImageJson))
 
