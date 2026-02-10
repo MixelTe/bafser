@@ -95,7 +95,7 @@ class RotatingFileHandler(logging.handlers.RotatingFileHandler):
         return r
 
 
-def get_log_fpath(fpath: str, next: bool = False):
+def get_log_fpath(fpath: str, next: bool = False) -> str:
     i = 0
     n = fpath.split(".")
     name, ext = (".".join(n[:-1]), n[-1]) if len(n) > 1 else (n[0], "")

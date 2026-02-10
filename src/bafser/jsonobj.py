@@ -722,9 +722,9 @@ def type_name(t: Any, json: bool = False) -> str:
     if json:
         if t in (int, float):
             return "number"
-        if t == bool:
+        if t is bool:
             return "boolean"
-        if t == str:
+        if t is str:
             return "string"
     try:
         return t.__name__

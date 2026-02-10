@@ -4,6 +4,7 @@ from flask import Blueprint, abort, send_from_directory
 
 import bafser_config
 from bafser import (
+    TJson,
     JsonObj,
     JsonOpt,
     JsonSingleKey,
@@ -141,7 +142,7 @@ def test_post4():  # type: ignore
 
 
 @bp.post("/api/img")
-@doc_api(req=JsonSingleKey["img", ImageJson], res=JsonSingleKey["id", int])
+@doc_api(req=TJson["img", ImageJson], res=TJson["id", int])
 @protected_route(perms=Operations.upload_img)
 def upload_img():
     img_data = get_json_values_from_req(("img", ImageJson))

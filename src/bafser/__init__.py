@@ -55,10 +55,10 @@ from .app import AppConfig, create_app, update_message_to_frontend, get_app_conf
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, add_file_logger, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
 from .jsonobj import JsonObj, JsonOpt, Undefined, JsonParseError
-from .doc_api import doc_api, get_api_docs, JsonSingleKey, render_docs_page
+from .doc_api import doc_api, get_api_docs, JsonSingleKey, TJson, TJsonListOf, render_docs_page
 
 from .db_session import SqlAlchemyBase
-from .table_base import IdMixin, ObjMixin, SingletonMixin
+from .table_base import IdMixin, ObjMixin, SingletonMixin, BigIdMixin
 from .data._tables import TablesBase
 from .data._roles import RolesBase
 from .data.operation import OperationsBase, OperationDict, TOperation
@@ -108,10 +108,10 @@ __all__ = [
     "get_logger_frontend", "log_frontend_error", "get_log_fpath", "add_file_logger", "ParametrizedLogger",
     "create_access_token", "get_user_by_jwt_identity", "get_user_id_by_jwt_identity",
     "JsonObj", "JsonOpt", "Undefined", "JsonParseError",
-    "doc_api", "get_api_docs", "JsonSingleKey", "render_docs_page",
+    "doc_api", "get_api_docs", "JsonSingleKey", "TJson", "TJsonListOf", "render_docs_page",
 
     "SqlAlchemyBase",
-    "IdMixin", "ObjMixin", "SingletonMixin",
+    "IdMixin", "ObjMixin", "SingletonMixin", "BigIdMixin",
     "TablesBase",
     "RolesBase",
     "OperationsBase", "OperationDict", "TOperation",

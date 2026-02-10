@@ -12,6 +12,8 @@ from flask import Flask, render_template
 from .jsonobj import JsonObj, JsonOpt, Undefined, type_name
 
 type JsonSingleKey[K: str, V] = Mapping[K, V]
+type TJson[K] = Mapping[str, Any]
+type TJsonListOf[K] = Mapping[str, Any]
 
 _docs: list[tuple[str, Any]] = []
 _types: dict[str, Any] = {}
@@ -56,9 +58,6 @@ def init_api_docs(app: Flask):
         if desc is not None:
             d["__desc__"] = desc
             endpoint.desc = desc
-        if jwt is not True:
-            d["__jwt__"] = False
-            endpoint.jwt = False
         if reqtype is not None:
             d["request"] = type_to_json(reqtype, _types, toplvl=True)
             endpoint.reqtype = type_info(reqtype, _types_full)
@@ -67,6 +66,9 @@ def init_api_docs(app: Flask):
             endpoint.restype = type_info(restype, _types_full)
         if d == {}:
             continue
+        if jwt is not True:
+            d["__jwt__"] = False
+            endpoint.jwt = False
         if perms is not None:
             d["__permsions__"] = perms
             endpoint.perms = perms
@@ -155,6 +157,14 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
             k = get_args(k)[0]
         t = targs[1]
         return {k: type_to_json(t, types, verbose)}
+    if torigin is TJson or torigin is TJsonListOf:
+        r: dict[str, Any] = {}
+        for i in range(0, len(targs) - 1, 2):
+            if isinstance(targs[i], str):
+                r[targs[i]] = type_to_json(targs[i + 1], types, verbose)
+        if torigin is TJsonListOf:
+            return [r]
+        return r
 
     r: dict[str, Any] = {}
     optional_fields: list[str] = []
@@ -256,6 +266,15 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         if get_origin(k) is Literal:
             k = get_args(k)[0]
         return TypeInfo(type="object", object_fields=[TypeInfoField(name=k, type=type_info(targs[1], types))])
+    if torigin is TJson or torigin is TJsonListOf:
+        fields: list[TypeInfoField] = []
+        for i in range(0, len(targs) - 1, 2):
+            if isinstance(targs[i], str):
+                fields.append(TypeInfoField(name=targs[i], type=type_info(targs[i + 1], types)))
+        obj = TypeInfo(type="object", object_fields=fields)
+        if torigin is TJsonListOf:
+            return TypeInfo(type="list", list_type=obj)
+        return obj
 
     optional_fields: list[str] = []
     field_descriptions: dict[str, str] = {}

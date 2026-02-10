@@ -44,7 +44,7 @@ class Image(SqlAlchemyBase, ObjMixin):
         if values_error:
             return None, values_error
 
-        data_splited = data.split(',')
+        data_splited = data.split(",")
         if len(data_splited) != 2:
             return None, "img data is not base64"
 
@@ -73,11 +73,15 @@ class Image(SqlAlchemyBase, ObjMixin):
 
         path = img.get_path()
         with open(path, "wb") as f:
-            f.write(base64.b64decode(img_data + '=='))
+            f.write(base64.b64decode(img_data + "=="))
 
         Log.added(img, creator, now=now)
 
         return img, None
+
+    @classmethod
+    def new2(cls: Type[T], json: ImageJson, *, creator: UserBase | None = None) -> tuple[T, None] | tuple[None, TError]:
+        return cls.new(creator or UserBase.current, json)
 
     @classmethod
     def _new(cls: Type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> tuple[None, TError] | tuple[T, None]:
