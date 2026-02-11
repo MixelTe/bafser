@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+
+<body>
+    <script type="text/template" id="data_endpoints">{{ endpoints }}</script>
+    <script>
+        const data = JSON.parse(document.getElementById("data_endpoints").innerText);
+    </script>
+    <!-- initEl -->
+    <script>
+        function initEl(tagName, classes, children, fn)
+        {
+            const el = document.createElement(tagName);
+            if (classes)
+            {
+                if (typeof classes == "string") el.classList.add(classes);
+                else classes.forEach(cs => cs && el.classList.add(cs));
+            }
+            if (children)
+            {
+                appendChildren(children);
+                function appendChildren(children)
+                {
+                    if (children instanceof Array)
+                        children.forEach(appendChildren);
+                    else if (!!children)
+                        el.append(children);
+                }
+            }
+
+            fn?.(el);
+
+            return el;
+        }
+        function Div(classes, children, fn)
+        {
+            return initEl("div", classes, children, fn);
+        }
+        function Span(classes, children, fn)
+        {
+            return initEl("span", classes, children, fn);
+        }
+        function Link(classes, children, href, fn)
+        {
+            const a = initEl("a", classes, children, fn);
+            if (href) a.href = href;
+            return a;
+        }
+        function Input(classes, type, placeholder, fn)
+        {
+            const input = initEl("input", classes, undefined, fn);
+            if (type) input.type = type;
+            if (placeholder) input.placeholder = placeholder;
+            return input;
+        }
+        function Button(classes, children, clickListener, fn)
+        {
+            const button = initEl("button", classes, children, fn);
+            if (clickListener) button.addEventListener("click", clickListener.bind(button, button));
+            return button;
+        }
+        function OptionEl(classes, value, children, fn)
+        {
+            const opt = initEl("option", classes, children, fn);
+            opt.value = value;
+            return opt;
+        }
+    </script>
+    <script>
+        document.body.appendChild(initEl("ul", [], Object.keys(data).map(time =>
+        {
+            return [
+                initEl("li", [], time),
+                initEl("ul", [], Object.keys(data[time]).map(endpoint =>
+                    initEl("li", [], `${endpoint}: ${data[time][endpoint]}`),
+                )),
+            ];
+        })));
+    </script>
+</body>
+
+</html>

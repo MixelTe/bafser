@@ -4,10 +4,10 @@ from flask import Blueprint, abort, send_from_directory
 
 import bafser_config
 from bafser import (
-    TJson,
     JsonObj,
     JsonOpt,
     JsonSingleKey,
+    TJson,
     Undefined,
     UserDict,
     doc_api,
@@ -15,6 +15,7 @@ from bafser import (
     get_app_config,
     get_json_values_from_req,
     protected_route,
+    render_dashboard_page,
     render_docs_page,
     response_msg,
 )
@@ -35,6 +36,12 @@ def docs_page():
     if not get_app_config().DEV_MODE:
         abort(404)
     return render_docs_page()
+
+
+@bp.get("/api/dashboard")
+@protected_route()
+def dashboard_page():
+    return render_dashboard_page()
 
 
 @bp.get("/")

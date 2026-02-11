@@ -116,6 +116,19 @@ def get_log_fpath(fpath: str, next: bool = False) -> str:
             return f"{name}.{i - 1}.{ext}"
 
 
+def get_log_fpath_all(fpath: str) -> list[str]:
+    r = [fpath]
+    i = 0
+    n = fpath.split(".")
+    name, ext = (".".join(n[:-1]), n[-1]) if len(n) > 1 else (n[0], "")
+    while True:
+        i += 1
+        npath = f"{name}.{i}.{ext}"
+        if not os.path.exists(npath):
+            return r
+        r.append(npath)
+
+
 MaxBytes = 8 * 1000 * 1000
 
 
@@ -176,12 +189,12 @@ def setLogging():
 
     logger_dashboard = get_logger_dashboard()
     logger_dashboard.setLevel(logging.INFO)
-    formatter_req = RequestFormatter("%(asctime)s;%(endpoint)s;%(duration)s;%(code)s;%(req_id)s;%(ip)s;%(uid)s")
-    file_handler_req = RotatingFileHandler(bafser_config.log_dashboard_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
-    file_handler_req.setFormatter(formatter_req)
-    file_handler_req.setLevel(logging.INFO)
-    file_handler_req.encoding = "utf-8"
-    logger_dashboard.addHandler(file_handler_req)
+    formatter_dashboard = RequestFormatter("%(asctime)s;%(endpoint)s;%(duration)s;%(code)s;%(req_id)s;%(ip)s;%(uid)s")
+    file_handler_dashboard = RotatingFileHandler(bafser_config.log_dashboard_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
+    file_handler_dashboard.setFormatter(formatter_dashboard)
+    file_handler_dashboard.setLevel(logging.INFO)
+    file_handler_dashboard.encoding = "utf-8"
+    logger_dashboard.addHandler(file_handler_dashboard)
 
 
 def get_logger_frontend():
