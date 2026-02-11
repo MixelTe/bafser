@@ -17,27 +17,28 @@ from . import db_session
 from .alembic import alembic_upgrade
 from .authentication import get_user_id_by_jwt_identity
 from .doc_api import init_api_docs
-from .logger import get_logger_requests, setLogging
+from .logger import get_logger_dashboard, get_logger_requests, setLogging
 from .utils import get_json, get_secret_key, get_secret_key_rnd, randstr, register_blueprints, response_msg
 
 _config: "AppConfig | None" = None
 
 
-class AppConfig():
+class AppConfig:
     data_folders: list[tuple[str, str]] = []
     config: list[tuple[str, Any]] = []
 
-    def __init__(self,
-                 FRONTEND_FOLDER: str = "build",
-                 JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = False,
-                 JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30),
-                 CACHE_MAX_AGE: int = 31536000,
-                 MESSAGE_TO_FRONTEND: str = "",
-                 STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],
-                 DEV_MODE: bool = False,
-                 DELAY_MODE: bool = False,
-                 PAGE404: str = "index.html",
-                 ):
+    def __init__(
+        self,
+        FRONTEND_FOLDER: str = "build",
+        JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = False,
+        JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30),
+        CACHE_MAX_AGE: int = 31536000,
+        MESSAGE_TO_FRONTEND: str = "",
+        STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],
+        DEV_MODE: bool = False,
+        DELAY_MODE: bool = False,
+        PAGE404: str = "index.html",
+    ):
         self.FRONTEND_FOLDER = FRONTEND_FOLDER
         self.JWT_ACCESS_TOKEN_EXPIRES = JWT_ACCESS_TOKEN_EXPIRES
         self.JWT_ACCESS_TOKEN_REFRESH = JWT_ACCESS_TOKEN_REFRESH
@@ -82,6 +83,7 @@ def create_app(import_name: str, config: AppConfig):
     setLogging()
     _config = config
     logreq = get_logger_requests()
+    logdash = get_logger_dashboard()
     app = Flask(import_name, static_folder=None)
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     app.config["JWT_SECRET_KEY"] = get_secret_key_rnd(bafser_config.jwt_key_file_path)
@@ -89,7 +91,7 @@ def create_app(import_name: str, config: AppConfig):
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False
     app.config["JWT_SESSION_COOKIE"] = False
     app.secret_key = app.config["JWT_SECRET_KEY"]
-    for (key, path) in config.config:
+    for key, path in config.config:
         app.config[key] = path
 
     jwt_manager = JWTManager(app)
@@ -97,7 +99,7 @@ def create_app(import_name: str, config: AppConfig):
     register_blueprints(app)
     init_api_docs(app)
 
-    for (_, path) in config.data_folders:
+    for _, path in config.data_folders:
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -106,7 +108,7 @@ def create_app(import_name: str, config: AppConfig):
         init_db: Callable[[Session, AppConfig], None] | None = None,
         init_dev_values: Callable[[Session, AppConfig], None] | None = None,
         port: int = 5000,
-        host: str = "127.0.0.1"
+        host: str = "127.0.0.1",
     ):
 
         if bafser_config.use_alembic:
@@ -122,6 +124,7 @@ def create_app(import_name: str, config: AppConfig):
     def init_database(init_db: Callable[[Session, AppConfig], None] | None, init_dev_values: Callable[[Session, AppConfig], None] | None):
         from . import Role, UserBase
         from .data.db_state import DBState
+
         db_session.global_init(config.DEV_MODE)
         with db_session.create_session() as db_sess:
             is_initialized = DBState.is_initialized(db_sess)
@@ -142,6 +145,7 @@ def create_app(import_name: str, config: AppConfig):
 
     def change_admin_default_pwd(db_sess: Session):
         from .data.user import get_user_table
+
         User = get_user_table()
         admin = User.get_by_login(db_sess, "admin", includeDeleted=True)
         if admin is not None and admin.check_password("admin"):
@@ -155,6 +159,7 @@ def create_app(import_name: str, config: AppConfig):
             print(request.path)
         g.json = get_json(request)
         g.req_id = randstr(4)
+        g.req_start = time.perf_counter_ns()
         try:
             verify_jwt_in_request()
             g.userId = get_user_id_by_jwt_identity(get_jwt_identity())
@@ -181,6 +186,7 @@ def create_app(import_name: str, config: AppConfig):
 
     @app.after_request
     def after_request(response: Response):  # type: ignore
+        logdash.info("", extra={"code": response.status_code})
         if request.path.startswith(bafser_config.api_url):
             try:
                 if response.content_type == "application/json":
@@ -207,7 +213,7 @@ def create_app(import_name: str, config: AppConfig):
         return response
 
     @app.teardown_appcontext
-    def teardown(exception: BaseException | None):  # pyright: ignore[reportUnusedFunction]
+    def teardown(exception: BaseException | None = None):  # pyright: ignore[reportUnusedFunction]
         g.pop("user", None)
         db_sess = g.pop("db_session", None)
         if db_sess:

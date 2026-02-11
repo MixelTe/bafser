@@ -11,6 +11,7 @@ log_info_path = "test/logs/log_info.csv"
 log_requests_path = "test/logs/log_requests.csv"
 log_errors_path = "test/logs/log_errors.log"
 log_frontend_path = "test/logs/log_frontend.log"
+log_dashboard_path = "test/logs/log_dashboard.csv"
 
 jwt_key_file_path = "test/secret_key_jwt.txt"
 images_folder = "test/images"

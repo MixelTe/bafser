@@ -17,6 +17,8 @@ scripts: `bafser`
 
 init project: `bafser init_project`
 
+run `gunicorn -w 4 --threads 2 --worker-class gthread -b 0.0.0.0:80 main:app`
+
 ---
 or manually
 
