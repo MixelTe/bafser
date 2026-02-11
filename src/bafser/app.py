@@ -273,20 +273,26 @@ def create_app(import_name: str, config: AppConfig):
 
     @app.errorhandler(401)
     def unauthorized(error: Exception):  # type: ignore
-        if request.path.startswith(bafser_config.api_url):
-            return response_msg("Unauthorized", 401)
-        return redirect(bafser_config.login_page_url)
+        if not request.path.startswith(bafser_config.api_url):
+            return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
+        return response_msg("Unauthorized", 401)
 
     @jwt_manager.expired_token_loader  # type: ignore
     def expired_token_loader(jwt_header, jwt_data):  # type: ignore
+        if not request.path.startswith(bafser_config.api_url):
+            return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
         return response_msg("The JWT has expired", 401)
 
     @jwt_manager.invalid_token_loader  # type: ignore
     def invalid_token_loader(error: Exception):  # type: ignore
+        if not request.path.startswith(bafser_config.api_url):
+            return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
         return response_msg("Invalid JWT", 401)
 
     @jwt_manager.unauthorized_loader  # type: ignore
     def unauthorized_loader(error: Exception):  # type: ignore
+        if not request.path.startswith(bafser_config.api_url):
+            return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
         return response_msg("Unauthorized", 401)
 
     return app, run
