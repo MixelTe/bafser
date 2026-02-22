@@ -9,7 +9,7 @@ from typing import Any
 from flask import g, has_request_context, request
 
 import bafser_config
-from bafser import create_folder_for_file, ip_to_emoji
+from bafser import create_folder_for_file, get_app_config, ip_to_emoji
 
 
 def customTime(*args: Any):
@@ -28,7 +28,7 @@ class RequestFormatter(logging.Formatter):
     max_msg_len = -1
     max_json_len = 2048
     json_indent: int | None = None
-    outer_args: list[str] = []
+    outer_args: list[str] | None = None
 
     def format(self, record: Any):
         def set_if_lack(name: str):
@@ -73,8 +73,13 @@ class RequestFormatter(logging.Formatter):
         if self.max_json_len > 0 and len(record.json) > self.max_json_len:
             record.json = record.json[: self.max_json_len] + "..."
 
-        for arg in self.outer_args:
-            setattr(record, arg, record.args.get(arg, f"[{arg}]"))
+        if self.outer_args:
+            for arg in self.outer_args:
+                if isinstance(record.args, dict):  # pyright: ignore[reportUnknownMemberType]
+                    value = str(record.args.get(arg, f"[{arg}]"))  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+                else:
+                    value = f"[{arg}]"
+                setattr(record, arg, value)
 
         return super().format(record)
 
@@ -139,62 +144,55 @@ def setLogging():
         format="[%(asctime)s] %(levelname)s in %(module)s (%(name)s): %(message)s",
         encoding="utf-8",
     )
-    create_folder_for_file(bafser_config.log_errors_path)
-    create_folder_for_file(bafser_config.log_info_path)
-    create_folder_for_file(bafser_config.log_requests_path)
-    create_folder_for_file(bafser_config.log_frontend_path)
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     logger.handlers.clear()
     logging.Formatter.converter = customTime
 
-    formatter_error = RequestFormatter(
-        "[%(asctime)s] %(ip_emoji)s (%(req_id)s by uid=%(uid)-6s) %(method)-6s %(url)-40s | %(levelname)s in %(module)s (%(name)s):\nReq json: %(json)s\n%(message)s\n"
-    )  # noqa: E501
-    formatter_error.max_json_len = -1
-    file_handler_error = RotatingFileHandler(bafser_config.log_errors_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
-    file_handler_error.setFormatter(formatter_error)
-    file_handler_error.setLevel(logging.WARNING)
-    file_handler_error.encoding = "utf-8"
-    logger.addHandler(file_handler_error)
+    logger.addHandler(
+        create_log_handler(
+            bafser_config.log_errors_path,
+            "[%(asctime)s] %(ip_emoji)s (%(req_id)s by uid=%(uid)-6s) %(method)-6s %(url)-40s | %(levelname)s in %(module)s (%(name)s):\nReq json: %(json)s\n%(message)s\n",
+            logging.WARNING,
+            max_json_len=-1,
+        )
+    )
 
-    formatter_info = RequestFormatter("%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)-4s;%(url)s;%(module)s;%(message)s")
-    formatter_info.max_json_len = 4096
-    file_handler_info = RotatingFileHandler(bafser_config.log_info_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
-    file_handler_info.setFormatter(formatter_info)
-    file_handler_info.addFilter(InfoFilter())
-    file_handler_info.encoding = "utf-8"
-    logger.addHandler(file_handler_info)
+    logger.addHandler(
+        create_log_handler(
+            bafser_config.log_info_path,
+            "%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)-4s;%(url)s;%(module)s;%(message)s",
+            max_json_len=4096,
+            filter=InfoFilter(),
+        )
+    )
 
-    logger_requests = get_logger_requests()
-    logger_requests.setLevel(logging.DEBUG)
-    formatter_req = RequestFormatter("%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)-4s;%(url)s;%(message)s")
-    formatter_req.max_msg_len = 1024
-    file_handler_req = RotatingFileHandler(bafser_config.log_requests_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
-    file_handler_req.setFormatter(formatter_req)
-    file_handler_req.setLevel(logging.INFO)
-    file_handler_req.encoding = "utf-8"
-    logger_requests.addHandler(file_handler_req)
+    add_logger(
+        "requests",
+        create_log_handler(
+            bafser_config.log_requests_path,
+            "%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)-4s;%(url)s;%(message)s",
+            max_msg_len=1024,
+        ),
+    )
 
-    logger_frontend = get_logger_frontend()
-    logger_frontend.setLevel(logging.DEBUG)
-    formatter_frontend = RequestFormatter("[%(asctime)s] %(ip_emoji)s (uid=%(uid)s):\n%(json)s\n%(message)s\n")
-    formatter_frontend.max_json_len = 8192
-    formatter_frontend.json_indent = 4
-    file_handler_frontend = RotatingFileHandler(bafser_config.log_frontend_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
-    file_handler_frontend.setFormatter(formatter_frontend)
-    file_handler_frontend.setLevel(logging.INFO)
-    file_handler_frontend.encoding = "utf-8"
-    logger_frontend.addHandler(file_handler_frontend)
+    add_logger(
+        "frontend",
+        create_log_handler(
+            bafser_config.log_frontend_path,
+            "[%(asctime)s] %(ip_emoji)s (uid=%(uid)s):\n%(json)s\n%(message)s\n",
+            max_json_len=8192,
+            json_indent=4,
+        ),
+    )
 
-    logger_dashboard = get_logger_dashboard()
-    logger_dashboard.setLevel(logging.INFO)
-    formatter_dashboard = RequestFormatter("%(asctime)s;%(endpoint)s;%(duration)s;%(code)s;%(req_id)s;%(ip)s;%(uid)s")
-    file_handler_dashboard = RotatingFileHandler(bafser_config.log_dashboard_path, mode="a", encoding="utf-8", maxBytes=MaxBytes)
-    file_handler_dashboard.setFormatter(formatter_dashboard)
-    file_handler_dashboard.setLevel(logging.INFO)
-    file_handler_dashboard.encoding = "utf-8"
-    logger_dashboard.addHandler(file_handler_dashboard)
+    add_logger(
+        "dashboard",
+        create_log_handler(
+            bafser_config.log_dashboard_path,
+            "%(asctime)s;%(endpoint)s;%(duration)s;%(code)s;%(req_id)s;%(ip)s;%(uid)s",
+        ),
+    )
 
 
 def get_logger_frontend():
@@ -209,27 +207,47 @@ def get_logger_dashboard():
     return logging.getLogger("dashboard")
 
 
-def log_frontend_error():
-    get_logger_frontend().info("")
+def log_frontend_error(msg: str | None = None):
+    get_logger_frontend().info(msg or "")
 
 
-def add_file_logger(
+def add_logger(name: str, handler: logging.Handler):
+    logger = logging.getLogger(name)
+    logger.handlers.clear()
+    logger.addHandler(handler)
+    return logger
+
+
+def create_log_handler(
     fpath: str,
-    name: str,
-    format: str = "%(req_id)s;%(ip_emoji)s;%(uid)-6s;%(asctime)s;%(method)s;%(url)s;%(levelname)s;%(module)s;%(message)s",
-    outer_args: list[str] = [],
+    format: str = "%(levelname)s in %(module)s: %(message)s",
+    level: logging._Level = logging.INFO,  # pyright: ignore[reportPrivateUsage]
+    *,
+    outer_args: list[str] | None = None,
+    max_msg_len: int = -1,
     max_json_len: int = 4096,
+    json_indent: int | None = None,
+    filter: logging._FilterType | None = None,  # pyright: ignore[reportPrivateUsage]
 ):
     create_folder_for_file(fpath)
-    logger = logging.getLogger(name)
     formatter = RequestFormatter(format)
+    formatter.max_msg_len = max_msg_len
     formatter.max_json_len = max_json_len
     formatter.outer_args = outer_args
-    file_handler = RotatingFileHandler(fpath, mode="a", encoding="utf-8", maxBytes=MaxBytes)
-    file_handler.setFormatter(formatter)
-    file_handler.encoding = "utf-8"
-    logger.addHandler(file_handler)
-    return logger
+    formatter.json_indent = json_indent
+
+    config = get_app_config()
+    if config.THREADED:
+        handler = logging.handlers.WatchedFileHandler(fpath, encoding="utf-8")
+    else:
+        handler = RotatingFileHandler(fpath, mode="a", encoding="utf-8", maxBytes=MaxBytes)
+
+    handler.setFormatter(formatter)
+    if filter:
+        handler.addFilter(filter)
+    handler.setLevel(level)
+    handler.encoding = "utf-8"
+    return handler
 
 
 class ParametrizedLogger:

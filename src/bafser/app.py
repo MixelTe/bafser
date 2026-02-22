@@ -1,14 +1,16 @@
 import json
 import logging
 import os
+import sys
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Literal
 from urllib.parse import quote
 
-from flask import Flask, Response, abort, g, make_response, redirect, request, send_from_directory
+from flask import Flask, Response, abort, g, jsonify, make_response, redirect, request, send_from_directory
 from flask_jwt_extended import JWTManager, create_access_token, get_jwt, get_jwt_identity, set_access_cookies, verify_jwt_in_request  # type: ignore
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 import bafser_config
@@ -29,8 +31,9 @@ class AppConfig:
 
     def __init__(
         self,
+        *,
         FRONTEND_FOLDER: str = "build",
-        JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = False,
+        JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = timedelta(hours=24),
         JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30),
         CACHE_MAX_AGE: int = 31536000,
         MESSAGE_TO_FRONTEND: str = "",
@@ -38,7 +41,50 @@ class AppConfig:
         DEV_MODE: bool = False,
         DELAY_MODE: bool = False,
         PAGE404: str = "index.html",
+        HEALTH_ROUTE: bool | str = False,
+        THREADED: bool = False,
     ):
+        """
+        Initializes the application configuration settings.
+
+        Args:
+            FRONTEND_FOLDER (str): The directory path where the compiled frontend assets
+                reside. Defaults to "build".
+            JWT_ACCESS_TOKEN_EXPIRES (Literal[False] | timedelta): The lifespan of the JWT
+                access token. Set to False for no expiration. Defaults to 24 hours.
+            JWT_ACCESS_TOKEN_REFRESH (Literal[False] | timedelta): The interval or lifespan
+                for refreshing JWT tokens. Defaults to 30 minutes.
+            CACHE_MAX_AGE (int): The 'max-age' value for Cache-Control headers in seconds.
+                The default (31536000) corresponds to one year.
+            MESSAGE_TO_FRONTEND (str): A custom string or announcement to be passed
+                to the client application. Defaults to "".
+            STATIC_FOLDERS (list[str]): A list of URL prefixes that should be treated
+                as static asset directories. Defaults to ["/static/", "/fonts/", "/_next/"].
+            DEV_MODE (bool): If True, enables debug features and more verbose logging.
+                Defaults to False.
+            DELAY_MODE (bool): If True, introduces artificial latency, typically for
+                testing loading states. Defaults to False.
+            PAGE404 (str): The filename to serve when a route is not found, useful for
+                Single Page Application (SPA) routing. Defaults to "index.html".
+            HEALTH_ROUTE (bool | str): Configures the health check endpoint.
+                - If **True**: defaults to "/api/health".
+                - If a **string**: uses the provided string as the path.
+                - If **False**: the health check route is disabled.
+            THREADED (bool): If True, enables multithreaded mode for the application.
+                Defaults to False.
+
+                When set to True, the following changes take effect
+
+                **Logging:** File rotation is disabled, and the log handler is switched to
+                `WatchedFileHandler` to safely support log file rotation.
+
+                **`run` function behavior:** The behavior of the `run` function is modified
+                based on the presence of the `--setup` command-line argument
+                - **Normal startup (without `--setup`):** The application runs normally,
+                but database initialization and migrations are skipped.
+                - **Setup mode (with `--setup`):** The application performs only
+                database initialization and migrations, then exits.
+        """
         self.FRONTEND_FOLDER = FRONTEND_FOLDER
         self.JWT_ACCESS_TOKEN_EXPIRES = JWT_ACCESS_TOKEN_EXPIRES
         self.JWT_ACCESS_TOKEN_REFRESH = JWT_ACCESS_TOKEN_REFRESH
@@ -48,40 +94,71 @@ class AppConfig:
         self.DEV_MODE = DEV_MODE
         self.DELAY_MODE = DELAY_MODE
         self.PAGE404 = PAGE404
+        self.HEALTH_ROUTE = "/api/health" if HEALTH_ROUTE is True else HEALTH_ROUTE
+        self.THREADED = THREADED
         self.add_data_folder("IMAGES_FOLDER", bafser_config.images_folder)
         self.add("CACHE_MAX_AGE", CACHE_MAX_AGE)
 
     def add(self, key: str, value: Any):
+        """Adds value accessable via `current_app.config[key]`"""
         self.config.append((key, value))
         return self
 
     def add_data_folder(self, key: str, path: str):
+        """
+        Adds a folder that would be created at startup if not exist
+
+        Path value is accessable via `current_app.config[key]`
+        """
         self.add(key, path)
         self.data_folders.append((key, path))
         return self
 
     def add_secret_key(self, key: str, path: str):
+        """
+        Adds a secret key loaded from a file
+
+        Value is accessable via `current_app.config[key]`
+
+        Raises:
+            FileNotFoundError:
+        """
         self.add(key, get_secret_key(path))
         return self
 
     def add_secret_key_env(self, key: str, envname: str | None = None, default: str | None = None):
+        """Adds a secret key from an environment variable.
+
+        Value is accessable via `current_app.config[key]`
+
+        If `envname` is not provided, it defaults to `key`.
+
+        Raises:
+            ValueError: If the required environment variable is not set and no default
+                value is provided.
+        """
         if envname is None:
             envname = key
         v = os.environ.get(envname, default)
         if v is None:
-            raise Exception(f"env var not set: {envname}")
+            raise ValueError(f"env var is not set: {envname}")
         self.add(key, v)
         return self
 
     def add_secret_key_rnd(self, key: str, path: str):
+        """
+        Adds a randomly generated secret key, persisted to a file.
+
+        Value is accessable via `current_app.config[key]`
+        """
         self.add(key, get_secret_key_rnd(path))
         return self
 
 
 def create_app(import_name: str, config: AppConfig):
     global _config
-    setLogging()
     _config = config
+    setLogging()
     logreq = get_logger_requests()
     logdash = get_logger_dashboard()
     app = Flask(import_name, static_folder=None)
@@ -100,8 +177,7 @@ def create_app(import_name: str, config: AppConfig):
     init_api_docs(app)
 
     for _, path in config.data_folders:
-        if not os.path.exists(path):
-            os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
 
     def run(
         run_server: bool,
@@ -110,11 +186,16 @@ def create_app(import_name: str, config: AppConfig):
         port: int = 5000,
         host: str = "127.0.0.1",
     ):
+        setup_only = config.THREADED and "--setup" in sys.argv
 
-        if bafser_config.use_alembic:
-            alembic_upgrade(config.DEV_MODE)
-        init_database(init_db, init_dev_values)
+        if not config.THREADED or setup_only:
+            if bafser_config.use_alembic:
+                alembic_upgrade(config.DEV_MODE)
+            init_database(init_db, init_dev_values)
+            if setup_only:
+                return
 
+        db_session.global_init(config.DEV_MODE)
         if run_server:
             print(f"Starting on http://{host}:{port}")
             if config.DELAY_MODE:
@@ -244,27 +325,39 @@ def create_app(import_name: str, config: AppConfig):
             res.headers.set("Cache-Control", "public,max-age=60,stale-while-revalidate=600,stale-if-error=14400")
         return res
 
+    if config.HEALTH_ROUTE:
+
+        @app.route("/api/health")
+        def health():  # pyright: ignore[reportUnusedFunction]
+            try:
+                with db_session.create_session() as db_sess:
+                    db_sess.execute(text("SELECT 1")).scalar()
+                return jsonify(status="ok"), 200
+            except Exception as e:
+                logging.error("%s\n%s", e, traceback.format_exc())
+                return jsonify(status="unhealthy"), 500
+
     @app.errorhandler(404)
-    def not_found(error: Exception):  # type: ignore
+    def not_found(error: Exception):  # pyright: ignore[reportUnusedFunction]
         if request.path.startswith(bafser_config.api_url):
             return response_msg("Not found", 404)
         return make_response("Страница не найдена", 404)
 
     @app.errorhandler(405)
-    def method_not_allowed(error: Exception):  # type: ignore
+    def method_not_allowed(error: Exception):  # pyright: ignore[reportUnusedFunction]
         return response_msg("Method Not Allowed", 405)
 
     @app.errorhandler(415)
-    def unsupported_media_type(error: Exception):  # type: ignore
+    def unsupported_media_type(error: Exception):  # pyright: ignore[reportUnusedFunction]
         return response_msg("Unsupported Media Type", 415)
 
     @app.errorhandler(403)
-    def no_permission(error: Exception):  # type: ignore
+    def no_permission(error: Exception):  # pyright: ignore[reportUnusedFunction]
         return response_msg("No permission", 403)
 
     @app.errorhandler(500)
     @app.errorhandler(Exception)
-    def internal_server_error(error: Exception):  # type: ignore
+    def internal_server_error(error: Exception):  # pyright: ignore[reportUnusedFunction]
         print(error)
         logging.error("%s\n%s", error, traceback.format_exc())
         if request.path.startswith(bafser_config.api_url):
@@ -272,7 +365,7 @@ def create_app(import_name: str, config: AppConfig):
         return make_response("Произошла ошибка", 500)
 
     @app.errorhandler(401)
-    def unauthorized(error: Exception):  # type: ignore
+    def unauthorized(error: Exception):  # pyright: ignore[reportUnusedFunction]
         if not request.path.startswith(bafser_config.api_url):
             return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
         return response_msg("Unauthorized", 401)
@@ -284,13 +377,13 @@ def create_app(import_name: str, config: AppConfig):
         return response_msg("The JWT has expired", 401)
 
     @jwt_manager.invalid_token_loader  # type: ignore
-    def invalid_token_loader(error: Exception):  # type: ignore
+    def invalid_token_loader(error: Exception):  # pyright: ignore[reportUnusedFunction]
         if not request.path.startswith(bafser_config.api_url):
             return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
         return response_msg("Invalid JWT", 401)
 
     @jwt_manager.unauthorized_loader  # type: ignore
-    def unauthorized_loader(error: Exception):  # type: ignore
+    def unauthorized_loader(error: Exception):  # pyright: ignore[reportUnusedFunction]
         if not request.path.startswith(bafser_config.api_url):
             return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
         return response_msg("Unauthorized", 401)

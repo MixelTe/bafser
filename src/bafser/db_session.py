@@ -24,17 +24,24 @@ def global_init(dev: bool):
 
     if dev:
         setup_sqlite(bafser_config.db_dev_path)
-        conn_str = f"sqlite:///{bafser_config.db_dev_path}"
+        conn_str = f"sqlite:///{bafser_config.db_dev_path}?check_same_thread=False"
     else:
         db_path = get_db_path(bafser_config.db_path)
         if bafser_config.db_mysql:
             conn_str = f"mysql+pymysql://{db_path}?charset=UTF8mb4"
         else:
             setup_sqlite(db_path)
-            conn_str = f"sqlite:///{db_path}"
+            conn_str = f"sqlite:///{db_path}?check_same_thread=False"
     print(f"Connecting to the database at {conn_str}")
 
-    engine = sa.create_engine(conn_str, echo=bafser_config.sql_echo, pool_pre_ping=True)
+    engine = sa.create_engine(
+        conn_str,
+        echo=bafser_config.sql_echo,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_recycle=3600,
+    )
     __factory = orm.sessionmaker(bind=engine)
 
     import_all_tables()
@@ -49,14 +56,15 @@ def create_session() -> orm.Session:
 @compiles(FunctionFilter, "mysql")
 def compile_functionfilter_mysql(element: Any, compiler: Any, **kwgs: Any):
     # Support unary functions only
-    arg0, = element.func.clauses
+    (arg0,) = element.func.clauses
 
     new_func = Function(  # type: ignore
         element.func.name,
         sa.case([(element.criterion, arg0)]),  # type: ignore
         packagenames=element.func.packagenames,
         type_=element.func.type,
-        bind=element.func._bind)
+        bind=element.func._bind,
+    )
 
     return new_func._compiler_dispatch(compiler, **kwgs)  # type: ignore
 
@@ -68,5 +76,5 @@ def setup_sqlite(db_path: str):
     def _(dbapi_connection: Any, connection_record: Any):
         dbapi_connection.create_function("lower", 1, str.lower)
         cursor = dbapi_connection.cursor()
-        cursor.execute('PRAGMA foreign_keys=ON')
+        cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()

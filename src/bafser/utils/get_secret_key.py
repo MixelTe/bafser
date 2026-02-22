@@ -18,4 +18,4 @@ def get_secret_key(path: str):
         with open(path, "r", encoding="utf8") as f:
             return f.read()
     else:
-        raise Exception(f"Secret key not found! [{path}]")
+        raise FileNotFoundError(f"Secret key file not exist! [{path}]")
