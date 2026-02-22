@@ -9,7 +9,7 @@ from typing import Any
 from flask import g, has_request_context, request
 
 import bafser_config
-from bafser import create_folder_for_file, get_app_config, ip_to_emoji
+from bafser import create_folder_for_file, ip_to_emoji
 
 
 def customTime(*args: Any):
@@ -221,14 +221,16 @@ def add_logger(name: str, handler: logging.Handler):
 def create_log_handler(
     fpath: str,
     format: str = "%(levelname)s in %(module)s: %(message)s",
-    level: logging._Level = logging.INFO,  # pyright: ignore[reportPrivateUsage]
+    level: "logging._Level" = logging.INFO,  # pyright: ignore[reportPrivateUsage]
     *,
     outer_args: list[str] | None = None,
     max_msg_len: int = -1,
     max_json_len: int = 4096,
     json_indent: int | None = None,
-    filter: logging._FilterType | None = None,  # pyright: ignore[reportPrivateUsage]
+    filter: "logging._FilterType | None" = None,  # pyright: ignore[reportPrivateUsage]
 ):
+    from bafser import get_app_config
+
     create_folder_for_file(fpath)
     formatter = RequestFormatter(format)
     formatter.max_msg_len = max_msg_len
