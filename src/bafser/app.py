@@ -189,6 +189,7 @@ def create_app(import_name: str, config: AppConfig):
         setup_only = config.THREADED and "--setup" in sys.argv
 
         if not config.THREADED or setup_only:
+            print("Setup database")
             if bafser_config.use_alembic:
                 alembic_upgrade(config.DEV_MODE)
             init_database(init_db, init_dev_values)
