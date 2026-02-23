@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Type, TypedDict, TypeVar, final
 from flask import abort, g, has_request_context
 from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request  # type: ignore
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship
+from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship, validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .. import ObjMixin, SqlAlchemyBase, TOperation, UserRole, listfind
@@ -46,6 +46,12 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     password: Mapped[str] = mapped_column(String(256), init=False)
     name: Mapped[str] = mapped_column(String(64))
 
+    @validates("login")
+    def convert_to_lower(self, key: str, value: Any):
+        if isinstance(value, str):
+            return value.lower()
+        return value
+
     @declared_attr
     def roles(self) -> Mapped[List[UserRole]]:
         return relationship(UserRole, lazy="joined", init=False)
@@ -87,7 +93,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
 
     @classmethod
     def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False, *, for_update: bool = False):
-        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.login == login).first()
+        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.login == login.lower()).first()
 
     @final
     @classmethod
