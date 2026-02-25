@@ -70,6 +70,7 @@ class Image(SqlAlchemyBase, ObjMixin):
         assert img
         db_sess = creator.db_sess
         db_sess.add(img)
+        db_sess.commit()
 
         path = img.get_path()
         with open(path, "wb") as f:
