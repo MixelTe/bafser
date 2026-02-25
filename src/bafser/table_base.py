@@ -159,6 +159,8 @@ class ObjMixin(IdMixin):
 
     def delete2(self, commit: bool = True, now: datetime | None = None, *, actor: "UserBase | None" = None, db_sess: Session | None = None):
         """Calls self.delete with UserBase.current as actor"""
+        from . import UserBase
+
         return self.delete(actor or UserBase.current, commit, now, db_sess)
 
     def _on_delete(self, db_sess: Session, actor: "UserBase", now: datetime, commit: bool) -> bool:
@@ -181,6 +183,8 @@ class ObjMixin(IdMixin):
 
     def restore2(self, commit: bool = True, now: datetime | None = None, *, actor: "UserBase | None" = None, db_sess: Session | None = None):
         """Calls self.restore with UserBase.current as actor"""
+        from . import UserBase
+
         return self.restore(actor or UserBase.current, commit, now, db_sess)
 
     def _on_restore(self, db_sess: Session, actor: "UserBase", now: datetime, commit: bool) -> bool:
