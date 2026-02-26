@@ -3,16 +3,153 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <script src="https://unpkg.com/@sgratzl/chartjs-chart-boxplot@4.3.1/build/index.umd.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f4f4f9;
+            padding: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            text-align: left;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+
+        .badge-median {
+            background: #dcfce7;
+            color: #166534;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .badge-max {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        code {
+            background: #f8fafc;
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: #334155;
+        }
+
+        @media (max-width: 1000px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Improved Controls Styling */
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .slider-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        input[type="range"] {
+            flex-grow: 1;
+        }
+
+        #rangeLabel {
+            font-weight: 600;
+            color: #1e293b;
+            min-width: 200px;
+        }
+    </style>
 </head>
 
 <body>
-    <script type="text/template" id="data_endpoints">{{ endpoints }}</script>
-    <script>
-        const data = JSON.parse(document.getElementById("data_endpoints").innerText);
-    </script>
-    <!-- initEl -->
+    <div class="grid" id="dashboard">
+        <div class="card">
+            <div class="controls-container">
+                <div class="slider-group">
+                    <input type="range" id="startRange" min="0" value="0">
+                    <input type="range" id="endRange" min="0" value="0">
+                    <span id="rangeLabel">Loading...</span>
+                </div>
+                <div class="button-group">
+                    <button id="btnToday">📅 Show Today Only</button>
+                    <button id="btnReset">🔄 Reset to All Time</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/template" id="backend_data">{{ endpoints|safe }}</script>
+
     <script>
         function initEl(tagName, classes, children, fn)
         {
@@ -24,64 +161,169 @@
             }
             if (children)
             {
-                appendChildren(children);
-                function appendChildren(children)
+                const appendChildren = (child) =>
                 {
-                    if (children instanceof Array)
-                        children.forEach(appendChildren);
-                    else if (!!children)
-                        el.append(children);
-                }
+                    if (child instanceof Array) child.forEach(appendChildren);
+                    else if (child) el.append(child);
+                };
+                appendChildren(children);
             }
-
             fn?.(el);
-
             return el;
         }
-        function Div(classes, children, fn)
+        const Div = (cls, child, fn) => initEl("div", cls, child, fn);
+
+        const raw = JSON.parse(document.getElementById("backend_data").innerText);
+        const timeLabels = Object.keys(raw.traffic).sort();
+        const routes = Object.keys(raw.box_stats);
+        const colors = routes.map((_, i) => `hsl(${(i * 360) / routes.length}, 70%, 50%)`);
+
+        const isHidden = (routeName) => raw.hidden_routes.includes(routeName);
+
+        const container = document.getElementById("dashboard");
+
+        // --- Traffic Line Chart ---
+        const lineCard = document.createElement('div');
+        lineCard.className = 'card';
+        lineCard.innerHTML = '<h3>Requests per Hour</h3><canvas id="lineChart"></canvas>';
+        container.appendChild(lineCard);
+
+        const myChart = new Chart(document.getElementById("lineChart"), {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: routes.map((r, i) => ({
+                    label: r,
+                    data: timeLabels.map(t => raw.traffic[t][r] || 0),
+                    borderColor: colors[i],
+                    tension: 0.2,
+                    // hidden: isHidden(r),
+                }))
+            }
+        });
+
+        // --- Pre-calculated Box Plot ---
+        const boxCard = document.createElement('div');
+        boxCard.className = 'card';
+        boxCard.innerHTML = '<h3>Latency Distribution</h3><canvas id="boxChart"></canvas>';
+        container.appendChild(boxCard);
+
+        new Chart(document.getElementById("boxChart"), {
+            type: 'boxplot',
+            data: {
+                labels: ['Endpoints'],
+                datasets: routes.map((r, i) => ({
+                    label: r,
+                    backgroundColor: colors[i].replace('hsl', 'hsla').replace(')', ', 0.5)'),
+                    borderColor: colors[i],
+                    borderWidth: 1,
+                    data: [raw.box_stats[r]],
+                    // hidden: isHidden(r),
+                }))
+            },
+            options: {
+                responsive: true,
+                scales: { y: { title: { display: true, text: 'ms' } } }
+            }
+        });
+
+        function createTable(title, data, valueKey, badgeClass)
         {
-            return initEl("div", classes, children, fn);
+            return Div("chart-card", [
+                initEl("h2", [], title),
+                initEl("table", [], [
+                    initEl("thead", [], initEl("tr", [], [
+                        initEl("th", [], "Route"),
+                        initEl("th", [], "Hits"),
+                        initEl("th", [], title.includes("Median") ? "Median" : "Max Spike")
+                    ])),
+                    initEl("tbody", [], data.map(item =>
+                        initEl("tr", [], [
+                            initEl("td", [], initEl("code", [], item.route)),
+                            initEl("td", [], item.count.toString()),
+                            initEl("td", [], [
+                                initEl("span", badgeClass, `${item[valueKey].toFixed(1)} ms`)
+                            ])
+                        ])
+                    ))
+                ])
+            ]);
         }
-        function Span(classes, children, fn)
+
+        // --- Add to UI ---
+        const summaryContainer = Div("summary-grid", [
+            createTable("Top 5 Slowest (Median)", raw.slowest_median, "median", "badge-median"),
+            createTable("Top 5 Slowest (Max)", raw.slowest_max, "max", "badge-max")
+        ]);
+
+        // Insert before the main chart grid
+        container.insertBefore(summaryContainer, boxCard);
+
+        const startInput = document.getElementById('startRange');
+        const endInput = document.getElementById('endRange');
+        const rangeLabel = document.getElementById('rangeLabel');
+        const btnToday = document.getElementById('btnToday');
+        const btnReset = document.getElementById('btnReset');
+
+        startInput.max = timeLabels.length - 1;
+        endInput.max = timeLabels.length - 1;
+        endInput.value = timeLabels.length - 1;
+
+        // --- Helper: Update Chart Display ---
+        function updateChart()
         {
-            return initEl("span", classes, children, fn);
+            let start = parseInt(startInput.value);
+            let end = parseInt(endInput.value);
+
+            // Ensure start doesn't cross end
+            if (start > end)
+            {
+                start = end;
+                startInput.value = start;
+            }
+
+            const filteredLabels = timeLabels.slice(start, end + 1);
+            myChart.data.labels = filteredLabels;
+
+            myChart.data.datasets.forEach(dataset =>
+            {
+                dataset.data = filteredLabels.map(t => raw.traffic[t][dataset.label] || 0);
+            });
+
+            rangeLabel.innerText = `${timeLabels[start]} — ${timeLabels[end]}`;
+            myChart.update('none');
         }
-        function Link(classes, children, href, fn)
+
+        // --- Button Logic: Today ---
+        btnToday.addEventListener('click', () =>
         {
-            const a = initEl("a", classes, children, fn);
-            if (href) a.href = href;
-            return a;
-        }
-        function Input(classes, type, placeholder, fn)
+            if (timeLabels.length === 0) return;
+
+            // Find the date of the very last entry (Today)
+            const lastEntry = timeLabels[timeLabels.length - 1];
+            const todayDate = lastEntry.split(' ')[0]; // Assumes format "YYYY-MM-DD HH:MM"
+
+            // Find the first index where this date appears
+            const firstIdx = timeLabels.findIndex(l => l.startsWith(todayDate));
+
+            startInput.value = firstIdx;
+            endInput.value = timeLabels.length - 1;
+            updateChart();
+        });
+
+        // --- Button Logic: Reset ---
+        btnReset.addEventListener('click', () =>
         {
-            const input = initEl("input", classes, undefined, fn);
-            if (type) input.type = type;
-            if (placeholder) input.placeholder = placeholder;
-            return input;
-        }
-        function Button(classes, children, clickListener, fn)
-        {
-            const button = initEl("button", classes, children, fn);
-            if (clickListener) button.addEventListener("click", clickListener.bind(button, button));
-            return button;
-        }
-        function OptionEl(classes, value, children, fn)
-        {
-            const opt = initEl("option", classes, children, fn);
-            opt.value = value;
-            return opt;
-        }
-    </script>
-    <script>
-        document.body.appendChild(initEl("ul", [], Object.keys(data).map(time =>
-        {
-            return [
-                initEl("li", [], time),
-                initEl("ul", [], Object.keys(data[time]).map(endpoint =>
-                    initEl("li", [], `${endpoint}: ${data[time][endpoint]}`),
-                )),
-            ];
-        })));
+            startInput.value = 0;
+            endInput.value = timeLabels.length - 1;
+            updateChart();
+        });
+
+        startInput.addEventListener('input', updateChart);
+        endInput.addEventListener('input', updateChart);
+
+        // Initial run to set the label
+        updateChart();
     </script>
 </body>
 
