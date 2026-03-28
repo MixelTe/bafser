@@ -1,6 +1,7 @@
 from .response_msg import response_msg
 from .get_json_values import get_json_values, get_json_list
 
+from .abort_if_none import abort_if_none
 from .create_file_response import create_file_response
 from .create_folder_for_file import create_folder_for_file
 from .get_all_vars import get_all_values, get_all_fields
@@ -29,6 +30,7 @@ from .use_userId import use_userId  # pyright: ignore[reportDeprecated]
 __all__ = [
     "response_msg",
     "get_json_values", "get_json_list",
+    "abort_if_none",
     "create_file_response",
     "create_folder_for_file",
     "create_permission_required_decorator",

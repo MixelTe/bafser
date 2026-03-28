@@ -154,9 +154,7 @@ class User(UserBase):
     @classmethod
     @override
     def _new(cls, db_sess: Session, user_kwargs: UserKwargs, *, newColumn: str, **kwargs: Any):
-        user = User(**user_kwargs, newColumn=newColumn)
-        changes = [("newColumn", newColumn)]
-        return user, changes
+        return User(**user_kwargs, newColumn=newColumn)
 
     @classmethod
     @override

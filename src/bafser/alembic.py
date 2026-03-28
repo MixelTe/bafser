@@ -13,7 +13,7 @@ def create_alembic_config(dev: bool):
     alembic_cfg.set_main_option("file_template", "%%(year)d_%%(month).2d_%%(day).2d_%%(rev)s_%%(slug)s")
 
     if dev:
-        db_path = bafser_config.db_dev_path
+        db_path = get_db_path(bafser_config.db_dev_path)
         issqlite = True
     else:
         db_path = get_db_path(bafser_config.db_path)

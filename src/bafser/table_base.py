@@ -18,7 +18,7 @@ convention = {
 }
 
 
-class TableBase(SerializerMixin, MappedAsDataclass, DeclarativeBase):
+class TableBase(DeclarativeBase, MappedAsDataclass, SerializerMixin):
     __abstract__ = True
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_unicode_ci"}
     __fields_hidden_in_log__ = [""]
@@ -43,7 +43,7 @@ class TableBase(SerializerMixin, MappedAsDataclass, DeclarativeBase):
 intpk = Annotated[int, mapped_column(primary_key=True, unique=True, autoincrement=True)]
 
 
-class IdMixin:
+class IdMixin(MappedAsDataclass):
     """Mixin providing an integer primary key and common query helpers."""
 
     id: Mapped[intpk] = mapped_column(init=False)
@@ -198,7 +198,7 @@ class ObjMixin(IdMixin):
         return r
 
 
-class SingletonMixin:
+class SingletonMixin(MappedAsDataclass):
     """
     Mixin for tables that must contain exactly one row.
 
@@ -237,7 +237,7 @@ class SingletonMixin:
 T = TypeVar("T", bound="BigIdMixin")
 
 
-class BigIdMixin:
+class BigIdMixin(MappedAsDataclass):
     """
     Mixin adding a unique, short string identifier (`id_big`).
 

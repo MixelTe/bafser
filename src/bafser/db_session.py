@@ -23,8 +23,9 @@ def global_init(dev: bool):
         return
 
     if dev:
-        setup_sqlite(bafser_config.db_dev_path)
-        conn_str = f"sqlite:///{bafser_config.db_dev_path}?check_same_thread=False"
+        db_path = get_db_path(bafser_config.db_dev_path)
+        setup_sqlite(db_path)
+        conn_str = f"sqlite:///{db_path}?check_same_thread=False"
     else:
         db_path = get_db_path(bafser_config.db_path)
         if bafser_config.db_mysql:

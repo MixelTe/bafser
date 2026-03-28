@@ -189,6 +189,9 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def check_permission(self, operation: TOperation):
         return operation[0] in self.get_operations()
 
+    def has_operation(self, operation: TOperation):
+        return self.check_permission(operation)
+
     def add_role(self, actor: "UserBase", roleId: int):
         if roleId in self.get_roles_ids():
             return False

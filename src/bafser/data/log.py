@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 from typing import Any, TypedDict
 
@@ -120,12 +121,14 @@ class Log(SqlAlchemyBase, IdMixin):
         db_sess = db_sess if db_sess else record.get_session()
         if actor is None:
             from .. import get_db_session
+
             db_sess = db_sess if db_sess else get_db_session()
             with db_sess.no_autoflush:
                 actor = UserBase.get_current(lazyload=True)
         if actor is None:
             actor = UserBase.get_fake_system()
             from .. import get_db_session
+
             db_sess = db_sess if db_sess else get_db_session()
         db_sess = db_sess if db_sess else actor.db_sess
         if now is None:
@@ -142,7 +145,7 @@ class Log(SqlAlchemyBase, IdMixin):
             userName=userName,
             tableName=record.__tablename__,
             recordId=record.id if isinstance(record, IdMixin) and record.id is not None else -1,  # pyright: ignore[reportUnnecessaryComparison]
-            changes=Log._serialize_changes(changes)
+            changes=Log._serialize_changes(changes),
         )
         db_sess.add(log)
         if commit:
@@ -153,6 +156,8 @@ class Log(SqlAlchemyBase, IdMixin):
     def _serialize(v: Any):
         if isinstance(v, datetime):
             return v.isoformat()
+        if isinstance(v, enum.Enum):
+            return v.value
         return v
 
     @staticmethod

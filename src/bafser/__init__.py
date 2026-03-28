@@ -31,6 +31,7 @@ except ModuleNotFoundError:
 from .utils.response_msg import response_msg
 from .utils.get_json_values import get_json_values, get_json_list
 
+from .utils.abort_if_none import abort_if_none
 from .utils.create_file_response import create_file_response
 from .utils.create_folder_for_file import create_folder_for_file
 from .utils.get_datetime_now import get_datetime_now
@@ -85,6 +86,7 @@ __all__ = [
     "response_msg",
     "get_json_values", "get_json_list",
 
+    "abort_if_none",
     "create_file_response",
     "create_folder_for_file",
     "create_permission_required_decorator",

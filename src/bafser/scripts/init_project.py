@@ -36,8 +36,8 @@ def init_project():
     write_file("main.py", main_tgapi if with_tgapi else main)
     if not os.path.exists(".gitignore"):
         gitignore = gitignore_base
-        gitignore += "\n" + "\n".join([
-            bafser_config.db_dev_path,
+        gitignore += "\n" + "\n".join(
+            ([bafser_config.db_dev_path] if not bafser_config.db_dev_path.startswith("ENV:") else []) + [
             bafser_config.log_info_path,
             bafser_config.log_requests_path,
             bafser_config.log_errors_path,

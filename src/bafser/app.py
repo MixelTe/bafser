@@ -316,6 +316,8 @@ def create_app(import_name: str, config: AppConfig):
             fname = path
         elif os.path.exists(config.FRONTEND_FOLDER + "/" + path + ".html"):
             fname = path + ".html"
+        elif "." in os.path.basename(path):
+            abort(404)
         else:
             fname = config.PAGE404
 
