@@ -7,6 +7,9 @@ def get_secret_key_rnd(path):
         with open(path, "r", encoding="utf8") as f:
             return f.read()
     else:
+        from bafser import create_folder_for_file
+
+        create_folder_for_file(path)
         with open(path, "w", encoding="utf8") as f:
             key = str(uuid.uuid4())
             f.write(key)
