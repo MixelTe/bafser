@@ -48,32 +48,26 @@ class AppConfig:
         Initializes the application configuration settings.
 
         Args:
-            FRONTEND_FOLDER (str): The directory path where the compiled frontend assets
-                reside. Defaults to "build".
-            JWT_ACCESS_TOKEN_EXPIRES (Literal[False] | timedelta): The lifespan of the JWT
-                access token. Set to False for no expiration. Defaults to 24 hours.
-            JWT_ACCESS_TOKEN_REFRESH (Literal[False] | timedelta): The interval or lifespan
-                for refreshing JWT tokens. Defaults to 30 minutes.
-            CACHE_MAX_AGE (int): The 'max-age' value for Cache-Control headers in seconds.
-                The default (31536000) corresponds to one year.
-            MESSAGE_TO_FRONTEND (str): A custom string or announcement to be passed
-                to the client application. Defaults to "".
-            STATIC_FOLDERS (list[str]): A list of URL prefixes that should be treated
-                as static asset directories. Defaults to ["/static/", "/fonts/", "/_next/"].
-            DEV_MODE (bool): If True, enables debug features and more verbose logging.
-                Defaults to False.
-            DELAY_MODE (bool): If True, introduces artificial latency, typically for
-                testing loading states. Defaults to False.
-            PAGE404 (str): The filename to serve when a route is not found, useful for
-                Single Page Application (SPA) routing. Defaults to "index.html".
-            HEALTH_ROUTE (bool | str): Configures the health check endpoint.
-                - If **True**: defaults to "/api/health".
-                - If a **string**: uses the provided string as the path.
-                - If **False**: the health check route is disabled.
-            THREADED (bool): If True, enables multithreaded mode for the application.
-                Defaults to False.
+            FRONTEND_FOLDER (str): Path to compiled frontend assets.
+            JWT_ACCESS_TOKEN_EXPIRES (Literal[False] | timedelta): Lifespan of JWT access tokens.
+                Use `False` for no expiration. Defaults to 24 hours.
+            JWT_ACCESS_TOKEN_REFRESH (Literal[False] | timedelta): Lifespan for refresh tokens.
+                Defaults to 30 minutes.
+            CACHE_MAX_AGE (int): 'max-age' for Cache-Control headers in seconds.
+                Defaults to one year.
+            MESSAGE_TO_FRONTEND (str): Custom string passed to the client.
+            STATIC_FOLDERS (list[str]): URL prefixes treated as static asset directories.
+                Defaults to ["/static/", "/fonts/", "/_next/"].
+            DEV_MODE (bool): If True, enables verbose logging and debug features.
+            DELAY_MODE (bool): If True, simulates network latency for UI testing.
+            PAGE404 (str): Filename to serve for missing routes (SPA fallback).
+            HEALTH_ROUTE (bool | str): Path for health checks.
+                - `True`: defaults to "/api/health".
+                - `str`: uses the specific path.
+                - `False`: disables the endpoint.
+            THREADED (bool): Enables multithreaded mode.
 
-                When set to True, the following changes take effect
+                When True, the following changes take effect
 
                 **Logging:** File rotation is disabled, and the log handler is switched to
                 `WatchedFileHandler` to safely support log file rotation.
@@ -99,57 +93,123 @@ class AppConfig:
         self.add_data_folder("IMAGES_FOLDER", bafser_config.images_folder)
         self.add("CACHE_MAX_AGE", CACHE_MAX_AGE)
 
-    def add(self, key: str, value: Any):
-        """Adds value accessable via `current_app.config[key]`"""
+    def add(self, key: str, value: Any) -> "AppConfig":
+        """Adds value accessible via `current_app.config[key]`"""
         self.config.append((key, value))
         return self
 
-    def add_data_folder(self, key: str, path: str):
+    def add_data_folder(self, key: str, path: str) -> "AppConfig":
         """
-        Adds a folder that would be created at startup if not exist
+        Registers a directory that must exist at startup.
 
-        Path value is accessable via `current_app.config[key]`
+        The directory will be created automatically if it is missing.
+        The path is stored in `current_app.config[key]`.
+
+        Args:
+            key: The configuration key.
+            path: Filesystem path to the folder.
+
+        Returns:
+            The AppConfig instance for method chaining.
         """
         self.add(key, path)
         self.data_folders.append((key, path))
         return self
 
-    def add_secret_key(self, key: str, path: str):
+    def add_secret_key(self, key: str, path: str) -> "AppConfig":
         """
-        Adds a secret key loaded from a file
+        Loads a secret key from a local file.
 
-        Value is accessable via `current_app.config[key]`
+        The value is stored in `current_app.config[key]`.
+
+        Args:
+            key: The configuration key.
+            path: Path to the file containing the secret.
+
+        Returns:
+            The AppConfig instance for method chaining.
 
         Raises:
-            FileNotFoundError:
+            FileNotFoundError: If the file at `path` does not exist.
         """
         self.add(key, get_secret_key(path))
         return self
 
-    def add_secret_key_env(self, key: str, envname: str | None = None, default: str | None = None):
-        """Adds a secret key from an environment variable.
+    def add_env_var(self, key: str, envname: str | None = None, default: str | None = None) -> "AppConfig":
+        """
+        Loads a string configuration value from an environment variable.
 
-        Value is accessable via `current_app.config[key]`
+        The value is stored in `current_app.config[key]`.
 
-        If `envname` is not provided, it defaults to `key`.
+        Args:
+            key: The configuration key used within the app.
+            envname: The environment variable name (defaults to `key`).
+            default: Fallback value if the environment variable is missing.
+
+        Returns:
+            The AppConfig instance for method chaining.
 
         Raises:
-            ValueError: If the required environment variable is not set and no default
-                value is provided.
+            ValueError: If the environment variable is missing and no default is set.
         """
         if envname is None:
             envname = key
         v = os.environ.get(envname, default)
         if v is None:
-            raise ValueError(f"env var is not set: {envname}")
+            raise ValueError(f"Required environment variable '{envname}' is not set.")
         self.add(key, v)
         return self
 
-    def add_secret_key_rnd(self, key: str, path: str):
-        """
-        Adds a randomly generated secret key, persisted to a file.
+    add_secret_key_env = add_env_var
 
-        Value is accessable via `current_app.config[key]`
+    def add_env_var_int(self, key: str, envname: str | None = None, default: int | None = None) -> "AppConfig":
+        """
+        Loads an integer configuration value from an environment variable.
+
+        The value is stored in `current_app.config[key]`.
+
+        Args:
+            key: The configuration key used within the app.
+            envname: The environment variable name (defaults to `key`).
+            default: Fallback value if the environment variable is missing.
+
+        Returns:
+            The AppConfig instance for method chaining.
+
+        Raises:
+            ValueError: If the environment variable is missing (and no default
+                is provided) or if the value cannot be cast to an integer.
+        """
+        if envname is None:
+            envname = key
+
+        raw_v = os.environ.get(envname)
+        if raw_v is None:
+            if default is not None:
+                self.add(key, default)
+                return self
+            raise ValueError(f"Required environment variable '{envname}' is not set.")
+
+        try:
+            v = int(raw_v)
+        except ValueError:
+            raise ValueError(f"Environment variable '{envname}' must be an integer, got: '{raw_v}'")
+
+        self.add(key, v)
+        return self
+
+    def add_secret_key_rnd(self, key: str, path: str) -> "AppConfig":
+        """
+        Generates a random secret key and persists it to a file if it doesn't exist.
+
+        The value is stored in `current_app.config[key]`.
+
+        Args:
+            key: The configuration key.
+            path: Path where the secret key is or should be stored.
+
+        Returns:
+            The AppConfig instance for method chaining.
         """
         self.add(key, get_secret_key_rnd(path))
         return self
