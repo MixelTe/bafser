@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bafser"
-version = "2.8.9"
+version = "2.8.10"
 authors = [{ name = "Mixel Te" }]
 description = "Base for flask server"
 readme = "README.md"
@@ -32,3 +32,14 @@ Issues = "https://github.com/MixelTe/bafser/issues"
 
 [project.scripts]
 bafser = "bafser.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bafser"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/bafser"]
+include = [
+  "/LICENSE*",
+  "/README.md",
+  "/pyproject.toml",
+]
