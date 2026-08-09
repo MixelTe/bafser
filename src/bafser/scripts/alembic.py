@@ -33,7 +33,7 @@ def revision(args: list[str]):
         name = f"v{maxV + 1}"
     else:
         name = args[0]
-    print(f"alembic revision --autogenerate -m \"{name}\"")
+    print(f'alembic revision --autogenerate -m "{name}"')
     command.revision(alembic_cfg, name, True)
 
 
@@ -49,14 +49,14 @@ def run(args: list[str]):
         ("upgrade", "upgrade head", upgrade),
     ]
 
-    if len(args) == 0 or args[0] not in map(lambda v: v[0], scripts):
-        ml = max(map(lambda v: len(v[0]), scripts))
-        ml2 = max(map(lambda v: len(v[1]), scripts))
+    if len(args) == 0 or args[0] not in (v[0] for v in scripts):
+        ml = max(len(v[0]) for v in scripts)
+        ml2 = max(len(v[1]) for v in scripts)
         l = ml + ml2 + 5
         t = " Scripts "
-        l2 = (l - len(t))
+        l2 = l - len(t)
         print("-" * (l2 // 2) + t + "-" * (l2 // 2 + l2 % 2))
-        print("\n".join(map(lambda v: f"{' ' * (ml - len(v[0]))} {v[0]} : {v[1]}", scripts)))
+        print("\n".join(f"{' ' * (ml - len(v[0]))} {v[0]} : {v[1]}" for v in scripts))
         print("-" * l)
         return
 

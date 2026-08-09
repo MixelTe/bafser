@@ -1,8 +1,7 @@
 from typing import Any
 
 import sqlalchemy as sa
-import sqlalchemy.orm as orm
-from sqlalchemy import event
+from sqlalchemy import event, orm
 from sqlalchemy.engine import Engine
 
 import bafser_config

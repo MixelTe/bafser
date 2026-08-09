@@ -65,10 +65,9 @@ class Log(SqlAlchemyBase, IdMixin):
         db_sess = log.db_sess
         db_sess.add(record)
         if commit:
-            if isinstance(record, IdMixin):
-                if record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
-                    db_sess.commit()
-                    log.recordId = record.id
+            if isinstance(record, IdMixin) and record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
+                db_sess.commit()
+                log.recordId = record.id
             db_sess.commit()
         return log
 

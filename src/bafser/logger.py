@@ -13,7 +13,7 @@ from bafser import create_folder_for_file, ip_to_emoji
 
 
 def customTime(*args: Any):
-    utc_dt = datetime.datetime.now(datetime.timezone.utc)
+    utc_dt = datetime.datetime.now(datetime.UTC)
     utc_dt += datetime.timedelta(hours=3)
     return utc_dt.timetuple()
 
@@ -140,9 +140,7 @@ MaxBytes = 8 * 1000 * 1000
 def setLogging():
     logging.basicConfig(
         level=logging.DEBUG,
-        # filename="log.log",
         format="[%(asctime)s] %(levelname)s in %(module)s (%(name)s): %(message)s",
-        encoding="utf-8",
     )
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)

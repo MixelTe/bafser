@@ -1,7 +1,7 @@
 def add_user_role(userId: int, roleId: int, dev: bool):
     userId, roleId = int(userId), int(roleId)
     print(f"add_user_role {userId=} {roleId=} {dev=}")
-    from bafser import db_session, Role
+    from bafser import Role, db_session
     from bafser.data.user import get_user_table
 
     db_session.global_init(dev)

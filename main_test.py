@@ -6,7 +6,6 @@ sys.path.append(os.path.join(current, "src"))
 
 from bafser import AppConfig, create_app
 
-
 app, run = create_app(__name__, AppConfig(
     FRONTEND_FOLDER="test/build",
     # PAGE404="404.html",

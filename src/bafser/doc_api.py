@@ -1,10 +1,10 @@
 import inspect
 import json
 import os
-from collections.abc import Callable as CallableClass
+from collections.abc import Callable, Mapping
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import Any, Callable, Literal, Mapping, TypeVar, Union, get_args, get_origin, get_type_hints
+from typing import Any, Literal, TypeVar, Union, get_args, get_origin, get_type_hints
 
 import jinja2
 from flask import Flask, render_template
@@ -53,7 +53,7 @@ def init_api_docs(app: Flask):
         d: dict[str, Any] = {}
         methods = ""
         if rule.methods is not None:
-            methods = " ".join(rule.methods - set([M.HEAD, M.OPTIONS]))
+            methods = " ".join(rule.methods - {M.HEAD, M.OPTIONS})
         endpoint = EndpointInfo(route=rule.endpoint, url=route, name=fn.__module__ + "." + fn.__name__, line=line, methods=methods)
         if desc is not None:
             d["__desc__"] = desc
@@ -131,7 +131,7 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
         to = get_origin(t)
         r = type_to_json(t, types)
         if isinstance(r, str):
-            if to in (UnionType, CallableClass):
+            if to in (UnionType, Callable):
                 return f"({r})[]"
             return r + "[]"
         if verbose:

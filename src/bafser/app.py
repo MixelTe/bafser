@@ -4,8 +4,9 @@ import os
 import sys
 import time
 import traceback
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Literal
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any, Literal
 from urllib.parse import quote
 
 from flask import Flask, Response, abort, g, jsonify, make_response, redirect, request, send_from_directory
@@ -26,8 +27,8 @@ _config: "AppConfig | None" = None
 
 
 class AppConfig:
-    data_folders: list[tuple[str, str]] = []
-    config: list[tuple[str, Any]] = []
+    data_folders: list[tuple[str, str]]
+    config: list[tuple[str, Any]]
 
     def __init__(
         self,
@@ -37,7 +38,7 @@ class AppConfig:
         JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30),
         CACHE_MAX_AGE: int = 31536000,
         MESSAGE_TO_FRONTEND: str = "",
-        STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],
+        STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],  # noqa: B006
         DEV_MODE: bool = False,
         DELAY_MODE: bool = False,
         PAGE404: str = "index.html",
@@ -79,12 +80,14 @@ class AppConfig:
                 - **Setup mode (with `--setup`):** The application performs only
                 database initialization and migrations, then exits.
         """
+        self.data_folders = []
+        self.config = []
         self.FRONTEND_FOLDER = FRONTEND_FOLDER
         self.JWT_ACCESS_TOKEN_EXPIRES = JWT_ACCESS_TOKEN_EXPIRES
         self.JWT_ACCESS_TOKEN_REFRESH = JWT_ACCESS_TOKEN_REFRESH
         self.CACHE_MAX_AGE = CACHE_MAX_AGE
         self.MESSAGE_TO_FRONTEND = MESSAGE_TO_FRONTEND
-        self.STATIC_FOLDERS = STATIC_FOLDERS
+        self.STATIC_FOLDERS = [*STATIC_FOLDERS]
         self.DEV_MODE = DEV_MODE
         self.DELAY_MODE = DELAY_MODE
         self.PAGE404 = PAGE404
@@ -343,7 +346,7 @@ def create_app(import_name: str, config: AppConfig):
         if config.JWT_ACCESS_TOKEN_REFRESH:
             try:
                 exp_timestamp: float = get_jwt()["exp"]  # type: ignore
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 target_timestamp = datetime.timestamp(now + config.JWT_ACCESS_TOKEN_REFRESH)
                 if target_timestamp > exp_timestamp:
                     access_token = create_access_token(identity=get_jwt_identity())

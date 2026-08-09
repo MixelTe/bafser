@@ -1,18 +1,22 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar, TYPE_CHECKING
-from typing_extensions import deprecated
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from flask import abort
+from typing_extensions import deprecated
+
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
+
     from .. import UserBase
 
 TFn = TypeVar("TFn", bound=Callable[..., Any])
 
 
 @deprecated("Now useless with protected_route")
-def create_permission_required_decorator(*, permission_desc: str | None = None) -> \
-        Callable[[Callable[["Session", "UserBase", dict[str, Any]], bool]], Callable[[TFn], TFn]]:
+def create_permission_required_decorator(
+    *, permission_desc: str | None = None
+) -> Callable[[Callable[["Session", "UserBase", dict[str, Any]], bool]], Callable[[TFn], TFn]]:
     def creator(check_permission: Callable[["Session", "UserBase", dict[str, Any]], bool]):
         def wrapper(fn: TFn) -> TFn:
             @wraps(fn)
@@ -26,9 +30,12 @@ def create_permission_required_decorator(*, permission_desc: str | None = None) 
                     abort(403)
 
                 return fn(*args, **kwargs)
+
             decorator._doc_api_perms = permission_desc  # type: ignore
             return decorator  # type: ignore
+
         return wrapper
+
     return creator
 
 
@@ -41,6 +48,7 @@ def permission_required(*operations: tuple[str, str]):
                 return False
 
         return True
+
     return check
 
 
@@ -53,4 +61,5 @@ def permission_required_any(*operations: tuple[str, str]):
                 return True
 
         return False
+
     return check

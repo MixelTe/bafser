@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from flask import g
 from flask_jwt_extended import unset_jwt_cookies  # type: ignore
@@ -22,5 +23,7 @@ def use_userId(optional: bool = False):
                 return response, 401
 
             return fn(*args, **kwargs, userId=userId)
+
         return wrapper  # type: ignore
+
     return decorator

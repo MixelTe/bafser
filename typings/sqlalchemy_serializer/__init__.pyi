@@ -1,12 +1,13 @@
 import datetime
-from typing import Any, Callable
-
+from collections.abc import Callable
+from typing import Any
 
 class SerializerMixin:
     """
     Mixin for retrieving public fields of sqlAlchemy-model in json-compatible format with no pain
     Can be inherited to redefine get_tzinfo callback, datetime formats or to add some extra serialization logic
     """
+
     serialize_only: tuple[str, ...] = ...
     serialize_rules: tuple[str, ...] = ...
     serialize_types: tuple[str, ...] = ...
@@ -25,18 +26,18 @@ class SerializerMixin:
 
         :return: datetime.tzinfo
         """
-        ...
 
-    def to_dict(self,
-                only: list[str] | tuple[str, ...] = ...,
-                rules: list[str] | tuple[str, ...] = ...,
-                date_format: str = ...,
-                datetime_format: str = ...,
-                time_format: str = ...,
-                tzinfo: datetime.tzinfo = ...,
-                decimal_format: str = ...,
-                serialize_types: list[tuple[type, Callable[[Any], Any]]] = ...
-                ) -> dict[str, Any]:
+    def to_dict(
+        self,
+        only: list[str] | tuple[str, ...] = ...,
+        rules: list[str] | tuple[str, ...] = ...,
+        date_format: str = ...,
+        datetime_format: str = ...,
+        time_format: str = ...,
+        tzinfo: datetime.tzinfo = ...,
+        decimal_format: str = ...,
+        serialize_types: list[tuple[type, Callable[[Any], Any]]] = ...,
+    ) -> dict[str, Any]:
         """
         Returns SQLAlchemy model's data in JSON compatible format
 
@@ -53,7 +54,5 @@ class SerializerMixin:
         :param tzinfo: datetime.tzinfo converts datetimes to local user timezone
         :return: data: dict
         """
-        ...
-
 
 __all__ = ["SerializerMixin"]

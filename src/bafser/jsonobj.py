@@ -1,11 +1,11 @@
 import inspect
 import json
+from collections.abc import Callable
 from collections.abc import Callable as CallableClass
 from dataclasses import dataclass
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import (Any, Callable, Literal, TypeAliasType, TypeGuard, TypeVar, Union, cast, dataclass_transform, get_args, get_origin, get_type_hints,
-                    overload)
+from typing import Any, Literal, TypeAliasType, TypeGuard, TypeVar, Union, cast, dataclass_transform, get_args, get_origin, get_type_hints, overload
 
 from flask import abort, jsonify
 
@@ -32,9 +32,7 @@ class Undefined(metaclass=UndefinedMeta):
     @staticmethod
     def defined[T](v: T | type["Undefined"]) -> TypeGuard[T]:
         """Returns true if value is not Undefined"""
-        if v is Undefined:
-            return False
-        return True
+        return v is not Undefined
 
     @staticmethod
     def default[T, K](v: T | type["Undefined"], default: K = None) -> T | K:
@@ -60,22 +58,21 @@ class JsonField:
 
 
 @overload
-def _field(*, default_factory: Callable[[], Any], desc: str | None = None, init: bool = True, repr: bool = True) -> Any:
-    ...
+def _field(*, default_factory: Callable[[], Any], desc: str | None = None, init: bool = True, repr: bool = True) -> Any: ...
 
 
 @overload
-def _field(*, default: Any = Undefined, desc: str | None = None, init: bool = True, repr: bool = True) -> Any:
-    ...
+def _field(*, default: Any = Undefined, desc: str | None = None, init: bool = True, repr: bool = True) -> Any: ...
 
 
-def _field(*,
-           default: Any = Undefined,
-           default_factory: Callable[[], Any] | None = None,
-           desc: str | None = None,
-           init: bool = True,
-           repr: bool = True,
-           ) -> Any:
+def _field(
+    *,
+    default: Any = Undefined,
+    default_factory: Callable[[], Any] | None = None,
+    desc: str | None = None,
+    init: bool = True,
+    repr: bool = True,
+) -> Any:
     """Configure object field"""
     return JsonField(default=default, default_factory=default_factory, desc=desc, repr=repr)
 
@@ -192,6 +189,7 @@ class JsonObj:
         class SomeObj(JsonObj):
             objs: list[ObjD | ObjV]
     """
+
     __repr_fields__: list[str] | None = _noinit_value(None)
     __datetime_parser__: Callable[[Any], datetime] = _noinit_value(datetime.fromisoformat)
     __datetime_serializer__: Callable[[datetime], Any] = _noinit_value(datetime.isoformat)
@@ -313,7 +311,7 @@ class JsonObj:
         elif t == datetime and not isinstance(v, datetime):
             try:
                 v = self.__datetime_parser__(v)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
         elif isinstance(v, dict):
             v = cast(dict[Any, Any], v)
@@ -436,10 +434,7 @@ class JsonObj:
         return data
 
     def __repr__(self) -> str:
-        params = ", ".join(
-            f"{k}={repr(v)}" for (k, v) in self.items()
-            if self.__repr_fields__ is None or k in self.__repr_fields__
-        )
+        params = ", ".join(f"{k}={repr(v)}" for (k, v) in self.items() if self.__repr_fields__ is None or k in self.__repr_fields__)
         return type(self).__name__ + f"({params})"
 
     def validate(self):
@@ -667,7 +662,7 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
             if err is None:
                 return o, None  # type: ignore
             errs.append(type_name(t) + ": " + err)
-        return None, f" is not {type_name(otype)} tried:\n\t{"\n\t".join(errs)}"
+        return None, f" is not {type_name(otype)} tried:\n\t{'\n\t'.join(errs)}"
 
     # TypedDict
     try:
@@ -706,7 +701,7 @@ def type_name(t: Any, json: bool = False) -> str:
             return f"{type_name(targs[0], json)}[]"
         return f"list[{type_name(targs[0], json)}]"
     if torigin is tuple:
-        return f"tuple[{", ".join(type_name(v, json) for v in targs)}]"
+        return f"tuple[{', '.join(type_name(v, json) for v in targs)}]"
     if torigin is dict and len(targs) == 2:
         if json:
             return f"{{[key: {type_name(targs[0], json)}]: {type_name(targs[1], json)}}}"
@@ -717,8 +712,8 @@ def type_name(t: Any, json: bool = False) -> str:
         return " | ".join(repr(v) for v in targs)
     if torigin is CallableClass and len(targs) == 2:
         if json:
-            return f"({", ".join(type_name(v, json) for v in targs[0])}) => {type_name(targs[1], json)}"
-        return f"({", ".join(type_name(v, json) for v in targs[0])}) -> {type_name(targs[1], json)}"
+            return f"({', '.join(type_name(v, json) for v in targs[0])}) => {type_name(targs[1], json)}"
+        return f"({', '.join(type_name(v, json) for v in targs[0])}) -> {type_name(targs[1], json)}"
     if json:
         if t in (int, float):
             return "number"

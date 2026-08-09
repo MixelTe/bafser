@@ -1,6 +1,6 @@
 def remove_user_role(userId: int, roleId: int, dev: bool):
     print(f"remove_user_role {userId=} {roleId=} {dev=}")
-    from bafser import db_session, Role
+    from bafser import Role, db_session
     from bafser.data.user import get_user_table
 
     db_session.global_init(dev)

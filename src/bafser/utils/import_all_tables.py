@@ -1,17 +1,20 @@
 import importlib
 import os
+
 import bafser_config
 
 
 def import_all_tables():
-    from ..data import db_state  # type: ignore
-    from ..data import image  # type: ignore
-    from ..data import log  # type: ignore
-    from ..data import operation  # type: ignore
-    from ..data import permission  # type: ignore
-    from ..data import role  # type: ignore
-    from ..data import user_role  # type: ignore
-    from ..data import user  # type: ignore
+    from ..data import (
+        db_state,  # type: ignore
+        image,  # type: ignore
+        log,  # type: ignore
+        operation,  # type: ignore
+        permission,  # type: ignore
+        role,  # type: ignore
+        user,  # type: ignore
+        user_role,  # type: ignore
+    )
 
     if not os.path.exists(bafser_config.data_tables_folder):
         return

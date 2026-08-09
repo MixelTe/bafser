@@ -5,4 +5,4 @@ letters = string.ascii_uppercase + string.digits
 
 
 def randstr(N: int):
-    return ''.join(choices(letters, k=N))
+    return "".join(choices(letters, k=N))

@@ -2,7 +2,7 @@ import contextvars
 from contextlib import contextmanager
 from typing import Any
 
-import sqlalchemy.orm as orm
+from sqlalchemy import orm
 from sqlalchemy.orm import Mapped, Session
 
 __factory: Any = None

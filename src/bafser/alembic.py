@@ -1,10 +1,11 @@
 import os
 
-from alembic.config import Config
 from alembic import command
+from alembic.config import Config
+
+import bafser_config
 
 from .utils import get_db_path
-import bafser_config
 
 
 def create_alembic_config(dev: bool):
@@ -40,16 +41,17 @@ def alembic_upgrade(dev: bool):
 
 def run():
     from logging.config import fileConfig
-    from sqlalchemy import engine_from_config
-    from sqlalchemy import pool
 
     from alembic import context
+    from sqlalchemy import engine_from_config, pool
+
     config = context.config
     if config.config_file_name is not None:
         fileConfig(config.config_file_name)
 
     from .db_session import SqlAlchemyBase
     from .utils.import_all_tables import import_all_tables
+
     import_all_tables()
     target_metadata = SqlAlchemyBase.metadata
 

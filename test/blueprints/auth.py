@@ -1,9 +1,8 @@
-from test.data.user import User
-
 from flask import Blueprint, jsonify
 from flask_jwt_extended import set_access_cookies, unset_jwt_cookies  # pyright: ignore[reportUnknownVariableType]
 
 from bafser import JsonObj, UserDict, create_access_token, doc_api, get_db_session, response_msg
+from test.data.user import User
 
 bp = Blueprint("auth", __name__)
 

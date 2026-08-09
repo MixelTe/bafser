@@ -14,8 +14,9 @@ def init_project():
     with_tgapi = False
     try:
         import bafser_tgapi  # type: ignore
+
         with_tgapi = True
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     os.makedirs(bafser_config.data_tables_folder, exist_ok=True)
     write_file(os.path.join(bafser_config.data_tables_folder, "__init__.py"), data__init__)
@@ -37,18 +38,25 @@ def init_project():
     if not os.path.exists(".gitignore"):
         gitignore = gitignore_base
         gitignore += "\n" + "\n".join(
-            ([bafser_config.db_dev_path] if not bafser_config.db_dev_path.startswith("ENV:") else []) + [
-            bafser_config.log_info_path,
-            bafser_config.log_requests_path,
-            bafser_config.log_errors_path,
-            bafser_config.log_frontend_path,
-            bafser_config.jwt_key_file_path,
-            bafser_config.images_folder if bafser_config.images_folder[-1] == "/" else bafser_config.images_folder + "/",
-        ] + ([
-            cast(str, bafser_config.log_bot_path),  # type: ignore
-            cast(str, bafser_config.config_path),  # type: ignore
-            cast(str, bafser_config.config_dev_path),  # type: ignore
-        ] if with_tgapi else []))
+            ([bafser_config.db_dev_path] if not bafser_config.db_dev_path.startswith("ENV:") else [])
+            + [
+                bafser_config.log_info_path,
+                bafser_config.log_requests_path,
+                bafser_config.log_errors_path,
+                bafser_config.log_frontend_path,
+                bafser_config.jwt_key_file_path,
+                bafser_config.images_folder if bafser_config.images_folder[-1] == "/" else bafser_config.images_folder + "/",
+            ]
+            + (
+                [
+                    cast(str, bafser_config.log_bot_path),  # type: ignore
+                    cast(str, bafser_config.config_path),  # type: ignore
+                    cast(str, bafser_config.config_dev_path),  # type: ignore
+                ]
+                if with_tgapi
+                else []
+            )
+        )
         write_file(".gitignore", gitignore)
     if bafser_config.use_alembic:
         alembic_init()

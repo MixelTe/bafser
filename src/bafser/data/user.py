@@ -1,4 +1,5 @@
-from typing import Any, Callable, List, Type, TypedDict, TypeVar, final
+from collections.abc import Callable
+from typing import Any, ClassVar, TypedDict, TypeVar, final
 
 from flask import abort, g, has_request_context
 from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request  # type: ignore
@@ -12,12 +13,12 @@ from ._roles import RolesBase
 from ._tables import TablesBase
 
 T = TypeVar("T", bound="UserBase")
-_User: "Type[UserBase] | None" = None
+_User: "type[UserBase] | None" = None
 TFieldName = str
 TValue = Any
 
-type defaultGetter = Callable[[bool, bool], "UserBase | None"]
-_current_user_getter: Callable[[defaultGetter, bool, bool], "UserBase | None"] = lambda get, lazyload, for_update: get(lazyload, for_update)
+type DefaultGetter = Callable[[bool, bool], "UserBase | None"]
+_current_user_getter: Callable[[DefaultGetter, bool, bool], "UserBase | None"] = lambda get, lazyload, for_update: get(lazyload, for_update)
 
 
 class UserKwargs(TypedDict):
@@ -31,7 +32,7 @@ def get_user_table():
     return _User
 
 
-def override_get_current_user(getter: Callable[[defaultGetter, bool, bool], "UserBase | None"]):
+def override_get_current_user(getter: Callable[[DefaultGetter, bool, bool], "UserBase | None"]):
     """def get_current_user(getter: defaultGetter, lazyload: bool, for_update: bool)"""
     global _current_user_getter
     _current_user_getter = getter
@@ -40,7 +41,7 @@ def override_get_current_user(getter: Callable[[defaultGetter, bool, bool], "Use
 class UserBase(ObjMixin, SqlAlchemyBase):
     __tablename__ = TablesBase.User
     __abstract__ = True
-    __fields_hidden_in_log__ = ["password"]
+    __fields_hidden_in_log__: ClassVar[list[str]] = ["password"]
 
     login: Mapped[str] = mapped_column(String(64), index=True, unique=True)
     password: Mapped[str] = mapped_column(String(256), init=False)
@@ -53,7 +54,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return value
 
     @declared_attr
-    def roles(self) -> Mapped[List[UserRole]]:
+    def roles(self) -> Mapped[list[UserRole]]:
         return relationship(UserRole, lazy="joined", init=False)
 
     def __repr__(self):
@@ -65,7 +66,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         _User = cls
 
     @classmethod
-    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], *_: Any, db_sess: Session | None = None, **kwargs: Any):  # noqa: E501
+    def new(cls, creator: "UserBase", login: str, password: str, name: str, roles: list[int], *_: Any, db_sess: Session | None = None, **kwargs: Any):
         from .. import Log
 
         db_sess = db_sess if db_sess else creator.db_sess
@@ -84,7 +85,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return user
 
     @classmethod
-    def _new(cls: Type[T], db_sess: Session, user_kwargs: UserKwargs, **kwargs: Any) -> T:
+    def _new(cls: type[T], db_sess: Session, user_kwargs: UserKwargs, **kwargs: Any) -> T:  # noqa: PYI019
         return cls(**user_kwargs)
 
     @classmethod
@@ -97,7 +98,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
 
     @final
     @classmethod
-    def get_current(cls: Type[T], *, lazyload: bool = False, for_update: bool = False) -> T | None:
+    def get_current(cls: type[T], *, lazyload: bool = False, for_update: bool = False) -> T | None:  # noqa: PYI019
         return _current_user_getter(UserBase._get_current, lazyload, for_update)  # pyright: ignore[reportReturnType]
 
     @final
@@ -116,7 +117,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         except Exception:
             try:
                 g.user = None
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
             return None
 

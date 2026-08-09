@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
-    <link rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
-    <link rel="shortcut icon" media="(prefers-color-scheme: light)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
-    <link rel="shortcut icon" media="(prefers-color-scheme: dark)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAAAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZPs9tbQAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
-    <title>Api Docs</title>
-    <style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+	<link rel="shortcut icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
+	<link rel="shortcut icon" media="(prefers-color-scheme: light)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAA67p667p667p667p667p667p667p667p667p667p667p667p667p6BR3ZhwAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
+	<link rel="shortcut icon" media="(prefers-color-scheme: dark)" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAACpQTFRFAAAAAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZAHWZPs9tbQAAAA50Uk5TAMD/f1VUQwGWh9WUTJ1sMbHcAAAAQElEQVR4nGNggINaQUFJMCNJUHDRBhDDCYg0YAylBhhDB8JgYFABMZgFBQ1UCTIMGFAYQCsEBdWAjGIQwwDhCAB5RwuSch3scQAAAABJRU5ErkJggg==" />
+	<title>Api Docs</title>
+	<style>
 		:root {
 			--c-back: #faebd7;
 			--c-box: white;
@@ -18,666 +19,749 @@
 			--c-link: #0969da;
 			--c-main: #ebba7a;
 			--c-main-dim: #f6e1c6;
-            --c-card: #80808022;
+			--c-card: #80808022;
 
-            --c-t-int: #005fcc;
-            --c-t-float: #005fcc;
-            --c-t-number: #098658;
-            --c-t-bool: #5204c8;
-            --c-t-str: #cc4700;
-            --c-t-null: #888a0f;
-            --c-t-any: #00a830;
-            --c-t-operator: #0000ff;
-            --c-t-type: #0592bd;
-            --c-t-var: #001080;
-            --c-t-comment: #008000;
+			--c-t-int: #005fcc;
+			--c-t-float: #005fcc;
+			--c-t-number: #098658;
+			--c-t-bool: #5204c8;
+			--c-t-str: #cc4700;
+			--c-t-null: #888a0f;
+			--c-t-any: #00a830;
+			--c-t-operator: #0000ff;
+			--c-t-type: #0592bd;
+			--c-t-var: #001080;
+			--c-t-comment: #008000;
 		}
+
 		@media (prefers-color-scheme: dark) {
 			:root {
 				--c-back: #172124;
 				--c-box: #1e1e1e;
 				--c-text: #d4d4d4;
 				--c-link: #00ffff;
-			    --c-main: #007599;
-			    --c-main-dim: #0d3c4a;
+				--c-main: #007599;
+				--c-main-dim: #0d3c4a;
 
-                --c-t-int: #74b5ff;
-                --c-t-float: #74b5ff;
-                --c-t-number: #b5cea8;
-                --c-t-bool: #bd93fd;
-                --c-t-str: #ffaf85;
-                --c-t-null: #fbfd9a;
-                --c-t-any: #70ff99;
-                --c-t-operator: #3095e8;
-                --c-t-type: #2cc3a5;
-                --c-t-var: #9cdcfe;
-                --c-t-comment: #6a9955;
+				--c-t-int: #74b5ff;
+				--c-t-float: #74b5ff;
+				--c-t-number: #b5cea8;
+				--c-t-bool: #bd93fd;
+				--c-t-str: #ffaf85;
+				--c-t-null: #fbfd9a;
+				--c-t-any: #70ff99;
+				--c-t-operator: #3095e8;
+				--c-t-type: #2cc3a5;
+				--c-t-var: #9cdcfe;
+				--c-t-comment: #6a9955;
 			}
 		}
-        *, *::before, *::after {
-            box-sizing: border-box;
-            color: inherit;
-            font: inherit;
-            padding: 0;
-            margin: 0;
-        }
 
-        html, body {
-            height: 100vh;
-            height: 100dvh;
-        }
-        body {
-            text-decoration-skip-ink: none;
-    	    font-family: "PT Sans", Arial, Helvetica, sans-serif;
+		*,
+		*::before,
+		*::after {
+			box-sizing: border-box;
+			color: inherit;
+			font: inherit;
+			padding: 0;
+			margin: 0;
+		}
+
+		html,
+		body {
+			height: 100vh;
+			height: 100dvh;
+		}
+
+		body {
+			text-decoration-skip-ink: none;
+			font-family: "PT Sans", Arial, Helvetica, sans-serif;
 			background-color: var(--c-back);
 			color: var(--c-text);
 			display: flex;
 			flex-direction: column;
 			align-items: center;
-        }
+		}
+
 		.body {
 			display: grid;
 			grid-template-rows: auto 1fr;
-            gap: 1rem;
+			gap: 1rem;
 			width: 100%;
-            flex-grow: 1;
-            max-height: 100%;
+			flex-grow: 1;
+			max-height: 100%;
 			max-width: 1000px;
 			background-color: var(--c-box);
 			padding: 1em 2em;
 		}
+
 		@media screen and (min-width: 1000px) {
-            body {
+			body {
 				padding: 1em;
-            }
+			}
+
 			.body {
 				border-radius: 1em;
 				padding: 1em 3em;
 			}
 		}
-        .content {
-            position: relative;
-        }
-        .content > * {
-            position: absolute;
-            inset: 0;
-            overflow: auto;
-            z-index: 1;
+
+		.content {
+			position: relative;
+		}
+
+		.content>* {
+			position: absolute;
+			inset: 0;
+			overflow: auto;
+			z-index: 1;
 			background-color: var(--c-box);
-        }
-        a {
-            color: inherit;
-            text-decoration: none;
-        }
-        .link {
-            cursor: pointer;
-            color: var(--c-link);
-        }
-        .link:hover {
-            text-decoration: underline;
-        }
+		}
 
-        h1 {
-            font-size: 2rem;
-            text-align: center;
-        }
-        h2 {
-            font-size: 1.25rem;
-        }
+		a {
+			color: inherit;
+			text-decoration: none;
+		}
 
-        button {
-            cursor: pointer;
-            border: none;
-            background-color: transparent;
-        }
-        button:disabled {
-            cursor: default;
-        }
+		.link {
+			cursor: pointer;
+			color: var(--c-link);
+		}
 
-        pre, .code {
-            padding: 0.25em;
-            text-wrap-mode: wrap;
-            font-family: "Fira Code", 'Courier New', Courier, monospace;
-            tab-size: 4;
-            font-size: 0.9rem;
-        }
-        .code {
-            display: block;
-            width: 100%;
-            outline: none;
-            background-color: transparent;
-            border-radius: 0.25em;
-            field-sizing: content;
-        }
+		.link:hover {
+			text-decoration: underline;
+		}
 
-        option {
-            background-color: #eeeeee;
-            color: black;
-        }
-        @media (prefers-color-scheme: dark) {
-            option {
-                background-color: #2b2b2b;
-                color: #d4d4d4;
-            }
-        }
+		h1 {
+			font-size: 2rem;
+			text-align: center;
+		}
 
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
+		h2 {
+			font-size: 1.25rem;
+		}
 
-        ::-webkit-scrollbar-thumb {
-            background-color: gray;
-        }
-    </style>
-    <style>
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-        }
-        .header > a {
-            padding: 0.5em 1em;
-            background-color: var(--c-card);
-        }
-        .header > :first-child {
-            border-top-left-radius: 0.5em;
-            border-bottom-left-radius: 0.5em;
-        }
-        .header > :last-child {
-            border-top-right-radius: 0.5em;
-            border-bottom-right-radius: 0.5em;
-        }
-        .header:has(~* #routes:target) > :nth-child(1),
-        .header:has(~* #routes *:target) > :nth-child(1) {
-            anchor-name: --header;
-        }
-        .header:has(~* #types:target) > :nth-child(2),
-        .header:has(~* #types *:target) > :nth-child(2) {
-            anchor-name: --header;
-        }
-        .header::after {
-            content: "";
-            position: absolute;
-            background-color: var(--c-main);
-            height: 0.2em;
-            bottom: calc(anchor(--header bottom) + 0.2em);
-            left: calc(anchor(--header left) + 0.3em);
-            right: calc(anchor(--header right) + 0.3em);
-            border-radius: 1rem;
-            transition-property: bottom, left, right;
-            transition-duration: 300ms;
-        }
-        #routes,
-        #types {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            opacity: 0;
-            transition: opacity 200ms;
-        }
-        #routes:target, #routes:has(*:target),
-        #types:target, #types:has(*:target) {
-            opacity: 1;
-            z-index: 2;
-        }
-    </style>
-    <style>
-        .group {
-            position: relative;
-        }
-        .group::before,
-        .group::after {
-            content: "";
-            z-index: 2;
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 0.5em;
-            height: 0.5em;
-        }
-        .group::before {
-            background: var(--c-box);
-        }
-        .group::after {
-            border: 1px solid var(--c-main);
-            border-top: none;
-            border-right: none;
-            border-bottom-left-radius: 0.5em;
-            width: calc(100% - 0.5em);
-        }
+		button {
+			cursor: pointer;
+			border: none;
+			background-color: transparent;
+		}
 
-        .group__title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-            cursor: pointer;
-        }
-        .group__title > :first-child {
-            position: relative;
-            padding: 0.2rem 1rem;
-            border: 1px solid var(--c-main);
-            border-bottom: none;
-            background: var(--c-box);
-            margin-bottom: -1px;
-            border-radius: 0.5em 0.5em 0 0;
-        }
-        .group__title > :first-child::before,
-        .group__title > :first-child::after {
-            content: "";
-            position: absolute;
-            right: -0.5em;
-            bottom: 0;
-            width: 0.5em;
-            height: 0.5em;
-            background: var(--c-box);
-        }
-        .group__title > :first-child::after {
-            border: 1px solid var(--c-main);
-            border-top: none;
-            border-right: none;
-            border-bottom-left-radius: 0.5em;
-        }
+		button:disabled {
+			cursor: default;
+		}
 
-        .group__title input {
-            appearance: none;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 1em;
-            height: 1em;
-            cursor: pointer;
-            margin-right: 0.3em;
-        }
-        .group__title input::after {
-            content: "";
-            z-index: 2;
-            display: flex;
-            width: 45%;
-            height: 45%;
-            border: 0.15em solid var(--c-main);
-            border-top: none;
-            border-left: none;
-            border-radius: 0.1em;
-            rotate: -45deg;
-            transition: rotate 150ms;
-        }
-        .group__title input:checked::after {
-            rotate: 45deg;
-        }
+		pre,
+		.code {
+			padding: 0.25em;
+			text-wrap-mode: wrap;
+			font-family: "Fira Code", 'Courier New', Courier, monospace;
+			tab-size: 4;
+			font-size: 0.9rem;
+		}
 
-        .group__body {
-            display: grid;
-            grid-template-rows: 0fr;
-            overflow: hidden;
-            transition: grid-template-rows 150ms, padding 150ms;
-            padding: 0 0.5rem;
-            border-radius: 0.5em;
-            border: 1px solid var(--c-main);
-            border-top-left-radius: 0;
-        }
-        .group__title:has(*:checked) ~ .group__body {
-            grid-template-rows: 1fr;
-            padding: 0.5rem;
-        }
-        .group__body > div {
-            max-width: 100%;
-            min-height: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+		.code {
+			display: block;
+			width: 100%;
+			outline: none;
+			background-color: transparent;
+			border-radius: 0.25em;
+			field-sizing: content;
+		}
+
+		option {
+			background-color: #eeeeee;
+			color: black;
+		}
+
+		@media (prefers-color-scheme: dark) {
+			option {
+				background-color: #2b2b2b;
+				color: #d4d4d4;
+			}
+		}
+
+		::-webkit-scrollbar {
+			width: 4px;
+			height: 4px;
+		}
+
+		::-webkit-scrollbar-thumb {
+			background-color: gray;
+		}
+	</style>
+	<style>
+		.header {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 1.1rem;
+		}
+
+		.header>a {
+			padding: 0.5em 1em;
+			background-color: var(--c-card);
+		}
+
+		.header> :first-child {
+			border-top-left-radius: 0.5em;
+			border-bottom-left-radius: 0.5em;
+		}
+
+		.header> :last-child {
+			border-top-right-radius: 0.5em;
+			border-bottom-right-radius: 0.5em;
+		}
+
+		.header:has(~* #routes:target)> :nth-child(1),
+		.header:has(~* #routes *:target)> :nth-child(1) {
+			anchor-name: --header;
+		}
+
+		.header:has(~* #types:target)> :nth-child(2),
+		.header:has(~* #types *:target)> :nth-child(2) {
+			anchor-name: --header;
+		}
+
+		.header::after {
+			content: "";
+			position: absolute;
+			background-color: var(--c-main);
+			height: 0.2em;
+			bottom: calc(anchor(--header bottom) + 0.2em);
+			left: calc(anchor(--header left) + 0.3em);
+			right: calc(anchor(--header right) + 0.3em);
+			border-radius: 1rem;
+			transition-property: bottom, left, right;
+			transition-duration: 300ms;
+		}
+
+		#routes,
+		#types {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			opacity: 0;
+			transition: opacity 200ms;
+		}
+
+		#routes:target,
+		#routes:has(*:target),
+		#types:target,
+		#types:has(*:target) {
+			opacity: 1;
+			z-index: 2;
+		}
+	</style>
+	<style>
+		.group {
+			position: relative;
+		}
+
+		.group::before,
+		.group::after {
+			content: "";
+			z-index: 2;
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			width: 0.5em;
+			height: 0.5em;
+		}
+
+		.group::before {
+			background: var(--c-box);
+		}
+
+		.group::after {
+			border: 1px solid var(--c-main);
+			border-top: none;
+			border-right: none;
+			border-bottom-left-radius: 0.5em;
+			width: calc(100% - 0.5em);
+		}
+
+		.group__title {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			user-select: none;
+			cursor: pointer;
+		}
+
+		.group__title> :first-child {
+			position: relative;
+			padding: 0.2rem 1rem;
+			border: 1px solid var(--c-main);
+			border-bottom: none;
+			background: var(--c-box);
+			margin-bottom: -1px;
+			border-radius: 0.5em 0.5em 0 0;
+		}
+
+		.group__title> :first-child::before,
+		.group__title> :first-child::after {
+			content: "";
+			position: absolute;
+			right: -0.5em;
+			bottom: 0;
+			width: 0.5em;
+			height: 0.5em;
+			background: var(--c-box);
+		}
+
+		.group__title> :first-child::after {
+			border: 1px solid var(--c-main);
+			border-top: none;
+			border-right: none;
+			border-bottom-left-radius: 0.5em;
+		}
+
+		.group__title input {
+			appearance: none;
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 1em;
+			height: 1em;
+			cursor: pointer;
+			margin-right: 0.3em;
+		}
+
+		.group__title input::after {
+			content: "";
+			z-index: 2;
+			display: flex;
+			width: 45%;
+			height: 45%;
+			border: 0.15em solid var(--c-main);
+			border-top: none;
+			border-left: none;
+			border-radius: 0.1em;
+			rotate: -45deg;
+			transition: rotate 150ms;
+		}
+
+		.group__title input:checked::after {
+			rotate: 45deg;
+		}
+
+		.group__body {
+			display: grid;
+			grid-template-rows: 0fr;
+			overflow: hidden;
+			transition: grid-template-rows 150ms, padding 150ms;
+			padding: 0 0.5rem;
+			border-radius: 0.5em;
+			border: 1px solid var(--c-main);
+			border-top-left-radius: 0;
+		}
+
+		.group__title:has(*:checked)~.group__body {
+			grid-template-rows: 1fr;
+			padding: 0.5rem;
+		}
+
+		.group__body>div {
+			max-width: 100%;
+			min-height: 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
 
 
-        .card {
-            border-radius: 0.5em;
-            background-color: var(--c-card);
-        }
+		.card {
+			border-radius: 0.5em;
+			background-color: var(--c-card);
+		}
 
-        .card__title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-            cursor: pointer;
-            padding: 0.5rem 1rem;
-        }
+		.card__title {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			user-select: none;
+			cursor: pointer;
+			padding: 0.5rem 1rem;
+		}
 
-        .card__title input {
-            appearance: none;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 1em;
-            height: 1em;
-            cursor: pointer;
-        }
-        .card__title input::before {
-            content: "";
-            display: flex;
-            position: absolute;
-            inset: 0;
-            background-color: var(--c-main);
-            border-radius: 0.25em;
-            transition: box-shadow 100ms;
-            box-shadow: 0 0 0 0 var(--c-main);
-        }
-        .card__title input:hover::before {
-            box-shadow: 0 0 0 0.1em var(--c-main);
-        }
-        .card__title input:active::before {
-            box-shadow: 0 0 0 0em var(--c-main);
-        }
-        .card__title input::after {
-            content: "";
-            z-index: 2;
-            display: flex;
-            width: 45%;
-            height: 45%;
-            border: 0.15em solid var(--c-text);
-            border-top: none;
-            border-left: none;
-            border-radius: 0.1em;
-            rotate: -45deg;
-            transition: rotate 150ms;
-        }
-        .card__title input:checked::after {
-            rotate: 45deg;
-        }
+		.card__title input {
+			appearance: none;
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 1em;
+			height: 1em;
+			cursor: pointer;
+		}
 
-        .card__body {
-            display: grid;
-            grid-template-rows: 0fr;
-            overflow: hidden;
-            transition: grid-template-rows 150ms, padding 150ms;
-            padding: 0 1rem;
-            overflow: auto;
-        }
-        .card__title:has(*:checked) ~ .card__body {
-            grid-template-rows: 1fr;
-            padding: 0.5rem 1rem;
-        }
-        .card__body > * {
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
+		.card__title input::before {
+			content: "";
+			display: flex;
+			position: absolute;
+			inset: 0;
+			background-color: var(--c-main);
+			border-radius: 0.25em;
+			transition: box-shadow 100ms;
+			box-shadow: 0 0 0 0 var(--c-main);
+		}
 
-        .flexRow {
-            display: inline-flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.25em;
-        }
+		.card__title input:hover::before {
+			box-shadow: 0 0 0 0.1em var(--c-main);
+		}
 
-        .boxes {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            align-items: center;
-        }
+		.card__title input:active::before {
+			box-shadow: 0 0 0 0em var(--c-main);
+		}
 
-        .boxes > div {
-            background-color: var(--c-main-dim);
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.4em;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.25em;
-        }
+		.card__title input::after {
+			content: "";
+			z-index: 2;
+			display: flex;
+			width: 45%;
+			height: 45%;
+			border: 0.15em solid var(--c-text);
+			border-top: none;
+			border-left: none;
+			border-radius: 0.1em;
+			rotate: -45deg;
+			transition: rotate 150ms;
+		}
 
-        .flexGrow {
-            flex-grow: 1;
-        }
+		.card__title input:checked::after {
+			rotate: 45deg;
+		}
 
-        .checkbox,
-        .btn {
-            background-color: var(--c-main);
-            color: var(--c-text);
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0.1em;
-            border-radius: 0.25em;
-            transition: box-shadow 100ms;
-            box-shadow: 0 0 0 0 var(--c-main);
-        }
-        .checkbox:hover,
-        .btn:hover {
-            box-shadow: 0 0 0 0.1em var(--c-main);
-        }
-        .checkbox:active,
-        .btn:active {
-            box-shadow: 0 0 0 0em var(--c-main);
-        }
-        .btn_small {
-            font-size: 0.8rem;
-            padding: 0;
-        }
+		.card__body {
+			display: grid;
+			grid-template-rows: 0fr;
+			overflow: hidden;
+			transition: grid-template-rows 150ms, padding 150ms;
+			padding: 0 1rem;
+			overflow: auto;
+		}
 
-        .checkbox {
-            appearance: none;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            width: 1em;
-            height: 1em;
-            background-color: transparent;
-            border: 0.1em solid var(--c-main);
-            cursor: pointer;
-        }
-        .checkbox::after {
-            content: "";
-            width: 55%;
-            height: 55%;
-            border-radius: 50%;
-            background-color: var(--c-main);
-            scale: 0;
-            transition: scale 250ms;
-        }
-        .checkbox:checked::after {
-            scale: 1;
-        }
+		.card__title:has(*:checked)~.card__body {
+			grid-template-rows: 1fr;
+			padding: 0.5rem 1rem;
+		}
 
-        .boxes > .btn {
-            width: 1.5em;
-            height: 1.5em;
-        }
+		.card__body>* {
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
 
-        .quote {
-            border-left: 0.2em solid var(--c-main);
-            margin-left: 0.5em;
-            padding: 0.25em;
-            border-radius: 0.25em;
-        }
-    </style>
-    <style>
-        .type {
-            display: inline-flex;
-            flex-wrap: wrap;
-            align-items: center;
-            white-space-collapse: preserve;
-        }
-        .type_open {
-            display: flex;
-            width: 100%;
-        }
+		.flexRow {
+			display: inline-flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 0.25em;
+		}
 
-        .typeShort {
-            display: inline;
-        }
-        .type_open > .typeShort {
-            display: none;
-        }
+		.boxes {
+			display: flex;
+			gap: 0.5rem;
+			flex-wrap: wrap;
+			align-items: center;
+		}
 
-        .typeFull {
-            display: none;
-            flex-grow: 1;
-            flex-direction: column;
-            gap: 0.2em;
-        }
-        .type_open > .typeFull {
-            display: flex;
-        }
-        .typeFull > * {
-            padding-left: 1em;
-        }
-        .typeFull > :first-child,
-        .typeFull > :last-child {
-            padding-left: 0;
-        }
+		.boxes>div {
+			background-color: var(--c-main-dim);
+			padding: 0.25rem 0.5rem;
+			border-radius: 0.4em;
+			display: inline-flex;
+			justify-content: center;
+			align-items: center;
+			gap: 0.25em;
+		}
 
-        .type_operator {
-            color: var(--c-t-operator);
-        }
-        .type_type {
-            color: var(--c-t-type);
-        }
-        .type_var {
-            color: var(--c-t-var);
-        }
-        .type_comment {
-            color: var(--c-t-comment);
-        }
-        .type_int {
-            color: var(--c-t-int);
-        }
-        .type_float {
-            color: var(--c-t-float);
-        }
-        .type_number {
-            color: var(--c-t-number);
-        }
-        .type_bool {
-            color: var(--c-t-bool);
-        }
-        .type_str {
-            color: var(--c-t-str);
-        }
-        .type_null {
-            color: var(--c-t-null);
-        }
-        .type_any {
-            color: var(--c-t-any);
-        }
+		.flexGrow {
+			flex-grow: 1;
+		}
 
-        .type_object,
-        .type_list,
-        .type_dict,
-        .type_union,
-        .type_tuple {
-            padding: 0.2em;
-            border-radius: 0.2em;
-        }
-        .type_object {
-            background: linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_list {
-            background: linear-gradient(0, #00ff0015), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_list .type_list {
-            background: linear-gradient(0, #00ff0008), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_dict {
-            background: linear-gradient(0, #00d9ff15), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_dict .type_dict {
-            background: linear-gradient(0, #00d9ff08), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_union {
-            background: linear-gradient(0, #b700ff15), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_union .type_union {
-            background: linear-gradient(0, #b700ff08), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_tuple {
-            background: linear-gradient(0, #ffa60015), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
-        .type_tuple .type_tuple {
-            background: linear-gradient(0, #ffa60008), linear-gradient(0, var(--c-card)), var(--c-box);
-        }
+		.checkbox,
+		.btn {
+			background-color: var(--c-main);
+			color: var(--c-text);
+			display: inline-flex;
+			justify-content: center;
+			align-items: center;
+			padding: 0.1em;
+			border-radius: 0.25em;
+			transition: box-shadow 100ms;
+			box-shadow: 0 0 0 0 var(--c-main);
+		}
 
-        .interface .btn {
-            margin-left: 0.2em;
-            translate: 0 0.2em;
-        }
-    </style>
-    <style>
-        .tform, .json {
-            font-family: "Fira Code", 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-        }
-        .json {
-            white-space-collapse: preserve;
-        }
-        .tfrom_dict,
-        .tfrom_object,
-        .tfrom_list,
-        .json_dict,
-        .json_object,
-        .json_list {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            gap: 0.15em;
-        }
-        .json_dict,
-        .json_object,
-        .json_list {
-            gap: 0;
-        }
+		.checkbox:hover,
+		.btn:hover {
+			box-shadow: 0 0 0 0.1em var(--c-main);
+		}
 
-        .tfrom_dict__item,
-        .tfrom_list__item,
-        .tfrom_object__item,
-        .json_dict__item,
-        .json_list__item,
-        .json_object__item {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5em;
-            align-items: flex-start;
-        }
+		.checkbox:active,
+		.btn:active {
+			box-shadow: 0 0 0 0em var(--c-main);
+		}
 
-        .json_object__item,
-        .tfrom_object__item {
-            padding-left: 4ch;
-        }
-        .json_object__item > :first-child {
-            margin-left: -2ch;
-        }
+		.btn_small {
+			font-size: 0.8rem;
+			padding: 0;
+		}
 
-        .tfrom_object__item:has(> .checkbox) {
-            padding-left: 0.9em;
-        }
+		.checkbox {
+			appearance: none;
+			display: inline-flex;
+			justify-content: center;
+			align-items: center;
+			width: 1em;
+			height: 1em;
+			background-color: transparent;
+			border: 0.1em solid var(--c-main);
+			cursor: pointer;
+		}
 
-        .json_list_compact {
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 0 0.5em;
-        }
-        .json_list_compact > .json_list__item {
-            gap: 0;
-        }
-        .json_list_compact > .json_list__item::after {
-            content: ",";
-        }
-        .json_list_compact > .json_list__item:nth-last-child(2)::after {
-            content: "";
-        }
+		.checkbox::after {
+			content: "";
+			width: 55%;
+			height: 55%;
+			border-radius: 50%;
+			background-color: var(--c-main);
+			scale: 0;
+			transition: scale 250ms;
+		}
 
-        .tform .checkbox {
-            translate: 0 0.2em;
-        }
+		.checkbox:checked::after {
+			scale: 1;
+		}
 
-        /* .tfrom_dict, .tfrom_object, .tfrom_list {
+		.boxes>.btn {
+			width: 1.5em;
+			height: 1.5em;
+		}
+
+		.quote {
+			border-left: 0.2em solid var(--c-main);
+			margin-left: 0.5em;
+			padding: 0.25em;
+			border-radius: 0.25em;
+		}
+	</style>
+	<style>
+		.type {
+			display: inline-flex;
+			flex-wrap: wrap;
+			align-items: center;
+			white-space-collapse: preserve;
+		}
+
+		.type_open {
+			display: flex;
+			width: 100%;
+		}
+
+		.typeShort {
+			display: inline;
+		}
+
+		.type_open>.typeShort {
+			display: none;
+		}
+
+		.typeFull {
+			display: none;
+			flex-grow: 1;
+			flex-direction: column;
+			gap: 0.2em;
+		}
+
+		.type_open>.typeFull {
+			display: flex;
+		}
+
+		.typeFull>* {
+			padding-left: 1em;
+		}
+
+		.typeFull> :first-child,
+		.typeFull> :last-child {
+			padding-left: 0;
+		}
+
+		.type_operator {
+			color: var(--c-t-operator);
+		}
+
+		.type_type {
+			color: var(--c-t-type);
+		}
+
+		.type_var {
+			color: var(--c-t-var);
+		}
+
+		.type_comment {
+			color: var(--c-t-comment);
+		}
+
+		.type_int {
+			color: var(--c-t-int);
+		}
+
+		.type_float {
+			color: var(--c-t-float);
+		}
+
+		.type_number {
+			color: var(--c-t-number);
+		}
+
+		.type_bool {
+			color: var(--c-t-bool);
+		}
+
+		.type_str {
+			color: var(--c-t-str);
+		}
+
+		.type_null {
+			color: var(--c-t-null);
+		}
+
+		.type_any {
+			color: var(--c-t-any);
+		}
+
+		.type_object,
+		.type_list,
+		.type_dict,
+		.type_union,
+		.type_tuple {
+			padding: 0.2em;
+			border-radius: 0.2em;
+		}
+
+		.type_object {
+			background: linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_list {
+			background: linear-gradient(0, #00ff0015), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_list .type_list {
+			background: linear-gradient(0, #00ff0008), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_dict {
+			background: linear-gradient(0, #00d9ff15), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_dict .type_dict {
+			background: linear-gradient(0, #00d9ff08), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_union {
+			background: linear-gradient(0, #b700ff15), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_union .type_union {
+			background: linear-gradient(0, #b700ff08), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_tuple {
+			background: linear-gradient(0, #ffa60015), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.type_tuple .type_tuple {
+			background: linear-gradient(0, #ffa60008), linear-gradient(0, var(--c-card)), var(--c-box);
+		}
+
+		.interface .btn {
+			margin-left: 0.2em;
+			translate: 0 0.2em;
+		}
+	</style>
+	<style>
+		.tform,
+		.json {
+			font-family: "Fira Code", 'Courier New', Courier, monospace;
+			font-size: 0.9rem;
+		}
+
+		.json {
+			white-space-collapse: preserve;
+		}
+
+		.tfrom_dict,
+		.tfrom_object,
+		.tfrom_list,
+		.json_dict,
+		.json_object,
+		.json_list {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			gap: 0.15em;
+		}
+
+		.json_dict,
+		.json_object,
+		.json_list {
+			gap: 0;
+		}
+
+		.tfrom_dict__item,
+		.tfrom_list__item,
+		.tfrom_object__item,
+		.json_dict__item,
+		.json_list__item,
+		.json_object__item {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.5em;
+			align-items: flex-start;
+		}
+
+		.json_object__item,
+		.tfrom_object__item {
+			padding-left: 4ch;
+		}
+
+		.json_object__item> :first-child {
+			margin-left: -2ch;
+		}
+
+		.tfrom_object__item:has(> .checkbox) {
+			padding-left: 0.9em;
+		}
+
+		.json_list_compact {
+			flex-direction: row;
+			flex-wrap: wrap;
+			gap: 0 0.5em;
+		}
+
+		.json_list_compact>.json_list__item {
+			gap: 0;
+		}
+
+		.json_list_compact>.json_list__item::after {
+			content: ",";
+		}
+
+		.json_list_compact>.json_list__item:nth-last-child(2)::after {
+			content: "";
+		}
+
+		.tform .checkbox {
+			translate: 0 0.2em;
+		}
+
+		/* .tfrom_dict, .tfrom_object, .tfrom_list {
             background: linear-gradient(0, #80808010), linear-gradient(0, var(--c-card)), var(--c-box);
             border-radius: 0.5em;
             padding-right: 0.5em;
@@ -688,1393 +772,1558 @@
             padding-right: 0.5em;
         } */
 
-        .tfrom_list {
-            counter-reset: list -1;
-        }
-        .tfrom_list__counter::before {
-            counter-increment: list;
-            content: counter(list) ":";
-        }
-        .json_list_no_counter > * > .json_list_counter {
-            display: none;
-        }
+		.tfrom_list {
+			counter-reset: list -1;
+		}
 
-        .tfrom_number,
-        .tfrom_string > input,
-        .tfrom_string > textarea,
-        .tfrom_literal,
-        .tfrom_any {
-            min-width: 2ch;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid var(--c-main);
-            outline: none;
-        }
-        .tfrom_string > textarea,
-        .tfrom_any {
-            min-width: 10ch;
-            min-height: 4.5ch;
-            field-sizing: content;
-        }
+		.tfrom_list__counter::before {
+			counter-increment: list;
+			content: counter(list) ":";
+		}
 
-        span.tfrom_literal {
-            border: none;
-        }
+		.json_list_no_counter>*>.json_list_counter {
+			display: none;
+		}
 
-        .tfrom_number {
-            color: var(--c-t-number);
-        }
-        .tfrom_string {
-            color: var(--c-t-str);
-        }
+		.tfrom_number,
+		.tfrom_string>input,
+		.tfrom_string>textarea,
+		.tfrom_literal,
+		.tfrom_any {
+			min-width: 2ch;
+			background: transparent;
+			border: none;
+			border-bottom: 1px solid var(--c-main);
+			outline: none;
+		}
 
-        .tfrom_string {
-            display: flex;
-            align-items: center;
-        }
-        .tfrom_string > .btn {
-            display: none;
-        }
-        .tfrom_string > input:focus ~ .btn,
-        .tfrom_string > textarea ~ .btn,
-        .tfrom_string > .btn:active {
-            display: flex;
-        }
+		.tfrom_string>textarea,
+		.tfrom_any {
+			min-width: 10ch;
+			min-height: 4.5ch;
+			field-sizing: content;
+		}
 
-        .tfrom_checkbox {
-            position: relative;
-            width: 2.3em;
-            height: 1.2em;
-            border: 0.0625em solid var(--c-main);
-            border-radius: 1em;
-            cursor: pointer;
-            transition: background-color 100ms;
-        }
+		span.tfrom_literal {
+			border: none;
+		}
 
-        .tfrom_checkbox:has(input:focus-visible) {
-            background-color: rgba(from var(--c-main) r g b / 0.15);
-        }
+		.tfrom_number {
+			color: var(--c-t-number);
+		}
 
-        .tfrom_checkbox input {
-            appearance: none;
-            width: 100%;
-            height: 100%;
-            border: none;
-            cursor: pointer;
-            outline: none;
-        }
+		.tfrom_string {
+			color: var(--c-t-str);
+		}
 
-        .tfrom_checkbox span {
-            position: absolute;
-            display: block;
-            width: 0.9em;
-            height: 0.9em;
-            top: 0.0875em;
-            left: 0.0875em;
-            border: 0.0625em solid var(--c-main);
-            border-radius: 50%;
-            background-color: rgba(255, 99, 71, 0.6);
-            transition-property: left, background-color;
-            transition-duration: 250ms;
-        }
+		.tfrom_string {
+			display: flex;
+			align-items: center;
+		}
 
-        .tfrom_checkbox input:checked ~ span {
-            background-color: rgba(50, 255, 50, 0.6);
-            left: 1.1875em;
-        }
+		.tfrom_string>.btn {
+			display: none;
+		}
 
-        .tfrom_union {
-            display: inline-flex;
-            align-items: flex-start;
-            gap: 0.5em;
-        }
-        .tfrom_union > :first-child {
-            font-size: 0.75rem;
-            translate: 0 0.2rem;
-        }
-        .tfrom_any {
-            color: var(--c-t-any);
-        }
+		.tfrom_string>input:focus~.btn,
+		.tfrom_string>textarea~.btn,
+		.tfrom_string>.btn:active {
+			display: flex;
+		}
 
-        .json_textarea {
-            display: inline-block;
-            color: var(--c-t-str);
-            border: 1px solid color-mix(in srgb, var(--c-t-str), transparent 60%);
-            padding: 0.2em;
-            border-radius: 0.25em;
-            white-space-collapse: preserve;
-        }
+		.tfrom_checkbox {
+			position: relative;
+			width: 2.3em;
+			height: 1.2em;
+			border: 0.0625em solid var(--c-main);
+			border-radius: 1em;
+			cursor: pointer;
+			transition: background-color 100ms;
+		}
 
-        .urlBuilder > :first-child {
-            margin-right: 1ch;
-        }
-        .urlBuilder > :last-child {
-            color: var(--c-t-str);
-            font-family: "Fira Code", 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-        }
-        .inp_number,
-        .inp_string {
-            min-width: 2ch;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid var(--c-main);
-            outline: none;
-        }
-        .inp_number {
-            color: var(--c-t-number);
-        }
-        .inp_string {
-            color: var(--c-t-str);
-        }
-    </style>
+		.tfrom_checkbox:has(input:focus-visible) {
+			background-color: rgba(from var(--c-main) r g b / 0.15);
+		}
+
+		.tfrom_checkbox input {
+			appearance: none;
+			width: 100%;
+			height: 100%;
+			border: none;
+			cursor: pointer;
+			outline: none;
+		}
+
+		.tfrom_checkbox span {
+			position: absolute;
+			display: block;
+			width: 0.9em;
+			height: 0.9em;
+			top: 0.0875em;
+			left: 0.0875em;
+			border: 0.0625em solid var(--c-main);
+			border-radius: 50%;
+			background-color: rgba(255, 99, 71, 0.6);
+			transition-property: left, background-color;
+			transition-duration: 250ms;
+		}
+
+		.tfrom_checkbox input:checked~span {
+			background-color: rgba(50, 255, 50, 0.6);
+			left: 1.1875em;
+		}
+
+		.tfrom_union {
+			display: inline-flex;
+			align-items: flex-start;
+			gap: 0.5em;
+		}
+
+		.tfrom_union> :first-child {
+			font-size: 0.75rem;
+			translate: 0 0.2rem;
+		}
+
+		.tfrom_any {
+			color: var(--c-t-any);
+		}
+
+		.json_textarea {
+			display: inline-block;
+			color: var(--c-t-str);
+			border: 1px solid color-mix(in srgb, var(--c-t-str), transparent 60%);
+			padding: 0.2em;
+			border-radius: 0.25em;
+			white-space-collapse: preserve;
+		}
+
+		.urlBuilder> :first-child {
+			margin-right: 1ch;
+		}
+
+		.urlBuilder> :last-child {
+			color: var(--c-t-str);
+			font-family: "Fira Code", 'Courier New', Courier, monospace;
+			font-size: 0.9rem;
+		}
+
+		.inp_number,
+		.inp_string {
+			min-width: 2ch;
+			background: transparent;
+			border: none;
+			border-bottom: 1px solid var(--c-main);
+			outline: none;
+		}
+
+		.inp_number {
+			color: var(--c-t-number);
+		}
+
+		.inp_string {
+			color: var(--c-t-str);
+		}
+	</style>
 </head>
+
 <body>
-    <script type="text/template" id="data_routes">{{ routes }}</script>
-    <script type="text/template" id="data_types">{{ types }}</script>
-    <script type="text/template" id="data_dev">{{ dev }}</script>
-    <script>
-        const routes = JSON.parse(document.getElementById("data_routes").innerText);
-        const types = JSON.parse(document.getElementById("data_types").innerText);
-        const dev = document.getElementById("data_dev").innerText.toLowerCase() == "true";
-    </script>
-    <script>
-        var url = new URL(window.location.href);
-        if (url.hash == "") {
-            url.hash = "routes";
-            window.history.replaceState(null, '', url.toString());
-        }
-    </script>
-    <div class="body">
-        <div class="header">
-            <a href="#routes">Routes</a>
-            <a href="#types">Types</a>
-        </div>
-        <div class="content">
-            <div id="routes"></div>
-            <div id="types"></div>
-        </div>
-    </div>
-    <!-- initEl -->
-    <script>
-        function initEl(tagName, classes, children, fn)
-        {
-            const el = document.createElement(tagName);
-            if (classes)
-            {
-                if (typeof classes == "string") el.classList.add(classes);
-                else classes.forEach(cs => cs && el.classList.add(cs));
-            }
-            if (children)
-            {
-                appendChildren(children);
-                function appendChildren(children) {
-                    if (children instanceof Array)
-                        children.forEach(appendChildren);
-                    else if (!!children)
-                        el.append(children);
-                }
-            }
+	<script type="text/template" id="data_routes">{{ routes }}</script>
+	<script type="text/template" id="data_types">{{ types }}</script>
+	<script type="text/template" id="data_dev">{{ dev }}</script>
+	<script>
+		const routes = JSON.parse(document.getElementById("data_routes").innerText);
+		const types = JSON.parse(document.getElementById("data_types").innerText);
+		const dev = document.getElementById("data_dev").innerText.toLowerCase() == "true";
+	</script>
+	<script>
+		var url = new URL(window.location.href);
+		if (url.hash == "")
+		{
+			url.hash = "routes";
+			window.history.replaceState(null, '', url.toString());
+		}
+	</script>
+	<div class="body">
+		<div class="header">
+			<a href="#routes">Routes</a>
+			<a href="#types">Types</a>
+		</div>
+		<div class="content">
+			<div id="routes"></div>
+			<div id="types"></div>
+		</div>
+	</div>
+	<!-- initEl -->
+	<script>
+		function initEl(tagName, classes, children, fn)
+		{
+			const el = document.createElement(tagName);
+			if (classes)
+			{
+				if (typeof classes == "string") el.classList.add(classes);
+				else classes.forEach(cs => cs && el.classList.add(cs));
+			}
+			if (children)
+			{
+				appendChildren(children);
+				function appendChildren(children)
+				{
+					if (children instanceof Array)
+						children.forEach(appendChildren);
+					else if (!!children)
+						el.append(children);
+				}
+			}
 
-            fn?.(el);
+			fn?.(el);
 
-            return el;
-        }
-        function Div(classes, children, fn) {
-            return initEl("div", classes, children, fn);
-        }
-        function Span(classes, children, fn) {
-            return initEl("span", classes, children, fn);
-        }
-        function Link(classes, children, href, fn) {
-            const a = initEl("a", classes, children, fn);
-            if (href) a.href = href;
-            return a;
-        }
-        function Input(classes, type, placeholder, fn)
-        {
-            const input = initEl("input", classes, undefined, fn);
-            if (type) input.type = type;
-            if (placeholder) input.placeholder = placeholder;
-            return input;
-        }
-        function InputAutoWidth(classes, type, placeholder, fn)
-        {
-            const input = initEl("input", classes, undefined, fn);
-            if (type) input.type = type;
-            if (placeholder) input.placeholder = placeholder;
-            function upd() {
-                let ln = input.value.length;
-                if (ln == 0 && placeholder) ln = placeholder.length;
-                input.style.width = `${ln + 0.5}ch`;
-            }
-            input.addEventListener("input", upd);
-            upd();
-            return {upd, input};
-        }
-        function InputNumber(classes, float = false) {
-            const {upd, input} = InputAutoWidth(classes, "text", "0", el => {
-                el.value = 0;
-                el.addEventListener("input", () => {
-                    if (!float)
-                        el.value = el.value.replace(/[^\d]/g, "");
-                    else {
-                        el.value = el.value.replace(/[^\d\.,]/g, "").replaceAll(",", ".");
-                        const i = el.value.indexOf(".");
-                        if (i >= 0) el.value = el.value.slice(0, i + 1) + el.value.slice(i + 1).replaceAll(".", "");
-                    }
-                });
-            });
+			return el;
+		}
+		function Div(classes, children, fn)
+		{
+			return initEl("div", classes, children, fn);
+		}
+		function Span(classes, children, fn)
+		{
+			return initEl("span", classes, children, fn);
+		}
+		function Link(classes, children, href, fn)
+		{
+			const a = initEl("a", classes, children, fn);
+			if (href) a.href = href;
+			return a;
+		}
+		function Input(classes, type, placeholder, fn)
+		{
+			const input = initEl("input", classes, undefined, fn);
+			if (type) input.type = type;
+			if (placeholder) input.placeholder = placeholder;
+			return input;
+		}
+		function InputAutoWidth(classes, type, placeholder, fn)
+		{
+			const input = initEl("input", classes, undefined, fn);
+			if (type) input.type = type;
+			if (placeholder) input.placeholder = placeholder;
+			function upd()
+			{
+				let ln = input.value.length;
+				if (ln == 0 && placeholder) ln = placeholder.length;
+				input.style.width = `${ln + 0.5}ch`;
+			}
+			input.addEventListener("input", upd);
+			upd();
+			return { upd, input };
+		}
+		function InputNumber(classes, float = false)
+		{
+			const { upd, input } = InputAutoWidth(classes, "text", "0", el =>
+			{
+				el.value = 0;
+				el.addEventListener("input", () =>
+				{
+					if (!float)
+						el.value = el.value.replace(/[^\d]/g, "");
+					else
+					{
+						el.value = el.value.replace(/[^\d\.,]/g, "").replaceAll(",", ".");
+						const i = el.value.indexOf(".");
+						if (i >= 0) el.value = el.value.slice(0, i + 1) + el.value.slice(i + 1).replaceAll(".", "");
+					}
+				});
+			});
 
-            return {
-                value: () => float ?
-                    parseFloat(input.value || "0", 10) :
-                    parseInt(input.value || "0", 10),
-                set: (v) => {
-                    if (typeof v != "number" || !isFinite(v)) v = 0;
-                    input.value = `${float ? v : Math.trunc(v)}`;
-                    upd();
-                },
-                el: input,
-            };
-        }
-        function Button(classes, children, clickListener, fn)
-        {
-            const button = initEl("button", classes, children, fn);
-            if (clickListener) button.addEventListener("click", clickListener.bind(button, button));
-            return button;
-        }
-        function OptionEl(classes, value, children, fn)
-        {
-            const opt = initEl("option", classes, children, fn);
-            opt.value = value;
-            return opt;
-        }
-    </script>
-    <!-- JsonEditor -->
-    <script>
-        function JsonEditor(onEnter = () => {}) {
-            const el = initEl("textarea", "code");
-            let pv = "";
-            el.addEventListener("input", formatJson);
-            el.addEventListener("keydown", e => {
-                if (e.ctrlKey && e.key == "Enter") {
-                    onEnter?.();
-                    return;
-                }
-                if (e.key != "Tab") return;
-                e.preventDefault();
-                const ni = el.selectionStart;
-                const v = el.value.slice(0, ni) + "    " + el.value.slice(ni);
-                el.value = v;
-                pv = v;
-                el.setSelectionRange(ni + 4, ni + 4);
-            });
-            function formatJson() {
-                let v = el.value;
-                if (v.length != pv.length + 1) { pv = v; return; };
-                let ni = el.selectionStart;
-                let pos = ni;
-                const pch = v[ni - 2];
-                const ch = v[ni - 1];
-                const nch = v[ni];
-                // console.log("pv:", pv, "v:", v, "ni:", ni, "ch:", ch);
-                const before = v.slice(0, ni);
-                const after = v.slice(ni);
-                const _blnl = before.lastIndexOf("\n")
-                const line = before.slice(_blnl + 1);
-                const _bl = before.slice(0, _blnl);
-                const prevline = _blnl < 0 ? "" : _bl.slice(_bl.lastIndexOf("\n") + 1);
-                switch (ch) {
-                    case "{": v = before + "}" + after; break;
-                    case "[": v = before + "]" + after; break;
-                    case '"': if ((!nch || nch == "\n") && nch != '"' && pch != '"') v = before + '"' + after; break;
-                    case "\n":
-                        if (pch != "\n") {
-                            let indentS = Math.floor((prevline.length - prevline.trimStart(" ").length) / 4);
-                            if (pch == "{" || pch == "[") indentS++;
-                            if (nch == "}" || nch == "]") indentS--;
-                            const indent = new Array(indentS * 4).fill(" ").join("");
-                            const indent2 = new Array((indentS + 1) * 4).fill(" ").join("");
-                            v = before + indent + after;
-                            pos += indentS * 4;
-                            if (pch == "{" && nch == "}" || pch == "[" && nch == "]") {
-                                v = before + indent2 + "\n" + indent + after;
-                                pos += 4;
-                            }
-                        }
-                        break;
-                }
-                pv = v;
-                el.value = v;
-                el.setSelectionRange(pos, pos);
-            }
-            return { el, set: (v) => {
-                pv = v;
-                el.value = v;
-            } };
-        }
-    </script>
-    <!-- vscodeLink -->
-    <script>
-        function vscodeLink(module, line) {
-            let path = module.split(".").slice(0, -1);
-            line = line ? ":" + line : "";
-            let loc = "{{loc}}";
-            if (path[0] == "bafser") {
-                loc = "{{locb}}";
-                path = path.slice(1);
-            }
-            return `vscode://file/${loc}/${path.join("/")}.py${line}`
-        }
-    </script>
-    <!-- icons -->
-    <script>
-        function Icon(path) {
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            svg.appendChild(p);
-            svg.setAttribute("viewBox", "0 -960 960 960");
-            svg.setAttribute("height", "1em");
-            svg.setAttribute("width", "1em");
-            svg.setAttribute("fill", "currentColor");
-            p.setAttribute("d", path);
-            return svg;
-        }
-        function IconSave() {
-            return Icon("M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z")
-        }
-        function IconCopy() {
-            return Icon("M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z")
-        }
-        function IconCard() {
-            return Icon("M560-440h200v-80H560v80Zm0-120h200v-80H560v80ZM200-320h320v-22q0-45-44-71.5T360-440q-72 0-116 26.5T200-342v22Zm160-160q33 0 56.5-23.5T440-560q0-33-23.5-56.5T360-640q-33 0-56.5 23.5T280-560q0 33 23.5 56.5T360-480ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z")
-        }
-        function IconLink() {
-            return Icon("M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z")
-        }
-        function IconObj() {
-            return Icon("M600-160q-17 0-28.5-11.5T560-200q0-17 11.5-28.5T600-240h80q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720h-80q-17 0-28.5-11.5T560-760q0-17 11.5-28.5T600-800h80q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560t28.5 11.5Q880-537 880-520v80q0 17-11.5 28.5T840-400t-28.5 11.5Q800-377 800-360v80q0 50-35 85t-85 35h-80Zm-320 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400t-28.5-11.5Q80-423 80-440v-80q0-17 11.5-28.5T120-560t28.5-11.5Q160-583 160-600v-80q0-50 35-85t85-35h80q17 0 28.5 11.5T400-760q0 17-11.5 28.5T360-720h-80q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h80q17 0 28.5 11.5T400-200q0 17-11.5 28.5T360-160h-80Z")
-        }
-        function IconCode() {
-            return Icon("m193-479 155 155q11 11 11 28t-11 28q-11 11-28 11t-28-11L108-452q-6-6-8.5-13T97-480q0-8 2.5-15t8.5-13l184-184q12-12 28.5-12t28.5 12q12 12 12 28.5T349-635L193-479Zm574-2L612-636q-11-11-11-28t11-28q11-11 28-11t28 11l184 184q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13L668-268q-12 12-28 11.5T612-269q-12-12-12-28.5t12-28.5l155-155Z")
-        }
-        function IconCodeOff() {
-            return Icon("m193-479 155 155q11 11 11 28t-11 28q-11 11-28 11t-28-11L108-452q-6-6-8.5-13T97-480q0-8 2.5-15t8.5-13l115-115L83-763q-12-12-12-28.5T83-820q12-12 28.5-12t28.5 12l680 680q12 12 12 28t-12 28q-12 12-28.5 12T763-84L280-566l-87 87Zm516 113q-12-12-12-28.5t12-28.5l58-58-155-155q-11-11-11-28t11-28q11-11 28-11t28 11l184 184q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-87 87q-12 12-28 11.5T709-366Z")
-        }
-        function IconSend() {
-            return Icon("M792-443 176-183q-20 8-38-3.5T120-220v-520q0-22 18-33.5t38-3.5l616 260q25 11 25 37t-25 37ZM200-280l474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z")
-        }
-        function IconAdd() {
-            return Icon("M440-440H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200q-17 0-28.5-11.5T440-240v-200Z")
-        }
-        function IconRemove() {
-            return Icon("M240-440q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h480q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H240Z")
-        }
-        function IconExpand() {
-            return Icon("M280-280h120q17 0 28.5 11.5T440-240q0 17-11.5 28.5T400-200H240q-17 0-28.5-11.5T200-240v-160q0-17 11.5-28.5T240-440q17 0 28.5 11.5T280-400v120Zm400-400H560q-17 0-28.5-11.5T520-720q0-17 11.5-28.5T560-760h160q17 0 28.5 11.5T760-720v160q0 17-11.5 28.5T720-520q-17 0-28.5-11.5T680-560v-120Z")
-        }
-        function IconCollapse() {
-            return Icon("M360-360H240q-17 0-28.5-11.5T200-400q0-17 11.5-28.5T240-440h160q17 0 28.5 11.5T440-400v160q0 17-11.5 28.5T400-200q-17 0-28.5-11.5T360-240v-120Zm240-240h120q17 0 28.5 11.5T760-560q0 17-11.5 28.5T720-520H560q-17 0-28.5-11.5T520-560v-160q0-17 11.5-28.5T560-760q17 0 28.5 11.5T600-720v120Z")
-        }
-    </script>
-    <!-- renderType -->
-    <script>
-        function renderType(type, full = false) {
-            if (type.type == "int") return Div(["type", "type_int"], "int");
-            if (type.type == "float") return Div(["type", "type_float"], "float");
-            if (type.type == "bool") return Div(["type", "type_bool"], "boolean");
-            if (type.type == "str") return Div(["type", "type_str"], "string");
-            if (type.type == "null") return Div(["type", "type_null"], "null");
-            if (type.type == "any") return Div(["type", "type_any"], "any");
-            if (type.type == "literal") return Div(["type", "type_literal"], type.literal.map((v, i) => [
-                    i > 0 && Span([], " | "),
-                    typeof v == "number" ? Div("type_int", `${v}`) :
-                    typeof v == "string" ? Div("type_str", `"${v}"`) :
-                    typeof v == "boolean" ? Div("type_bool", v ? "true" : "false") :
-                        Div("type_null", `${v}`),
-                ]));
-            if (type.type == "list") return Div(["type", "type_list"], [
-                    Span([], "list["),
-                    renderType(type.list_type),
-                    Span([], "]"),
-                ]);
-            if (type.type == "dict") return Div(["type", "type_dict"], [
-                    Span([], "dict["),
-                    renderType(type.dict_type[0]),
-                    Span([], ", "),
-                    renderType(type.dict_type[1]),
-                    Span([], "]"),
-                ]);
-            if (type.type == "union") return Div(["type", "type_union"], type.union_type.map((t, i) => [
-                    i > 0 && Span([], " | "),
-                    renderType(t),
-                ]));
-            if (type.type == "tuple") return Div(["type", "type_tuple"], [
-                    Span([], "tuple["),
-                    type.tuple_type.map((t, i) => [
-                        i > 0 && Span([], ", "),
-                        renderType(t),
-                    ]),
-                    Span([], "]"),
-                ]);
-            if (type.type == "tlink") return type.name in types ? renderType(types[type.name]) : Div("type", "Unknown");
-            if (type.type != "object") return Div(["type", "type_type"], "unknown");
-            if (type.object_fields.length == 0) return Div(["type", "type_type"], "object");
-            let shortEl, fullEl;
-            const name = type.name?.split(".")?.at(-1) || "object";
-            const typeEl = Div("type", [
-                Div(["typeShort", "link"], name, el => shortEl = el),
-                Div(["typeFull", "type_object"], [], el => fullEl = el),
-            ]);
-            shortEl.addEventListener("click", () => {
-                if (render) {
-                    render();
-                    render = null;
-                }
-                typeEl.classList.toggle("type_open");
-            });
-            function render() {
-                fullEl.appendChild(Div("flexRow", [
-                    Span(full ? "" : "link", `${name}`, el => el.addEventListener("click", () => !full && typeEl.classList.toggle("type_open"))),
-                    (!full && type.name) && Link("btn", [IconLink()], "#" + type.name),
-                    Span([], "{"),
-                ]));
-                type.object_fields.forEach(field => {
-                    fullEl.appendChild(Div([], [
-                        Span([], field.name + (field.optional ? "?" : "") + ": "),
-                        renderType(field.type),
-                        field.default !== undefined && Span([], [
-                            Span([], " = "),
-                            typeof field.default == "number" ? Span("type_int", `${field.default}`) :
-                            typeof field.default == "string" ? Span("type_str", `"${field.default}"`) :
-                            typeof field.default == "boolean" ? Span("type_bool", field.default ? "true" : "false") :
-                            field.default == null ? Span("type_null", `${field.default}`) :
-                                Span([], `${JSON.stringify(field.default, null, 4)}`)
-                        ]),
-                        field.desc && Span("type_comment", "  # " + field.desc),
-                    ]));
-                })
-                fullEl.appendChild(Div([], "}"))
-            }
-            if (full) {
-                render();
-                render = null;
-                typeEl.classList.toggle("type_open");
-            }
-            return typeEl;
-        }
-        function snakeToCamel(name) {
-            return name.replace(/([-_][a-zA-Z])|(^[a-zA-Z])/g, group =>
-                group.toUpperCase().replace("-", "").replace("_", "")
-            );
-        }
-        function renderTypeInterface(type, routeName="", isReq=false) {
-            if (type.type == "tlink") type = types[type.name];
-            const name = type.name?.split(".")?.at(-1) || snakeToCamel(routeName.split(".").at(-1)) + (isReq ? "Req" : "Res");
-            const el = type.type != "object" || type.object_fields.length == 0 ?
-                initEl("pre", [], [
-                    Span("type_operator", "type"),
-                    Span([], " "),
-                    Span("type_type", name),
-                    Span([], " = "),
-                    _renderTypeInterface(type),
-                    Span([], ";"),
-                ]) :
-                initEl("pre", [], [
-                    Span("type_operator", "interface"),
-                    Span([], " "),
-                    Span("type_type", name),
-                    Span([], " "),
-                    _renderTypeInterface(type),
-                ]);
-            return Span("interface", [
-                Button("btn", [IconCopy()], () => navigator.clipboard.writeText(el.innerText)),
-                el,
-            ]);
-        }
-        function _renderTypeInterface(type, indent=0) {
-            if (type.type == "int") return Span("type_type", "number");
-            if (type.type == "float") return Span("type_type", "number");
-            if (type.type == "bool") return Span("type_type", "boolean");
-            if (type.type == "str") return Span("type_type", "string");
-            if (type.type == "null") return Span("type_type", "null");
-            if (type.type == "any") return Span("type_type", "any");
-            if (type.type == "literal") return type.literal.map((v, i) => [
-                i > 0 && Span([], " | "),
-                typeof v == "number" ? Span("type_number", `${v}`) :
-                typeof v == "string" ? Span("type_str", `"${v}"`) :
-                typeof v == "boolean" ? Span("type_bool", v ? "true" : "false") :
-                    Span("type_null", `${v}`),
-            ]);
-            if (type.type == "list") return [
-                (type.list_type.type == "union") && Span([], "("),
-                _renderTypeInterface(type.list_type, indent),
-                (type.list_type.type == "union") && Span([], ")"),
-                Span([], "[]"),
-            ];
-            if (type.type == "dict") return [
-                Span([], "{ ["),
-                Span("type_var", "key"),
-                type.dict_type[0].type == "literal" ? Span("type_operator", " in ") : Span([], ": "),
-                _renderTypeInterface(type.dict_type[0], indent),
-                Span([], "]: "),
-                _renderTypeInterface(type.dict_type[1], indent),
-                Span([], " }"),
-            ];
-            if (type.type == "union") return type.union_type.map((t, i) => [
-                i > 0 && Span([], " | "),
-                _renderTypeInterface(t, indent),
-            ]);
-            if (type.type == "tuple") return [
-                Span([], "["),
-                type.tuple_type.map((t, i) => [
-                    i > 0 && Span([], ", "),
-                    _renderTypeInterface(t, indent),
-                ]),
-                Span([], "]"),
-            ];
-            if (type.type == "tlink") return Span("type_type", type.name.split(".").at(-1));
-            if (type.type != "object") return Span("type_type", "unknown");
-            if (type.object_fields.length == 0) return Span("type_type", "object");
+			return {
+				value: () => float ?
+					parseFloat(input.value || "0", 10) :
+					parseInt(input.value || "0", 10),
+				set: (v) =>
+				{
+					if (typeof v != "number" || !isFinite(v)) v = 0;
+					input.value = `${float ? v : Math.trunc(v)}`;
+					upd();
+				},
+				el: input,
+			};
+		}
+		function Button(classes, children, clickListener, fn)
+		{
+			const button = initEl("button", classes, children, fn);
+			if (clickListener) button.addEventListener("click", clickListener.bind(button, button));
+			return button;
+		}
+		function OptionEl(classes, value, children, fn)
+		{
+			const opt = initEl("option", classes, children, fn);
+			opt.value = value;
+			return opt;
+		}
+	</script>
+	<!-- JsonEditor -->
+	<script>
+		function JsonEditor(onEnter = () => { })
+		{
+			const el = initEl("textarea", "code");
+			let pv = "";
+			el.addEventListener("input", formatJson);
+			el.addEventListener("keydown", e =>
+			{
+				if (e.ctrlKey && e.key == "Enter")
+				{
+					onEnter?.();
+					return;
+				}
+				if (e.key != "Tab") return;
+				e.preventDefault();
+				const ni = el.selectionStart;
+				const v = el.value.slice(0, ni) + "    " + el.value.slice(ni);
+				el.value = v;
+				pv = v;
+				el.setSelectionRange(ni + 4, ni + 4);
+			});
+			function formatJson()
+			{
+				let v = el.value;
+				if (v.length != pv.length + 1) { pv = v; return; };
+				let ni = el.selectionStart;
+				let pos = ni;
+				const pch = v[ni - 2];
+				const ch = v[ni - 1];
+				const nch = v[ni];
+				// console.log("pv:", pv, "v:", v, "ni:", ni, "ch:", ch);
+				const before = v.slice(0, ni);
+				const after = v.slice(ni);
+				const _blnl = before.lastIndexOf("\n")
+				const line = before.slice(_blnl + 1);
+				const _bl = before.slice(0, _blnl);
+				const prevline = _blnl < 0 ? "" : _bl.slice(_bl.lastIndexOf("\n") + 1);
+				switch (ch)
+				{
+					case "{": v = before + "}" + after; break;
+					case "[": v = before + "]" + after; break;
+					case '"': if ((!nch || nch == "\n") && nch != '"' && pch != '"') v = before + '"' + after; break;
+					case "\n":
+						if (pch != "\n")
+						{
+							let indentS = Math.floor((prevline.length - prevline.trimStart(" ").length) / 4);
+							if (pch == "{" || pch == "[") indentS++;
+							if (nch == "}" || nch == "]") indentS--;
+							const indent = new Array(indentS * 4).fill(" ").join("");
+							const indent2 = new Array((indentS + 1) * 4).fill(" ").join("");
+							v = before + indent + after;
+							pos += indentS * 4;
+							if (pch == "{" && nch == "}" || pch == "[" && nch == "]")
+							{
+								v = before + indent2 + "\n" + indent + after;
+								pos += 4;
+							}
+						}
+						break;
+				}
+				pv = v;
+				el.value = v;
+				el.setSelectionRange(pos, pos);
+			}
+			return {
+				el, set: (v) =>
+				{
+					pv = v;
+					el.value = v;
+				}
+			};
+		}
+	</script>
+	<!-- vscodeLink -->
+	<script>
+		function vscodeLink(module, line)
+		{
+			let path = module.split(".").slice(0, -1);
+			line = line ? ":" + line : "";
+			let loc = "{{loc}}";
+			if (path[0] == "bafser")
+			{
+				loc = "{{locb}}";
+				path = path.slice(1);
+			}
+			return `vscode://file/${loc}/${path.join("/")}.py${line}`
+		}
+	</script>
+	<!-- icons -->
+	<script>
+		function Icon(path)
+		{
+			const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+			const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+			svg.appendChild(p);
+			svg.setAttribute("viewBox", "0 -960 960 960");
+			svg.setAttribute("height", "1em");
+			svg.setAttribute("width", "1em");
+			svg.setAttribute("fill", "currentColor");
+			p.setAttribute("d", path);
+			return svg;
+		}
+		function IconSave()
+		{
+			return Icon("M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q50 0 85-35t35-85q0-50-35-85t-85-35q-50 0-85 35t-35 85q0 50 35 85t85 35ZM240-560h360v-160H240v160Zm-40-86v446-560 114Z")
+		}
+		function IconCopy()
+		{
+			return Icon("M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z")
+		}
+		function IconCard()
+		{
+			return Icon("M560-440h200v-80H560v80Zm0-120h200v-80H560v80ZM200-320h320v-22q0-45-44-71.5T360-440q-72 0-116 26.5T200-342v22Zm160-160q33 0 56.5-23.5T440-560q0-33-23.5-56.5T360-640q-33 0-56.5 23.5T280-560q0 33 23.5 56.5T360-480ZM160-160q-33 0-56.5-23.5T80-240v-480q0-33 23.5-56.5T160-800h640q33 0 56.5 23.5T880-720v480q0 33-23.5 56.5T800-160H160Zm0-80h640v-480H160v480Zm0 0v-480 480Z")
+		}
+		function IconLink()
+		{
+			return Icon("M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z")
+		}
+		function IconObj()
+		{
+			return Icon("M600-160q-17 0-28.5-11.5T560-200q0-17 11.5-28.5T600-240h80q17 0 28.5-11.5T720-280v-80q0-38 22-69t58-44v-14q-36-13-58-44t-22-69v-80q0-17-11.5-28.5T680-720h-80q-17 0-28.5-11.5T560-760q0-17 11.5-28.5T600-800h80q50 0 85 35t35 85v80q0 17 11.5 28.5T840-560t28.5 11.5Q880-537 880-520v80q0 17-11.5 28.5T840-400t-28.5 11.5Q800-377 800-360v80q0 50-35 85t-85 35h-80Zm-320 0q-50 0-85-35t-35-85v-80q0-17-11.5-28.5T120-400t-28.5-11.5Q80-423 80-440v-80q0-17 11.5-28.5T120-560t28.5-11.5Q160-583 160-600v-80q0-50 35-85t85-35h80q17 0 28.5 11.5T400-760q0 17-11.5 28.5T360-720h-80q-17 0-28.5 11.5T240-680v80q0 38-22 69t-58 44v14q36 13 58 44t22 69v80q0 17 11.5 28.5T280-240h80q17 0 28.5 11.5T400-200q0 17-11.5 28.5T360-160h-80Z")
+		}
+		function IconCode()
+		{
+			return Icon("m193-479 155 155q11 11 11 28t-11 28q-11 11-28 11t-28-11L108-452q-6-6-8.5-13T97-480q0-8 2.5-15t8.5-13l184-184q12-12 28.5-12t28.5 12q12 12 12 28.5T349-635L193-479Zm574-2L612-636q-11-11-11-28t11-28q11-11 28-11t28 11l184 184q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13L668-268q-12 12-28 11.5T612-269q-12-12-12-28.5t12-28.5l155-155Z")
+		}
+		function IconCodeOff()
+		{
+			return Icon("m193-479 155 155q11 11 11 28t-11 28q-11 11-28 11t-28-11L108-452q-6-6-8.5-13T97-480q0-8 2.5-15t8.5-13l115-115L83-763q-12-12-12-28.5T83-820q12-12 28.5-12t28.5 12l680 680q12 12 12 28t-12 28q-12 12-28.5 12T763-84L280-566l-87 87Zm516 113q-12-12-12-28.5t12-28.5l58-58-155-155q-11-11-11-28t11-28q11-11 28-11t28 11l184 184q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-87 87q-12 12-28 11.5T709-366Z")
+		}
+		function IconSend()
+		{
+			return Icon("M792-443 176-183q-20 8-38-3.5T120-220v-520q0-22 18-33.5t38-3.5l616 260q25 11 25 37t-25 37ZM200-280l474-200-474-200v140l240 60-240 60v140Zm0 0v-400 400Z")
+		}
+		function IconAdd()
+		{
+			return Icon("M440-440H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200q-17 0-28.5-11.5T440-240v-200Z")
+		}
+		function IconRemove()
+		{
+			return Icon("M240-440q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h480q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H240Z")
+		}
+		function IconExpand()
+		{
+			return Icon("M280-280h120q17 0 28.5 11.5T440-240q0 17-11.5 28.5T400-200H240q-17 0-28.5-11.5T200-240v-160q0-17 11.5-28.5T240-440q17 0 28.5 11.5T280-400v120Zm400-400H560q-17 0-28.5-11.5T520-720q0-17 11.5-28.5T560-760h160q17 0 28.5 11.5T760-720v160q0 17-11.5 28.5T720-520q-17 0-28.5-11.5T680-560v-120Z")
+		}
+		function IconCollapse()
+		{
+			return Icon("M360-360H240q-17 0-28.5-11.5T200-400q0-17 11.5-28.5T240-440h160q17 0 28.5 11.5T440-400v160q0 17-11.5 28.5T400-200q-17 0-28.5-11.5T360-240v-120Zm240-240h120q17 0 28.5 11.5T760-560q0 17-11.5 28.5T720-520H560q-17 0-28.5-11.5T520-560v-160q0-17 11.5-28.5T560-760q17 0 28.5 11.5T600-720v120Z")
+		}
+	</script>
+	<!-- renderType -->
+	<script>
+		function renderType(type, full = false)
+		{
+			if (type.type == "int") return Div(["type", "type_int"], "int");
+			if (type.type == "float") return Div(["type", "type_float"], "float");
+			if (type.type == "bool") return Div(["type", "type_bool"], "boolean");
+			if (type.type == "str") return Div(["type", "type_str"], "string");
+			if (type.type == "null") return Div(["type", "type_null"], "null");
+			if (type.type == "any") return Div(["type", "type_any"], "any");
+			if (type.type == "literal") return Div(["type", "type_literal"], type.literal.map((v, i) => [
+				i > 0 && Span([], " | "),
+				typeof v == "number" ? Div("type_int", `${v}`) :
+					typeof v == "string" ? Div("type_str", `"${v}"`) :
+						typeof v == "boolean" ? Div("type_bool", v ? "true" : "false") :
+							Div("type_null", `${v}`),
+			]));
+			if (type.type == "list") return Div(["type", "type_list"], [
+				Span([], "list["),
+				renderType(type.list_type),
+				Span([], "]"),
+			]);
+			if (type.type == "dict") return Div(["type", "type_dict"], [
+				Span([], "dict["),
+				renderType(type.dict_type[0]),
+				Span([], ", "),
+				renderType(type.dict_type[1]),
+				Span([], "]"),
+			]);
+			if (type.type == "union") return Div(["type", "type_union"], type.union_type.map((t, i) => [
+				i > 0 && Span([], " | "),
+				renderType(t),
+			]));
+			if (type.type == "tuple") return Div(["type", "type_tuple"], [
+				Span([], "tuple["),
+				type.tuple_type.map((t, i) => [
+					i > 0 && Span([], ", "),
+					renderType(t),
+				]),
+				Span([], "]"),
+			]);
+			if (type.type == "tlink") return type.name in types ? renderType(types[type.name]) : Div("type", "Unknown");
+			if (type.type != "object") return Div(["type", "type_type"], "unknown");
+			if (type.object_fields.length == 0) return Div(["type", "type_type"], "object");
+			let shortEl, fullEl;
+			const name = type.name?.split(".")?.at(-1) || "object";
+			const typeEl = Div("type", [
+				Div(["typeShort", "link"], name, el => shortEl = el),
+				Div(["typeFull", "type_object"], [], el => fullEl = el),
+			]);
+			shortEl.addEventListener("click", () =>
+			{
+				if (render)
+				{
+					render();
+					render = null;
+				}
+				typeEl.classList.toggle("type_open");
+			});
+			function render()
+			{
+				fullEl.appendChild(Div("flexRow", [
+					Span(full ? "" : "link", `${name}`, el => el.addEventListener("click", () => !full && typeEl.classList.toggle("type_open"))),
+					(!full && type.name) && Link("btn", [IconLink()], "#" + type.name),
+					Span([], "{"),
+				]));
+				type.object_fields.forEach(field =>
+				{
+					fullEl.appendChild(Div([], [
+						Span([], field.name + (field.optional ? "?" : "") + ": "),
+						renderType(field.type),
+						field.default !== undefined && Span([], [
+							Span([], " = "),
+							typeof field.default == "number" ? Span("type_int", `${field.default}`) :
+								typeof field.default == "string" ? Span("type_str", `"${field.default}"`) :
+									typeof field.default == "boolean" ? Span("type_bool", field.default ? "true" : "false") :
+										field.default == null ? Span("type_null", `${field.default}`) :
+											Span([], `${JSON.stringify(field.default, null, 4)}`)
+						]),
+						field.desc && Span("type_comment", "  # " + field.desc),
+					]));
+				})
+				fullEl.appendChild(Div([], "}"))
+			}
+			if (full)
+			{
+				render();
+				render = null;
+				typeEl.classList.toggle("type_open");
+			}
+			return typeEl;
+		}
+		function snakeToCamel(name)
+		{
+			return name.replace(/([-_][a-zA-Z])|(^[a-zA-Z])/g, group =>
+				group.toUpperCase().replace("-", "").replace("_", "")
+			);
+		}
+		function renderTypeInterface(type, routeName = "", isReq = false)
+		{
+			if (type.type == "tlink") type = types[type.name];
+			const name = type.name?.split(".")?.at(-1) || snakeToCamel(routeName.split(".").at(-1)) + (isReq ? "Req" : "Res");
+			const el = type.type != "object" || type.object_fields.length == 0 ?
+				initEl("pre", [], [
+					Span("type_operator", "type"),
+					Span([], " "),
+					Span("type_type", name),
+					Span([], " = "),
+					_renderTypeInterface(type),
+					Span([], ";"),
+				]) :
+				initEl("pre", [], [
+					Span("type_operator", "interface"),
+					Span([], " "),
+					Span("type_type", name),
+					Span([], " "),
+					_renderTypeInterface(type),
+				]);
+			return Span("interface", [
+				Button("btn", [IconCopy()], () => navigator.clipboard.writeText(el.innerText)),
+				el,
+			]);
+		}
+		function _renderTypeInterface(type, indent = 0)
+		{
+			if (type.type == "int") return Span("type_type", "number");
+			if (type.type == "float") return Span("type_type", "number");
+			if (type.type == "bool") return Span("type_type", "boolean");
+			if (type.type == "str") return Span("type_type", "string");
+			if (type.type == "null") return Span("type_type", "null");
+			if (type.type == "any") return Span("type_type", "any");
+			if (type.type == "literal") return type.literal.map((v, i) => [
+				i > 0 && Span([], " | "),
+				typeof v == "number" ? Span("type_number", `${v}`) :
+					typeof v == "string" ? Span("type_str", `"${v}"`) :
+						typeof v == "boolean" ? Span("type_bool", v ? "true" : "false") :
+							Span("type_null", `${v}`),
+			]);
+			if (type.type == "list") return [
+				(type.list_type.type == "union") && Span([], "("),
+				_renderTypeInterface(type.list_type, indent),
+				(type.list_type.type == "union") && Span([], ")"),
+				Span([], "[]"),
+			];
+			if (type.type == "dict") return [
+				Span([], "{ ["),
+				Span("type_var", "key"),
+				type.dict_type[0].type == "literal" ? Span("type_operator", " in ") : Span([], ": "),
+				_renderTypeInterface(type.dict_type[0], indent),
+				Span([], "]: "),
+				_renderTypeInterface(type.dict_type[1], indent),
+				Span([], " }"),
+			];
+			if (type.type == "union") return type.union_type.map((t, i) => [
+				i > 0 && Span([], " | "),
+				_renderTypeInterface(t, indent),
+			]);
+			if (type.type == "tuple") return [
+				Span([], "["),
+				type.tuple_type.map((t, i) => [
+					i > 0 && Span([], ", "),
+					_renderTypeInterface(t, indent),
+				]),
+				Span([], "]"),
+			];
+			if (type.type == "tlink") return Span("type_type", type.name.split(".").at(-1));
+			if (type.type != "object") return Span("type_type", "unknown");
+			if (type.object_fields.length == 0) return Span("type_type", "object");
 
-            indent++;
-            const indentEl = () => Span([], new Array(indent).fill("\t").join(""));
-            const indentPrevEl = () => Span([], new Array(Math.max(0, indent - 1)).fill("\t").join(""));
+			indent++;
+			const indentEl = () => Span([], new Array(indent).fill("\t").join(""));
+			const indentPrevEl = () => Span([], new Array(Math.max(0, indent - 1)).fill("\t").join(""));
 
-            return [
-                Span([], "{\n"),
-                type.object_fields.map(field => [
-                    indentEl(),
-                    Span("type_var", field.name),
-                    Span([], (field.optional ? "?" : "") + ": "),
-                    _renderTypeInterface(field.type, indent),
-                    Span([], ";"),
-                    (field.type.type == "int") && Span("type_comment", " // int"),
-                    (field.type.type == "float") && Span("type_comment", " // float"),
-                    field.desc && Span("type_comment", " // " + field.desc),
-                    Span([], "\n"),
-                ]),
-                indentPrevEl(),
-                Span([], "}"),
-            ]
-        }
-    </script>
-    <!-- Card -->
-    <script>
-        const _cardsCbx = [];
-        addEventListener("hashchange", () => {
-            const id = decodeURIComponent(location.hash.slice(1));
-            const cbx = _cardsCbx.find(v => v.id == id)?.cbx;
-            console.log(id, cbx);
-            if (cbx) cbx.checked = true;
-        });
-        const _onloadSelectedId = decodeURIComponent(location.hash.slice(1));
-        function Card(title, id, body) {
-            return Div("card", [
-                initEl("label", "card__title", [
-                    Div([], title),
-                    Input([], "checkbox", "", cbx => {
-                        cbx.checked = id == _onloadSelectedId;
-                        cbx.addEventListener("input", () => { if (cbx.checked) {
-                                var url = new URL(window.location.href);
-                                url.hash = id;
-                                window.history.replaceState(null, '', url.toString());
-                            }})
-                        _cardsCbx.push({ cbx, id })
-                    }),
-                ], card => card.id = id),
-                Div("card__body", [
-                    Div([], body)
-                ]),
-            ])
-        }
-    </script>
-    <!-- state -->
-    <script>
-        function state(v) {
-            const listeners = [];
-            return {
-                v: () => v,
-                set: (nv) => {
-                    v = nv;
-                    listeners.forEach(l => l(v));
-                },
-                elu: (fn) => {
-                    return (el) => {
-                        fn(el, v);
-                        listeners.push((v) => fn(el, v));
-                    }
-                },
-                onupd: (fn) => {
-                    fn(v);
-                    listeners.push(fn)
-                },
-            }
-        }
-        function showIf(state, cfn, el) {
-            if (el instanceof HTMLElement || el instanceof SVGElement) {
-                state.onupd(v => {
-                    el.style.display = cfn(v) ? "" : "none";
-                })
-            }
-            return el;
-        }
-    </script>
-    <!-- useFetcher -->
-    <script>
-        function useFetcher(route) {
-            const url = urlBuilder(route.url);
-            const status = Span();
-            status.style.paddingLeft = "1em"
-            const textToReqErr = Div("type_null");
-            textToReqErr.style.paddingLeft = "1em"
-            const { el: reqPre, set: reqPreSet } = JsonEditor(callFetch);
-            const { el: resJson, setJson } = renderJson();
-            const resPre = initEl("pre");
-            const resPreInfo = initEl("pre");
-            const { data, setData, el } = renderFormItem(route.reqtype, true, true);
-            el?.classList?.add("tform");
-            const textModeReq = state(false);
-            const textModeRes = state(false);
-            async function callFetch() {
-                resPre.innerHTML = "";
-                resPreInfo.innerHTML = "";
-                status.innerText = "";
-                resPreInfo.appendChild(Span("type_any", "fetching..."));
-                setJson();
-                try
-                {
-                    const d = data();
-                    const body = textModeReq.v() ? reqPre.value : d ? JSON.stringify(d) : undefined;
-                    const method = route.methods.split(" ")[0].toUpperCase();
-                    const res = await fetch(url.get(), {
-                        method: method,
-                        headers: method == "GET" ? {} : {
-                            "Content-Type": "application/json"
-                        },
-                        body: method == "GET" ? null : body,
-                    });
-                    resPreInfo.innerHTML = "";
-                    const resText = await res.text();
-                    resPre.innerText = resText;
-                    status.innerText = res.statusText;
-                    try {
-                        setJson(JSON.parse(resText));
-                    } catch (e) {
-                        setJson(e?.message);
-                        resPreInfo.innerText = resText;
-                    }
-                } catch (e)
-                {
-                    resPreInfo.innerHTML = "";
-                    resPreInfo.appendChild(Span("type_null", e?.message));
-                    resPreInfo.appendChild(Span("type_null", "\n"));
-                    resPreInfo.appendChild(Span("type_null", e?.stack));
-                }
-            }
-            return {
-                urlBuilder: url.el,
-                req: Span([], [
-                    Button("btn", [
-                        showIf(textModeReq, v => !v, IconCode()),
-                        showIf(textModeReq, v => v, IconCodeOff()),
-                    ], btn => {
-                        textToReqErr.innerText = "";
-                        if (textModeReq.v()) {
-                            let r = true;
-                            if (reqPre.value != "") {
-                                try {
-                                    const err = setData(JSON.parse(reqPre.value));
-                                    r = !err;
-                                    if (err) textToReqErr.innerText = "Parse json error: " + err;
-                                } catch (e) {
-                                    r = false;
-                                    textToReqErr.innerText = e?.message;
-                                }
-                            }
-                            if (r) textModeReq.set(false);
-                        }
-                        else {
-                            reqPreSet(JSON.stringify(data(), null, 4));
-                            textModeReq.set(true);
-                        }
-                    }),
-                    textToReqErr,
-                    showIf(textModeReq, v => !v, el),
-                    showIf(textModeReq, v => v, reqPre),
-                ]),
-                res: Span([], [
-                    Button("btn", [
-                        showIf(textModeRes, v => !v, IconCode()),
-                        showIf(textModeRes, v => v, IconCodeOff()),
-                    ], btn => {
-                        textModeRes.set(!textModeRes.v());
-                    }),
-                    status,
-                    resPreInfo,
-                    showIf(textModeRes, v => !v, resJson),
-                    showIf(textModeRes, v => v, resPre),
-                ]),
-                fetch: callFetch,
-            }
-        }
-        function urlBuilder(url) {
-            if (!url.includes("<")) return { el: null, get: () => url };
-            const parts = [];
-            return { el: Div("urlBuilder", [
-                Span([], "Url: "),
-                Span([], [
-                    url.split("/").map(part => {
-                        const match = part.match(/<((([a-z])+):)?(([a-z_\d])+)>/i);
-                        if (!match) {
-                            parts.push(() => part);
-                            return Span([], part);
-                        }
-                        const type = match[2] || "string";
-                        const name = match[4] || "param";
-                        if (type == "int" || type == "float") {
-                            const { value, set, el } = InputNumber("inp_number", type == "float");
-                            parts.push(() => value());
-                            return el;
-                        }
-                        const { upd, input } = InputAutoWidth("inp_string", "text", name);
-                        parts.push(() => input.value || name);
-                        return input;
-                    }).map((el, i) => i == 0 ? el : [Span([], "/"), el]),
-                ]),
-            ]), get: () => parts.map(fn => fn()).join("/") };
-        }
-        function renderFormItem(type, unfold = false, top = false) {
-            if (!type) return { data: () => undefined, el: null };
-            if (type.type == "dict") {
-                const tlname = t => t.type == "tlink" ? t.name : t.type;
-                const data = [];
-                function Item() {
-                    const key = renderFormItem(type.dict_type[0], true);
-                    const value = renderFormItem(type.dict_type[1], true);
-                    const d = { key: key.data, setKey: key.setData, value: value.data, setValue: value.setData };
-                    data.push(d);
-                    return Div("tfrom_dict__item", [
-                        Button("btn", [IconRemove()], btn => {
-                            data.splice(data.indexOf(d), 1);
-                            itemBefore.parentNode.removeChild(btn.parentNode);
-                        }),
-                        key.el,
-                        Div([], ":"),
-                        value.el,
-                    ]);
-                }
-                let itemBefore;
-                const collapsed = state(false);
-                return {
-                    data: () =>
-                    {
-                        const d = {};
-                        for (const field of data)
-                            d[field.key()] = field.value();
-                        return d;
-                    },
-                    setData: (d) => {
-                        if (typeof d != "object" || d == null) return ` not dict[${tlname(type.dict_type[0])}, ${tlname(type.dict_type[1])}]`;
-                        const keys = Object.keys(d);
-                        while (data.length > keys.length) {
-                            const item = data.pop();
-                            itemBefore.parentNode.removeChild(item.el.parentNode);
-                        }
-                        while (data.length < keys.length) {
-                            itemBefore.parentNode.insertBefore(Item(), itemBefore)
-                        }
-                        let err = null;
-                        for (const key of keys) {
-                            let r = data[key]?.setKey(v);
-                            if (r && err == null) err = ` key ${key}${r}`;
-                            r = data[key]?.setValue(d[v]);
-                            if (r && err == null) err = `.${key}${r}`;
-                        }
-                        return err;
-                    },
-                    el: Span([], [
-                        showIf(collapsed, v => !v, Div("tfrom_dict", [
-                            Div([], [
-                                Span([], "{"),
-                                !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
-                            ]),
-                            Div([], [Button("btn", [IconAdd()], btn =>
-                            {
-                                itemBefore.parentNode.insertBefore(Item(), itemBefore);
-                            })], el => itemBefore = el),
-                            Div([], "}"),
-                        ])),
-                        showIf(collapsed, v => v, Div("tfrom_dict", [
-                            Div([], [
-                                Span([], "{"),
-                                Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
-                                Span([], "}"),
-                            ]),
-                        ])),
-                    ]),
-                };
-            }
-            if (type.type == "list") {
-                const tlname = t => t.type == "tlink" ? t.name : t.type;
-                const items = [];
-                function Item() {
-                    const item = renderFormItem(type.list_type, true);
-                    items.push(item);
-                    return Div("tfrom_list__item", [
-                        Button("btn", [IconRemove()], btn => {
-                            items.splice(items.indexOf(item), 1);
-                            itemBefore.parentNode.removeChild(btn.parentNode);
-                        }),
-                        Span("tfrom_list__counter"),
-                        item.el,
-                    ]);
-                }
-                let itemBefore;
-                const collapsed = state(false);
-                return {
-                    data: () => items.map(it => it.data()),
-                    setData: (d) => {
-                        if (!(d instanceof Array)) return ` not list[${tlname(type.list_type)}]`;
-                        while (items.length > d.length) {
-                            const item = items.pop();
-                            itemBefore.parentNode.removeChild(item.el.parentNode);
-                        }
-                        while (items.length < d.length) {
-                            itemBefore.parentNode.insertBefore(Item(), itemBefore)
-                        }
-                        let err = null;
-                        for (let i = 0; i < d.length; i++) {
-                            const v = d[i];
-                            const r = items[i]?.setData(v);
-                            if (r && err == null) err = `[${i}]${r}`;
-                        }
-                        return err;
-                    },
-                    el: Span([], [
-                        showIf(collapsed, v => !v, Div("tfrom_list", [
-                            Div([], [
-                                Span([], "["),
-                                !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
-                            ]),
-                            Div([], [Button("btn", IconAdd(), btn =>
-                            {
-                                itemBefore.parentNode.insertBefore(Item(), itemBefore);
-                            })], el => itemBefore = el),
-                            Div([], "]"),
-                        ])),
-                        showIf(collapsed, v => v, Div("tfrom_list", [
-                            Div([], [
-                                Span([], "["),
-                                Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
-                                Span([], "]"),
-                            ]),
-                        ])),
-                    ])
-                };
-            }
-            if (type.type == "tuple") {
-                const tlname = t => t.type == "tlink" ? t.name : t.type;
-                const items = [];
-                function Item(t) {
-                    const item = renderFormItem(t);
-                    items.push(item);
-                    return Div("tfrom_list__item", [
-                        Span("tfrom_list__counter"),
-                        item.el,
-                    ]);
-                }
-                const collapsed = state(!top);
-                return {
-                    data: () => items.map(it => it.data()),
-                    setData: (d) => {
-                        if (!(d instanceof Array)) return ` not tuple[${type.tuple_type.map(t => tlname(t)).join(", ")}]`;
-                        let err = null;
-                        for (let i = 0; i < d.length; i++) {
-                            const v = d[i];
-                            const r = items[i]?.setData(v);
-                            if (r && err == null) err = `[${i}]${r}`;
-                        }
-                        if (items.length != d.length) err = ` wrong number of els: ${d.length} != ${items.length}`;
-                        return err;
-                    },
-                    el: Span([], [
-                        showIf(collapsed, v => !v, Div("tfrom_list", [
-                            Div([], [
-                                Span([], "["),
-                                !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
-                            ]),
-                            type.tuple_type.map(Item),
-                            Div([], "]"),
-                        ])),
-                        showIf(collapsed, v => v, Div("tfrom_list", [
-                            Div([], [
-                                Span([], "["),
-                                Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
-                                Span([], "]"),
-                            ]),
-                        ])),
-                    ]) };
-            }
-            if (type.type == "union") {
-                const tlname = t => t.type == "tlink" ? t.name : t.type;
-                const select = initEl("select", "tfrom_literal", [
-                    type.union_type.map((v, i) => OptionEl([], i, (() =>
-                        v.type == "dict" ? `dict[${tlname(v.dict_type[0].type)}, ${tlname(v.dict_type[1].type)}]` :
-                        v.type == "list" ? `list[${tlname(v.list_type.type)}]` :
-                        v.type == "tlink" ? v.name.split(".").at(-1) :
-                        v.type == "tuple" ? `tuple[${v.tuple_type.slice(0, 2).map(t => tlname(t.type)).join(", ") + (v.tuple_type.length > 2 ? ", ..." : "")}]` :
-                        v.type == "literal" ? v.literal.slice(0, 2).map(lv =>
-                            typeof lv == "number" ? `${lv}` :
-                            typeof lv == "string" ? `"${lv}"` :
-                            typeof lv == "boolean" ? lv ? "true" : "false" :
-                            `${lv}`).join(" | ") + (v.literal.length > 2 ? " | ..." : "") :
-                        v.type
-                    )())),
-                ]);
-                let item = renderFormItem(type.union_type[0], true);
-                select.addEventListener("input", updateItem);
-                function updateItem() {
-                    const t = type.union_type[select.value];
-                    const nitem = renderFormItem(t, true);
-                    item.el.parentNode.insertBefore(nitem.el, item.el);
-                    item.el.parentNode.removeChild(item.el);
-                    item = nitem;
-                }
-                return {
-                    data: () => item.data(),
-                    setData: (d) => {
-                        const dt = typeof d;
-                        const searchFor = dt == "number" ? ["int", "float", "literal"] :
-                            dt == "boolean" ? ["bool", "literal"] :
-                            dt == "string" ? ["str", "literal"] :
-                            dt == null ? ["null", "literal"] :
-                            dt instanceof Array ? ["list", "tuple"] : ["tlink", "object", "dict", "union"];
-                        searchFor.push("any");
-                        const err = [];
-                        for (const tname of searchFor) {
-                            for (let i = 0; i < type.union_type.length; i++) {
-                                const t = type.union_type[i];
-                                if (t.type != tname) continue;
-                                const nitem = renderFormItem(t);
-                                const r = nitem.setData(d);
-                                if (r) {
-                                    err.push(select.children[i].innerText + r);
-                                    continue;
-                                }
-                                select.value = i;
-                                updateItem();
-                                item.setData(d);
-                                return null;
-                            }
-                        }
-                        return " not " + Array.from(select.children).map(el => el.innerText).join(" | ") + (err.length > 0 ? "\n" + err.join("\n") : "");
-                    },
-                    el: Span("tfrom_union", [
-                        select,
-                        item.el,
-                    ]),
-                };
-            }
-            if (type.type == "int" || type.type == "float") {
-                const { value, set, el } = InputNumber("tfrom_number", type.type == "float");
+			return [
+				Span([], "{\n"),
+				type.object_fields.map(field => [
+					indentEl(),
+					Span("type_var", field.name),
+					Span([], (field.optional ? "?" : "") + ": "),
+					_renderTypeInterface(field.type, indent),
+					Span([], ";"),
+					(field.type.type == "int") && Span("type_comment", " // int"),
+					(field.type.type == "float") && Span("type_comment", " // float"),
+					field.desc && Span("type_comment", " // " + field.desc),
+					Span([], "\n"),
+				]),
+				indentPrevEl(),
+				Span([], "}"),
+			]
+		}
+	</script>
+	<!-- Card -->
+	<script>
+		const _cardsCbx = [];
+		addEventListener("hashchange", () =>
+		{
+			const id = decodeURIComponent(location.hash.slice(1));
+			const cbx = _cardsCbx.find(v => v.id == id)?.cbx;
+			console.log(id, cbx);
+			if (cbx) cbx.checked = true;
+		});
+		const _onloadSelectedId = decodeURIComponent(location.hash.slice(1));
+		function Card(title, id, body)
+		{
+			return Div("card", [
+				initEl("label", "card__title", [
+					Div([], title),
+					Input([], "checkbox", "", cbx =>
+					{
+						cbx.checked = id == _onloadSelectedId;
+						cbx.addEventListener("input", () =>
+						{
+							if (cbx.checked)
+							{
+								var url = new URL(window.location.href);
+								url.hash = id;
+								window.history.replaceState(null, '', url.toString());
+							}
+						})
+						_cardsCbx.push({ cbx, id })
+					}),
+				], card => card.id = id),
+				Div("card__body", [
+					Div([], body)
+				]),
+			])
+		}
+	</script>
+	<!-- state -->
+	<script>
+		function state(v)
+		{
+			const listeners = [];
+			return {
+				v: () => v,
+				set: (nv) =>
+				{
+					v = nv;
+					listeners.forEach(l => l(v));
+				},
+				elu: (fn) =>
+				{
+					return (el) =>
+					{
+						fn(el, v);
+						listeners.push((v) => fn(el, v));
+					}
+				},
+				onupd: (fn) =>
+				{
+					fn(v);
+					listeners.push(fn)
+				},
+			}
+		}
+		function showIf(state, cfn, el)
+		{
+			if (el instanceof HTMLElement || el instanceof SVGElement)
+			{
+				state.onupd(v =>
+				{
+					el.style.display = cfn(v) ? "" : "none";
+				})
+			}
+			return el;
+		}
+	</script>
+	<!-- useFetcher -->
+	<script>
+		function useFetcher(route)
+		{
+			const url = urlBuilder(route.url);
+			const status = Span();
+			status.style.paddingLeft = "1em"
+			const textToReqErr = Div("type_null");
+			textToReqErr.style.paddingLeft = "1em"
+			const { el: reqPre, set: reqPreSet } = JsonEditor(callFetch);
+			const { el: resJson, setJson } = renderJson();
+			const resPre = initEl("pre");
+			const resPreInfo = initEl("pre");
+			const { data, setData, el } = renderFormItem(route.reqtype, true, true);
+			el?.classList?.add("tform");
+			const textModeReq = state(false);
+			const textModeRes = state(false);
+			async function callFetch()
+			{
+				resPre.innerHTML = "";
+				resPreInfo.innerHTML = "";
+				status.innerText = "";
+				resPreInfo.appendChild(Span("type_any", "fetching..."));
+				setJson();
+				try
+				{
+					const d = data();
+					const body = textModeReq.v() ? reqPre.value : d ? JSON.stringify(d) : undefined;
+					const method = route.methods.split(" ")[0].toUpperCase();
+					const res = await fetch(url.get(), {
+						method: method,
+						headers: method == "GET" ? {} : {
+							"Content-Type": "application/json"
+						},
+						body: method == "GET" ? null : body,
+					});
+					resPreInfo.innerHTML = "";
+					const resText = await res.text();
+					resPre.innerText = resText;
+					status.innerText = res.statusText;
+					try
+					{
+						setJson(JSON.parse(resText));
+					} catch (e)
+					{
+						setJson(e?.message);
+						resPreInfo.innerText = resText;
+					}
+				} catch (e)
+				{
+					resPreInfo.innerHTML = "";
+					resPreInfo.appendChild(Span("type_null", e?.message));
+					resPreInfo.appendChild(Span("type_null", "\n"));
+					resPreInfo.appendChild(Span("type_null", e?.stack));
+				}
+			}
+			return {
+				urlBuilder: url.el,
+				req: Span([], [
+					Button("btn", [
+						showIf(textModeReq, v => !v, IconCode()),
+						showIf(textModeReq, v => v, IconCodeOff()),
+					], btn =>
+					{
+						textToReqErr.innerText = "";
+						if (textModeReq.v())
+						{
+							let r = true;
+							if (reqPre.value != "")
+							{
+								try
+								{
+									const err = setData(JSON.parse(reqPre.value));
+									r = !err;
+									if (err) textToReqErr.innerText = "Parse json error: " + err;
+								} catch (e)
+								{
+									r = false;
+									textToReqErr.innerText = e?.message;
+								}
+							}
+							if (r) textModeReq.set(false);
+						}
+						else
+						{
+							reqPreSet(JSON.stringify(data(), null, 4));
+							textModeReq.set(true);
+						}
+					}),
+					textToReqErr,
+					showIf(textModeReq, v => !v, el),
+					showIf(textModeReq, v => v, reqPre),
+				]),
+				res: Span([], [
+					Button("btn", [
+						showIf(textModeRes, v => !v, IconCode()),
+						showIf(textModeRes, v => v, IconCodeOff()),
+					], btn =>
+					{
+						textModeRes.set(!textModeRes.v());
+					}),
+					status,
+					resPreInfo,
+					showIf(textModeRes, v => !v, resJson),
+					showIf(textModeRes, v => v, resPre),
+				]),
+				fetch: callFetch,
+			}
+		}
+		function urlBuilder(url)
+		{
+			if (!url.includes("<")) return { el: null, get: () => url };
+			const parts = [];
+			return {
+				el: Div("urlBuilder", [
+					Span([], "Url: "),
+					Span([], [
+						url.split("/").map(part =>
+						{
+							const match = part.match(/<((([a-z])+):)?(([a-z_\d])+)>/i);
+							if (!match)
+							{
+								parts.push(() => part);
+								return Span([], part);
+							}
+							const type = match[2] || "string";
+							const name = match[4] || "param";
+							if (type == "int" || type == "float")
+							{
+								const { value, set, el } = InputNumber("inp_number", type == "float");
+								parts.push(() => value());
+								return el;
+							}
+							const { upd, input } = InputAutoWidth("inp_string", "text", name);
+							parts.push(() => input.value || name);
+							return input;
+						}).map((el, i) => i == 0 ? el : [Span([], "/"), el]),
+					]),
+				]), get: () => parts.map(fn => fn()).join("/")
+			};
+		}
+		function renderFormItem(type, unfold = false, top = false)
+		{
+			if (!type) return { data: () => undefined, el: null };
+			if (type.type == "dict")
+			{
+				const tlname = t => t.type == "tlink" ? t.name : t.type;
+				const data = [];
+				function Item()
+				{
+					const key = renderFormItem(type.dict_type[0], true);
+					const value = renderFormItem(type.dict_type[1], true);
+					const d = { key: key.data, setKey: key.setData, value: value.data, setValue: value.setData };
+					data.push(d);
+					return Div("tfrom_dict__item", [
+						Button("btn", [IconRemove()], btn =>
+						{
+							data.splice(data.indexOf(d), 1);
+							itemBefore.parentNode.removeChild(btn.parentNode);
+						}),
+						key.el,
+						Div([], ":"),
+						value.el,
+					]);
+				}
+				let itemBefore;
+				const collapsed = state(false);
+				return {
+					data: () =>
+					{
+						const d = {};
+						for (const field of data)
+							d[field.key()] = field.value();
+						return d;
+					},
+					setData: (d) =>
+					{
+						if (typeof d != "object" || d == null) return ` not dict[${tlname(type.dict_type[0])}, ${tlname(type.dict_type[1])}]`;
+						const keys = Object.keys(d);
+						while (data.length > keys.length)
+						{
+							const item = data.pop();
+							itemBefore.parentNode.removeChild(item.el.parentNode);
+						}
+						while (data.length < keys.length)
+						{
+							itemBefore.parentNode.insertBefore(Item(), itemBefore)
+						}
+						let err = null;
+						for (const key of keys)
+						{
+							let r = data[key]?.setKey(v);
+							if (r && err == null) err = ` key ${key}${r}`;
+							r = data[key]?.setValue(d[v]);
+							if (r && err == null) err = `.${key}${r}`;
+						}
+						return err;
+					},
+					el: Span([], [
+						showIf(collapsed, v => !v, Div("tfrom_dict", [
+							Div([], [
+								Span([], "{"),
+								!top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+							]),
+							Div([], [Button("btn", [IconAdd()], btn =>
+							{
+								itemBefore.parentNode.insertBefore(Item(), itemBefore);
+							})], el => itemBefore = el),
+							Div([], "}"),
+						])),
+						showIf(collapsed, v => v, Div("tfrom_dict", [
+							Div([], [
+								Span([], "{"),
+								Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+								Span([], "}"),
+							]),
+						])),
+					]),
+				};
+			}
+			if (type.type == "list")
+			{
+				const tlname = t => t.type == "tlink" ? t.name : t.type;
+				const items = [];
+				function Item()
+				{
+					const item = renderFormItem(type.list_type, true);
+					items.push(item);
+					return Div("tfrom_list__item", [
+						Button("btn", [IconRemove()], btn =>
+						{
+							items.splice(items.indexOf(item), 1);
+							itemBefore.parentNode.removeChild(btn.parentNode);
+						}),
+						Span("tfrom_list__counter"),
+						item.el,
+					]);
+				}
+				let itemBefore;
+				const collapsed = state(false);
+				return {
+					data: () => items.map(it => it.data()),
+					setData: (d) =>
+					{
+						if (!(d instanceof Array)) return ` not list[${tlname(type.list_type)}]`;
+						while (items.length > d.length)
+						{
+							const item = items.pop();
+							itemBefore.parentNode.removeChild(item.el.parentNode);
+						}
+						while (items.length < d.length)
+						{
+							itemBefore.parentNode.insertBefore(Item(), itemBefore)
+						}
+						let err = null;
+						for (let i = 0; i < d.length; i++)
+						{
+							const v = d[i];
+							const r = items[i]?.setData(v);
+							if (r && err == null) err = `[${i}]${r}`;
+						}
+						return err;
+					},
+					el: Span([], [
+						showIf(collapsed, v => !v, Div("tfrom_list", [
+							Div([], [
+								Span([], "["),
+								!top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+							]),
+							Div([], [Button("btn", IconAdd(), btn =>
+							{
+								itemBefore.parentNode.insertBefore(Item(), itemBefore);
+							})], el => itemBefore = el),
+							Div([], "]"),
+						])),
+						showIf(collapsed, v => v, Div("tfrom_list", [
+							Div([], [
+								Span([], "["),
+								Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+								Span([], "]"),
+							]),
+						])),
+					])
+				};
+			}
+			if (type.type == "tuple")
+			{
+				const tlname = t => t.type == "tlink" ? t.name : t.type;
+				const items = [];
+				function Item(t)
+				{
+					const item = renderFormItem(t);
+					items.push(item);
+					return Div("tfrom_list__item", [
+						Span("tfrom_list__counter"),
+						item.el,
+					]);
+				}
+				const collapsed = state(!top);
+				return {
+					data: () => items.map(it => it.data()),
+					setData: (d) =>
+					{
+						if (!(d instanceof Array)) return ` not tuple[${type.tuple_type.map(t => tlname(t)).join(", ")}]`;
+						let err = null;
+						for (let i = 0; i < d.length; i++)
+						{
+							const v = d[i];
+							const r = items[i]?.setData(v);
+							if (r && err == null) err = `[${i}]${r}`;
+						}
+						if (items.length != d.length) err = ` wrong number of els: ${d.length} != ${items.length}`;
+						return err;
+					},
+					el: Span([], [
+						showIf(collapsed, v => !v, Div("tfrom_list", [
+							Div([], [
+								Span([], "["),
+								!top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+							]),
+							type.tuple_type.map(Item),
+							Div([], "]"),
+						])),
+						showIf(collapsed, v => v, Div("tfrom_list", [
+							Div([], [
+								Span([], "["),
+								Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+								Span([], "]"),
+							]),
+						])),
+					])
+				};
+			}
+			if (type.type == "union")
+			{
+				const tlname = t => t.type == "tlink" ? t.name : t.type;
+				const select = initEl("select", "tfrom_literal", [
+					type.union_type.map((v, i) => OptionEl([], i, (() =>
+						v.type == "dict" ? `dict[${tlname(v.dict_type[0].type)}, ${tlname(v.dict_type[1].type)}]` :
+							v.type == "list" ? `list[${tlname(v.list_type.type)}]` :
+								v.type == "tlink" ? v.name.split(".").at(-1) :
+									v.type == "tuple" ? `tuple[${v.tuple_type.slice(0, 2).map(t => tlname(t.type)).join(", ") + (v.tuple_type.length > 2 ? ", ..." : "")}]` :
+										v.type == "literal" ? v.literal.slice(0, 2).map(lv =>
+											typeof lv == "number" ? `${lv}` :
+												typeof lv == "string" ? `"${lv}"` :
+													typeof lv == "boolean" ? lv ? "true" : "false" :
+														`${lv}`).join(" | ") + (v.literal.length > 2 ? " | ..." : "") :
+											v.type
+					)())),
+				]);
+				let item = renderFormItem(type.union_type[0], true);
+				select.addEventListener("input", updateItem);
+				function updateItem()
+				{
+					const t = type.union_type[select.value];
+					const nitem = renderFormItem(t, true);
+					item.el.parentNode.insertBefore(nitem.el, item.el);
+					item.el.parentNode.removeChild(item.el);
+					item = nitem;
+				}
+				return {
+					data: () => item.data(),
+					setData: (d) =>
+					{
+						const dt = typeof d;
+						const searchFor = dt == "number" ? ["int", "float", "literal"] :
+							dt == "boolean" ? ["bool", "literal"] :
+								dt == "string" ? ["str", "literal"] :
+									dt == null ? ["null", "literal"] :
+										dt instanceof Array ? ["list", "tuple"] : ["tlink", "object", "dict", "union"];
+						searchFor.push("any");
+						const err = [];
+						for (const tname of searchFor)
+						{
+							for (let i = 0; i < type.union_type.length; i++)
+							{
+								const t = type.union_type[i];
+								if (t.type != tname) continue;
+								const nitem = renderFormItem(t);
+								const r = nitem.setData(d);
+								if (r)
+								{
+									err.push(select.children[i].innerText + r);
+									continue;
+								}
+								select.value = i;
+								updateItem();
+								item.setData(d);
+								return null;
+							}
+						}
+						return " not " + Array.from(select.children).map(el => el.innerText).join(" | ") + (err.length > 0 ? "\n" + err.join("\n") : "");
+					},
+					el: Span("tfrom_union", [
+						select,
+						item.el,
+					]),
+				};
+			}
+			if (type.type == "int" || type.type == "float")
+			{
+				const { value, set, el } = InputNumber("tfrom_number", type.type == "float");
 
-                return {
-                    data: value,
-                    setData: (d) => {
-                        if (typeof d != "number") return " not " + type.type;
-                        set(d);
-                        return null;
-                    },
-                    el,
-                };
-            }
-            if (type.type == "str") {
-                const {upd, input: el} = InputAutoWidth([], "text");
-                const elt = initEl("textarea");
-                el.addEventListener("input", () => elt.value = el.value);
-                elt.addEventListener("input", () => el.value = elt.value);
-                return { data: () => elt.value, setData: (d) => {
-                    if (typeof d != "string") return " not string";
-                    elt.value = d;
-                    el.value = d;
-                    upd();
-                    return null;
-                }, el: Span("tfrom_string", [
-                    Span([], '"'),
-                    el,
-                    Span([], '"'),
-                    Button(["btn", "btn_small"], [IconExpand()], btn => {
-                        btn.innerHTML = "";
-                        if (el.parentNode) {
-                            elt.style.width = el.style.width;
-                            el.parentNode.insertBefore(elt, el);
-                            el.parentNode.removeChild(el);
-                            btn.appendChild(IconCollapse());
-                        }
-                        else {
-                            upd();
-                            elt.parentNode.insertBefore(el, elt);
-                            elt.parentNode.removeChild(elt);
-                            btn.appendChild(IconExpand());
-                        }
-                    }),
-                ]) };
-            }
-            if (type.type == "bool") {
-                const cbx = Input([], "checkbox");
-                return {
-                    data: () => cbx.checked,
-                    setData: (d) => {
-                        if (typeof d != "boolean") return " not boolean";
-                        cbx.checked = d;
-                        return null;
-                    },
-                    el: initEl("label", "tfrom_checkbox", [
-                        cbx,
-                        Span(),
-                    ])
-                }
-            }
-            if (type.type == "null") return ({ data: () => null, setData: (d) => d == null ? null : " not null", el: Span("type_null", "null") });
-            if (type.type == "literal") {
-                const el = initEl("select", "tfrom_literal", [
-                    type.literal.map((v, i) =>
-                        typeof v == "number" ? OptionEl([], i, `${v}`) :
-                        typeof v == "string" ? OptionEl([], i, `"${v}"`) :
-                        typeof v == "boolean" ? OptionEl([], i, v ? "true" : "false") :
-                            OptionEl([], i, `${v}`)
-                    ),
-                ]);
-                function onInput() {
-                    const t = typeof type.literal[el.value];
-                    el.className = "tfrom_literal " +
-                        (t == "number" ? "type_number" :
-                        t == "string" ? "type_str" :
-                        t == "boolean" ? "type_bool" :
-                            "type_null")
-                }
-                el.addEventListener("input", onInput);
-                onInput();
-                return {
-                    data: () => type.literal[el.value],
-                    setData: (d) => {
-                        const i = type.literal.indexOf(d);
-                        if (i >= 0) {
-                            el.value = i;
-                            return null;
-                        };
-                        return " not " + type.literal.map(lv =>
-                            typeof lv == "number" ? `${lv}` :
-                            typeof lv == "string" ? `"${lv}"` :
-                            typeof lv == "boolean" ? lv ? "true" : "false" :
-                            `${lv}`).join(" | ");
-                    },
-                    el: type.literal.length > 1 ? el : Span(el.className.split(" "), el.innerText),
-                };
-            }
-            if (type.type == "any") {
-                const el = initEl("textarea", "tfrom_any");
-                return { data: () => {
-                    try { return JSON.parse(el.value);}
-                    catch { return el.value }
-                }, setData: (d) => null, el };
-            }
-            if (type.type == "tlink") {
-                if (unfold) return renderFormItem(types[type.name], unfold, top);
-                function open() {
-                    if (item) return;
-                    item = renderFormItem(types[type.name]);
-                    el.parentNode.appendChild(item.el);
-                    el.parentNode.removeChild(el);
-                }
-                let el, item;
-                return {
-                    data: () => item?.data(),
-                    setData: (d) => {
-                        open();
-                        return item?.setData(d);
-                    },
-                    el: Span([], [
-                        Span("link", `{<${type.name.split(".").at(-1)}>}`, btn => {
-                            el = btn;
-                            btn.addEventListener("click", open);
-                        })
-                    ])
-                }
-            }
-            if (type.type == "object") {
-                if (type.object_fields.length == 0) return renderFormItem({type: "dict", dict_type: [{type: "str"}, {type: "any"}]}, unfold, top);
-                const data = {};
-                function Item(field) {
-                    const value = renderFormItem(field.type);
-                    const isUndefined = state(!!field.optional);
-                    data[field.name] = {
-                        data: () => isUndefined.v() ? undefined : value.data(),
-                        setData: (d) => d === undefined ? isUndefined.set(true) : value.setData(d),
-                    };
-                    if (field.default !== undefined) value.setData(field.default);
-                    return Div("tfrom_object__item", [
-                        field.optional && Input("checkbox", "checkbox", null, cbx => {
-                            cbx.checked = !isUndefined.v();
-                            cbx.addEventListener("input", () => {
-                                isUndefined.set(!cbx.checked);
-                            })
-                        }),
-                        Span([], [
-                            Span("type_var", field.name),
-                            Span([], ": "),
-                        ]),
-                        showIf(isUndefined, v => !v, value.el),
-                        showIf(isUndefined, v => v, Span("type_operator", "undefined")),
-                        field.desc && Span("type_comment", " // " + field.desc),
-                    ]);
-                }
-                const collapsed = state(false);
-                return { data: () => {
-                    const d = {};
-                    for (const field in data) {
-                        d[field] = data[field].data();
-                    }
-                    return d;
-                }, setData: (d) => {
-                    if (typeof d != "object") return false;
-                    let err = null;
-                    const opt = type.object_fields.filter(v => v.optional);
-                    const req = type.object_fields.filter(v => !v.optional);
-                    for (const key of Object.keys(d)) {
-                        if (!(key in data)) continue;
-                        const i = opt.findIndex(v => v.name == key);
-                        if (i >= 0) opt.splice(i, 1);
-                        const j = req.findIndex(v => v.name == key);
-                        if (j >= 0) req.splice(j, 1);
-                        const r = data[key].setData(d[key]);
-                        if (r && err == null) err = `${top ? type.name?.split(".")?.at(-1) || "obj" : ""}.${key}${r}`;
-                    }
-                    opt.forEach(v => data[v.name].setData(undefined));
-                    if (req.length > 0) err = ` missing fields: ${req.map(v => v.name).join(", ")}`;
-                    return err;
-                },
-                el: Span([], [
-                    showIf(collapsed, v => !v, Div("tfrom_object", [
-                        Div([], [
-                            Span([], "{"),
-                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
-                        ]),
-                        type.object_fields.map(Item),
-                        Div([], "}"),
-                    ])),
-                    showIf(collapsed, v => v, Div("tfrom_object", [
-                        Div([], [
-                            Span([], "{"),
-                            Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
-                            Span([], "}"),
-                        ]),
-                    ])),
-                ])};
-            }
-            return { data: () => undefined, el: Span("type_type", "unknown"), setData: (d) => null };
-        }
-        function renderJson() {
-            let el;
-            return {
-                setJson: (data) => {
-                    el.innerHTML = "";
-                    el.appendChild(Span([], renderJsonItem(data, true)));
-                },
-                el: Div("json", [], v => el = v),
-            }
-        }
-        function renderJsonItem(data, top = false) {
-            if (typeof data == "undefined") return Span("type_operator", "undefined");
-            if (typeof data == "boolean") return Span("type_bool", data ? "true" : "false");
-            if (typeof data == "number") return Span("type_number", `${data}`);
-            if (typeof data == "string") {
-                const ML = 40;
-                if (!data.match(/\n|\t/) && data.length < ML) return Span("type_str", `"${data}"`);
+				return {
+					data: value,
+					setData: (d) =>
+					{
+						if (typeof d != "number") return " not " + type.type;
+						set(d);
+						return null;
+					},
+					el,
+				};
+			}
+			if (type.type == "str")
+			{
+				const { upd, input: el } = InputAutoWidth([], "text");
+				const elt = initEl("textarea");
+				el.addEventListener("input", () => elt.value = el.value);
+				elt.addEventListener("input", () => el.value = elt.value);
+				return {
+					data: () => elt.value, setData: (d) =>
+					{
+						if (typeof d != "string") return " not string";
+						elt.value = d;
+						el.value = d;
+						upd();
+						return null;
+					}, el: Span("tfrom_string", [
+						Span([], '"'),
+						el,
+						Span([], '"'),
+						Button(["btn", "btn_small"], [IconExpand()], btn =>
+						{
+							btn.innerHTML = "";
+							if (el.parentNode)
+							{
+								elt.style.width = el.style.width;
+								el.parentNode.insertBefore(elt, el);
+								el.parentNode.removeChild(el);
+								btn.appendChild(IconCollapse());
+							}
+							else
+							{
+								upd();
+								elt.parentNode.insertBefore(el, elt);
+								elt.parentNode.removeChild(elt);
+								btn.appendChild(IconExpand());
+							}
+						}),
+					])
+				};
+			}
+			if (type.type == "bool")
+			{
+				const cbx = Input([], "checkbox");
+				return {
+					data: () => cbx.checked,
+					setData: (d) =>
+					{
+						if (typeof d != "boolean") return " not boolean";
+						cbx.checked = d;
+						return null;
+					},
+					el: initEl("label", "tfrom_checkbox", [
+						cbx,
+						Span(),
+					])
+				}
+			}
+			if (type.type == "null") return ({ data: () => null, setData: (d) => d == null ? null : " not null", el: Span("type_null", "null") });
+			if (type.type == "literal")
+			{
+				const el = initEl("select", "tfrom_literal", [
+					type.literal.map((v, i) =>
+						typeof v == "number" ? OptionEl([], i, `${v}`) :
+							typeof v == "string" ? OptionEl([], i, `"${v}"`) :
+								typeof v == "boolean" ? OptionEl([], i, v ? "true" : "false") :
+									OptionEl([], i, `${v}`)
+					),
+				]);
+				function onInput()
+				{
+					const t = typeof type.literal[el.value];
+					el.className = "tfrom_literal " +
+						(t == "number" ? "type_number" :
+							t == "string" ? "type_str" :
+								t == "boolean" ? "type_bool" :
+									"type_null")
+				}
+				el.addEventListener("input", onInput);
+				onInput();
+				return {
+					data: () => type.literal[el.value],
+					setData: (d) =>
+					{
+						const i = type.literal.indexOf(d);
+						if (i >= 0)
+						{
+							el.value = i;
+							return null;
+						};
+						return " not " + type.literal.map(lv =>
+							typeof lv == "number" ? `${lv}` :
+								typeof lv == "string" ? `"${lv}"` :
+									typeof lv == "boolean" ? lv ? "true" : "false" :
+										`${lv}`).join(" | ");
+					},
+					el: type.literal.length > 1 ? el : Span(el.className.split(" "), el.innerText),
+				};
+			}
+			if (type.type == "any")
+			{
+				const el = initEl("textarea", "tfrom_any");
+				return {
+					data: () =>
+					{
+						try { return JSON.parse(el.value); }
+						catch { return el.value }
+					}, setData: (d) => null, el
+				};
+			}
+			if (type.type == "tlink")
+			{
+				if (unfold) return renderFormItem(types[type.name], unfold, top);
+				function open()
+				{
+					if (item) return;
+					item = renderFormItem(types[type.name]);
+					el.parentNode.appendChild(item.el);
+					el.parentNode.removeChild(el);
+				}
+				let el, item;
+				return {
+					data: () => item?.data(),
+					setData: (d) =>
+					{
+						open();
+						return item?.setData(d);
+					},
+					el: Span([], [
+						Span("link", `{<${type.name.split(".").at(-1)}>}`, btn =>
+						{
+							el = btn;
+							btn.addEventListener("click", open);
+						})
+					])
+				}
+			}
+			if (type.type == "object")
+			{
+				if (type.object_fields.length == 0) return renderFormItem({ type: "dict", dict_type: [{ type: "str" }, { type: "any" }] }, unfold, top);
+				const data = {};
+				function Item(field)
+				{
+					const value = renderFormItem(field.type);
+					const isUndefined = state(!!field.optional);
+					data[field.name] = {
+						data: () => isUndefined.v() ? undefined : value.data(),
+						setData: (d) => d === undefined ? isUndefined.set(true) : value.setData(d),
+					};
+					if (field.default !== undefined) value.setData(field.default);
+					return Div("tfrom_object__item", [
+						field.optional && Input("checkbox", "checkbox", null, cbx =>
+						{
+							cbx.checked = !isUndefined.v();
+							cbx.addEventListener("input", () =>
+							{
+								isUndefined.set(!cbx.checked);
+							})
+						}),
+						Span([], [
+							Span("type_var", field.name),
+							Span([], ": "),
+						]),
+						showIf(isUndefined, v => !v, value.el),
+						showIf(isUndefined, v => v, Span("type_operator", "undefined")),
+						field.desc && Span("type_comment", " // " + field.desc),
+					]);
+				}
+				const collapsed = state(false);
+				return {
+					data: () =>
+					{
+						const d = {};
+						for (const field in data)
+						{
+							d[field] = data[field].data();
+						}
+						return d;
+					}, setData: (d) =>
+					{
+						if (typeof d != "object") return false;
+						let err = null;
+						const opt = type.object_fields.filter(v => v.optional);
+						const req = type.object_fields.filter(v => !v.optional);
+						for (const key of Object.keys(d))
+						{
+							if (!(key in data)) continue;
+							const i = opt.findIndex(v => v.name == key);
+							if (i >= 0) opt.splice(i, 1);
+							const j = req.findIndex(v => v.name == key);
+							if (j >= 0) req.splice(j, 1);
+							const r = data[key].setData(d[key]);
+							if (r && err == null) err = `${top ? type.name?.split(".")?.at(-1) || "obj" : ""}.${key}${r}`;
+						}
+						opt.forEach(v => data[v.name].setData(undefined));
+						if (req.length > 0) err = ` missing fields: ${req.map(v => v.name).join(", ")}`;
+						return err;
+					},
+					el: Span([], [
+						showIf(collapsed, v => !v, Div("tfrom_object", [
+							Div([], [
+								Span([], "{"),
+								!top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+							]),
+							type.object_fields.map(Item),
+							Div([], "}"),
+						])),
+						showIf(collapsed, v => v, Div("tfrom_object", [
+							Div([], [
+								Span([], "{"),
+								Button("link", `<${type.name?.split(".")?.at(-1) || "..."}>`, () => collapsed.set(false)),
+								Span([], "}"),
+							]),
+						])),
+					])
+				};
+			}
+			return { data: () => undefined, el: Span("type_type", "unknown"), setData: (d) => null };
+		}
+		function renderJson()
+		{
+			let el;
+			return {
+				setJson: (data) =>
+				{
+					el.innerHTML = "";
+					el.appendChild(Span([], renderJsonItem(data, true)));
+				},
+				el: Div("json", [], v => el = v),
+			}
+		}
+		function renderJsonItem(data, top = false)
+		{
+			if (typeof data == "undefined") return Span("type_operator", "undefined");
+			if (typeof data == "boolean") return Span("type_bool", data ? "true" : "false");
+			if (typeof data == "number") return Span("type_number", `${data}`);
+			if (typeof data == "string")
+			{
+				const ML = 40;
+				if (!data.match(/\n|\t/) && data.length < ML) return Span("type_str", `"${data}"`);
 
-                const collapsed = state(false);
-                return [
-                    showIf(collapsed, v => v, Button(["btn", "btn_small"], IconCollapse(), btn => collapsed.set(false))),
-                    showIf(collapsed, v => !v, Span([], [
-                        Span("type_str", `"${data.slice(0, ML).replaceAll("\t", "\\t").replaceAll("\n", "\\n")}`),
-                        data.length >= ML && Button("link", "<...>", btn => collapsed.set(!collapsed.v())),
-                        Span("type_str", `"`),
-                    ])),
-                    showIf(collapsed, v => v, Span("json_textarea", data)),
-                    data.length < ML && showIf(collapsed, v => !v, Button(["btn", "btn_small"], IconExpand(), btn => collapsed.set(true))),
-                ];
-            };
-            if (data instanceof Array) {
-                if (data.length == 0) return Span([], "[]");
-                const compact = data.every(v => typeof v != "object");
-                const showCountFirst = compact ? 5 : 3;
-                const showCount = compact ? 10 : 5;
-                const parts = [{i: 0, d: data.slice(0, showCountFirst)}];
-                for (let i = showCountFirst; i < data.length; i += showCount) {
-                    parts.push({ i, d: data.slice(i, i + showCount) });
-                }
-                const collapsed = state(false);
-                return Span([], [
-                    showIf(collapsed, v => !v, Div([
-                        "json_list",
-                        compact && "json_list_compact",
-                        compact && "json_list_no_counter",
-                    ], [
-                        Div([], [
-                            Span([], "["),
-                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
-                            compact && Button(["btn", "btn_small"], "i",
-                                btn => btn.parentNode.parentNode.classList.toggle("json_list_no_counter"),
-                                btn => {btn.style.width = "0.8em"; btn.style.marginLeft = "0.2em"}),
-                        ]),
-                        parts[0].d.map((v, i) => Div("json_list__item", [
-                            Span("json_list_counter", `${i}:`),
-                            renderJsonItem(v),
-                        ])),
-                        parts.slice(1).map(({ i, d }) => [
-                            Div([], Button("link", compact ? `<${i}-${i + d.length - 1}>` : `${i}-${i + d.length - 1}: <...>`, btn => {
-                                d.forEach((v, j) => {
-                                    btn.parentNode.parentNode.insertBefore(Div("json_list__item", [
-                                        Span("json_list_counter", `${i + j}:`),
-                                        renderJsonItem(v),
-                                    ]), btn.parentNode)
-                                })
-                                btn.parentNode.parentNode.removeChild(btn.parentNode);
-                            })),
-                        ]),
-                        Div([], "]"),
-                    ])),
-                    showIf(collapsed, v => v, Div("json_list", [
-                        Div([], [
-                            Span([], "["),
-                            Button("link", `<...>`, () => collapsed.set(false)),
-                            Span([], "]"),
-                        ]),
-                    ])),
-                ]);
-            }
-            if (data == null) return Span("type_null", "null");
-            if (typeof data == "object") {
-                const collapsed = state(false);
-                return Span([], [
-                    showIf(collapsed, v => !v, Div("json_object", [
-                        Div([], [
-                            Span([], "{"),
-                            !top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
-                        ]),
-                        Object.keys(data).map(key => Div("json_object__item", [
-                            Span([], [
-                                key.match(/^(\s+.*\s*|\s*.*\s+|)$|\n|\t/) ?
-                                Span("type_str", `"${key.replaceAll("\t", "\\t").replaceAll("\n", "\\n")}"`) :
-                                Span("type_var", key),
-                                Span([], ":"),
-                            ]),
-                            renderJsonItem(data[key]),
-                        ])),
-                        Div([], "}"),
-                    ])),
-                    showIf(collapsed, v => v, Div("json_object", [
-                        Div([], [
-                            Span([], "{"),
-                            Button("link", `<...>`, () => collapsed.set(false)),
-                            Span([], "}"),
-                        ]),
-                    ])),
-                ]);
-            }
-            return Span("type_type", "unknown");
-        }
-    </script>
-    <!-- pages -->
-    <script>
-        const routesEl = document.getElementById("routes");
-        routes.forEach(route => { route.module = route.name.split(".").slice(0, -1).join(".") });
-        routes.sort((a, b) => (a.module > b.module) ? 1 : ((b.module > a.module) ? -1 : a.line - b.line));
-        const groups = [[]];
-        routes.forEach((route) => {
-            if (groups.at(-1)[0] && groups.at(-1)[0].gname != route.module)
-                groups.push([]);
-            const mode = state("normal");
-            const fetcher = useFetcher(route);
-            groups.at(-1).push({ gname: route.module, el: Card(route.methods + " " + route.url, route.url, [
-                Div("boxes", [
-                    Div([], [
-                        Button("btn", [IconCopy()], () => navigator.clipboard.writeText(route.url)),
-                        Span([], route.url),
-                    ]),
-                    Div([], `route: ${route.route}`),
-                    dev && Div([], Link("link", `${route.module}:${route.line}`, vscodeLink(route.name, route.line))),
-                    Span("flexGrow"),
-                    showIf(mode, v => v == "normal", Button("btn", [IconSend()], () => { mode.set("send"); if (!route.reqtype && !fetcher.urlBuilder) fetcher.fetch(); })),
-                    showIf(mode, v => v != "normal", Button("btn", [IconCode()], () => mode.set("normal"))),
-                    showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
-                    showIf(mode, v => v == "send", Button("btn", [IconSend()], fetcher.fetch)),
-                ]),
-                (route.perms || !route.jwt) && Div("boxes", [
-                    route.perms && Div([], [
-                        IconCard(),
-                        Span([], route.perms),
-                    ]),
-                    !route.jwt && Div([], "nojwt"),
-                ]),
-                route.desc && Div("quote", route.desc),
-                Div(),
-                showIf(mode, v => v == "send", fetcher.urlBuilder),
-                route.reqtype && Div([], [
-                    Span([], "Request: "),
-                    showIf(mode, v => v == "normal", renderType(route.reqtype)),
-                    showIf(mode, v => v == "code", renderTypeInterface(route.reqtype, route.name, true)),
-                    showIf(mode, v => v == "send", fetcher.req),
-                ]),
-                Div([], [
-                    showIf(mode, v => route.restype || v == "send", Span([], "Response: ")),
-                    route.restype && showIf(mode, v => v == "normal", renderType(route.restype)),
-                    route.restype && showIf(mode, v => v == "code", renderTypeInterface(route.restype, route.name, false)),
-                    showIf(mode, v => v == "send", fetcher.res),
-                ]),
-            ])});
-        });
-        groups.forEach((group) => {
-            if (group.length == 0) return;
-            const name = group[0].gname.split(".").at(-1);
-            let cbx;
-            routesEl.appendChild(Div("group", [
-                initEl("label", "group__title", [
-                    Div([], name),
-                    Input([], "checkbox", "", el => cbx = el),
-                ]),
-                Div("group__body", [
-                    Div([], [
-                        group.map(el => el.el),
-                    ])
-                ]),
-            ], el => {
-                cbx.checked = !!el.querySelector("input:checked");
-            }));
-        });
-    </script>
-    <!-- types -->
-    <script>
-        const typesEl = document.getElementById("types");
-        const typeNames = Object.keys(types);
-        typeNames.sort();
-        for (const typeName of typeNames) {
-            const mode = state("normal");
-            const module = typeName.split(".").slice(0, -1).join(".");
-            const type = types[typeName];
-            typesEl.appendChild(Card(typeName.split(".").at(-1), typeName, [
-                Div("boxes", [
-                    dev && Span([], Link("link", `${module}:${type.line}`, vscodeLink(typeName, type.line))),
-                    Span("flexGrow"),
-                    showIf(mode, v => v != "normal", Button("btn", [IconCodeOff()], () => mode.set("normal"))),
-                    showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
-                ]),
-                showIf(mode, v => v == "normal", renderType(type, true)),
-                showIf(mode, v => v == "code", renderTypeInterface(type)),
-            ]));
-        }
-    </script>
+				const collapsed = state(false);
+				return [
+					showIf(collapsed, v => v, Button(["btn", "btn_small"], IconCollapse(), btn => collapsed.set(false))),
+					showIf(collapsed, v => !v, Span([], [
+						Span("type_str", `"${data.slice(0, ML).replaceAll("\t", "\\t").replaceAll("\n", "\\n")}`),
+						data.length >= ML && Button("link", "<...>", btn => collapsed.set(!collapsed.v())),
+						Span("type_str", `"`),
+					])),
+					showIf(collapsed, v => v, Span("json_textarea", data)),
+					data.length < ML && showIf(collapsed, v => !v, Button(["btn", "btn_small"], IconExpand(), btn => collapsed.set(true))),
+				];
+			};
+			if (data instanceof Array)
+			{
+				if (data.length == 0) return Span([], "[]");
+				const compact = data.every(v => typeof v != "object");
+				const showCountFirst = compact ? 5 : 3;
+				const showCount = compact ? 10 : 5;
+				const parts = [{ i: 0, d: data.slice(0, showCountFirst) }];
+				for (let i = showCountFirst; i < data.length; i += showCount)
+				{
+					parts.push({ i, d: data.slice(i, i + showCount) });
+				}
+				const collapsed = state(false);
+				return Span([], [
+					showIf(collapsed, v => !v, Div([
+						"json_list",
+						compact && "json_list_compact",
+						compact && "json_list_no_counter",
+					], [
+						Div([], [
+							Span([], "["),
+							!top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+							compact && Button(["btn", "btn_small"], "i",
+								btn => btn.parentNode.parentNode.classList.toggle("json_list_no_counter"),
+								btn => { btn.style.width = "0.8em"; btn.style.marginLeft = "0.2em" }),
+						]),
+						parts[0].d.map((v, i) => Div("json_list__item", [
+							Span("json_list_counter", `${i}:`),
+							renderJsonItem(v),
+						])),
+						parts.slice(1).map(({ i, d }) => [
+							Div([], Button("link", compact ? `<${i}-${i + d.length - 1}>` : `${i}-${i + d.length - 1}: <...>`, btn =>
+							{
+								d.forEach((v, j) =>
+								{
+									btn.parentNode.parentNode.insertBefore(Div("json_list__item", [
+										Span("json_list_counter", `${i + j}:`),
+										renderJsonItem(v),
+									]), btn.parentNode)
+								})
+								btn.parentNode.parentNode.removeChild(btn.parentNode);
+							})),
+						]),
+						Div([], "]"),
+					])),
+					showIf(collapsed, v => v, Div("json_list", [
+						Div([], [
+							Span([], "["),
+							Button("link", `<...>`, () => collapsed.set(false)),
+							Span([], "]"),
+						]),
+					])),
+				]);
+			}
+			if (data == null) return Span("type_null", "null");
+			if (typeof data == "object")
+			{
+				const collapsed = state(false);
+				return Span([], [
+					showIf(collapsed, v => !v, Div("json_object", [
+						Div([], [
+							Span([], "{"),
+							!top && Button(["btn", "btn_small"], IconCollapse(), () => collapsed.set(true)),
+						]),
+						Object.keys(data).map(key => Div("json_object__item", [
+							Span([], [
+								key.match(/^(\s+.*\s*|\s*.*\s+|)$|\n|\t/) ?
+									Span("type_str", `"${key.replaceAll("\t", "\\t").replaceAll("\n", "\\n")}"`) :
+									Span("type_var", key),
+								Span([], ":"),
+							]),
+							renderJsonItem(data[key]),
+						])),
+						Div([], "}"),
+					])),
+					showIf(collapsed, v => v, Div("json_object", [
+						Div([], [
+							Span([], "{"),
+							Button("link", `<...>`, () => collapsed.set(false)),
+							Span([], "}"),
+						]),
+					])),
+				]);
+			}
+			return Span("type_type", "unknown");
+		}
+	</script>
+	<!-- pages -->
+	<script>
+		const routesEl = document.getElementById("routes");
+		routes.forEach(route => { route.module = route.name.split(".").slice(0, -1).join(".") });
+		routes.sort((a, b) => (a.module > b.module) ? 1 : ((b.module > a.module) ? -1 : a.line - b.line));
+		const groups = [[]];
+		routes.forEach((route) =>
+		{
+			if (groups.at(-1)[0] && groups.at(-1)[0].gname != route.module)
+				groups.push([]);
+			const mode = state("normal");
+			const fetcher = useFetcher(route);
+			groups.at(-1).push({
+				gname: route.module, el: Card(route.methods + " " + route.url, route.url, [
+					Div("boxes", [
+						Div([], [
+							Button("btn", [IconCopy()], () => navigator.clipboard.writeText(route.url)),
+							Span([], route.url),
+						]),
+						Div([], `route: ${route.route}`),
+						dev && Div([], Link("link", `${route.module}:${route.line}`, vscodeLink(route.name, route.line))),
+						Span("flexGrow"),
+						showIf(mode, v => v == "normal", Button("btn", [IconSend()], () => { mode.set("send"); if (!route.reqtype && !fetcher.urlBuilder) fetcher.fetch(); })),
+						showIf(mode, v => v != "normal", Button("btn", [IconCode()], () => mode.set("normal"))),
+						showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
+						showIf(mode, v => v == "send", Button("btn", [IconSend()], fetcher.fetch)),
+					]),
+					(route.perms || !route.jwt) && Div("boxes", [
+						route.perms && Div([], [
+							IconCard(),
+							Span([], route.perms),
+						]),
+						!route.jwt && Div([], "nojwt"),
+					]),
+					route.desc && Div("quote", route.desc),
+					Div(),
+					showIf(mode, v => v == "send", fetcher.urlBuilder),
+					route.reqtype && Div([], [
+						Span([], "Request: "),
+						showIf(mode, v => v == "normal", renderType(route.reqtype)),
+						showIf(mode, v => v == "code", renderTypeInterface(route.reqtype, route.name, true)),
+						showIf(mode, v => v == "send", fetcher.req),
+					]),
+					Div([], [
+						showIf(mode, v => route.restype || v == "send", Span([], "Response: ")),
+						route.restype && showIf(mode, v => v == "normal", renderType(route.restype)),
+						route.restype && showIf(mode, v => v == "code", renderTypeInterface(route.restype, route.name, false)),
+						showIf(mode, v => v == "send", fetcher.res),
+					]),
+				])
+			});
+		});
+		groups.forEach((group) =>
+		{
+			if (group.length == 0) return;
+			const name = group[0].gname.split(".").at(-1);
+			let cbx;
+			routesEl.appendChild(Div("group", [
+				initEl("label", "group__title", [
+					Div([], name),
+					Input([], "checkbox", "", el => cbx = el),
+				]),
+				Div("group__body", [
+					Div([], [
+						group.map(el => el.el),
+					])
+				]),
+			], el =>
+			{
+				cbx.checked = !!el.querySelector("input:checked");
+			}));
+		});
+	</script>
+	<!-- types -->
+	<script>
+		const typesEl = document.getElementById("types");
+		const typeNames = Object.keys(types);
+		typeNames.sort();
+		for (const typeName of typeNames)
+		{
+			const mode = state("normal");
+			const module = typeName.split(".").slice(0, -1).join(".");
+			const type = types[typeName];
+			typesEl.appendChild(Card(typeName.split(".").at(-1), typeName, [
+				Div("boxes", [
+					dev && Span([], Link("link", `${module}:${type.line}`, vscodeLink(typeName, type.line))),
+					Span("flexGrow"),
+					showIf(mode, v => v != "normal", Button("btn", [IconCodeOff()], () => mode.set("normal"))),
+					showIf(mode, v => v == "normal", Button("btn", [IconObj()], () => mode.set("code"))),
+				]),
+				showIf(mode, v => v == "normal", renderType(type, true)),
+				showIf(mode, v => v == "code", renderTypeInterface(type)),
+			]));
+		}
+	</script>
 </body>
+
 </html>

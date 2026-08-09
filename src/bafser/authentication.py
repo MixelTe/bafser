@@ -1,5 +1,6 @@
 import json
 from typing import TYPE_CHECKING, Any
+
 from flask_jwt_extended import create_access_token as jwt_create_access_token  # type: ignore
 from sqlalchemy.orm import Session
 
@@ -24,6 +25,7 @@ def get_user_id_by_jwt_identity(jwt_identity: Any):
 
 def get_user_by_jwt_identity(db_sess: Session, jwt_identity: Any, *, lazyload: bool = False, for_update: bool = False):
     from .data.user import get_user_table
+
     jwt_identity = json.loads(jwt_identity)
     if not isinstance(jwt_identity, list) or len(jwt_identity) != 2:  # type: ignore
         return None

@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Concatenate, Literal, ParamSpec, TypeVar
+from typing import Any, Concatenate, Literal, ParamSpec, TypeVar
 
 from flask import Response, abort
 from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request  # type: ignore
@@ -37,5 +38,7 @@ def use_user(*, optional: bool = False, lazyload: bool = False, for_update: bool
                 return response, 401
 
             return fn(*args, **kwargs, user=user)  # type: ignore
+
         return wrapper  # type: ignore
+
     return decorator

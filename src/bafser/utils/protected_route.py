@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from flask import abort
 from flask_jwt_extended import jwt_required  # pyright: ignore[reportUnknownVariableType]

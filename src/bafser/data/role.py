@@ -1,8 +1,9 @@
-from typing import List, TypedDict
-from sqlalchemy import String
-from sqlalchemy.orm import Session, Mapped, mapped_column, relationship
+from typing import TypedDict
 
-from .. import SqlAlchemyBase, ObjMixin, get_datetime_now
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
+
+from .. import ObjMixin, SqlAlchemyBase, get_datetime_now
 from ._roles import RoleDesc, RolesBase, TRole, get_roles
 from ._tables import TablesBase
 from .log import Actions, Changes, Log
@@ -20,7 +21,7 @@ class Role(SqlAlchemyBase, ObjMixin):
 
     name: Mapped[str] = mapped_column(String(32))
 
-    permissions: Mapped[List[Permission]] = relationship(lazy="joined", init=False)
+    permissions: Mapped[list[Permission]] = relationship(lazy="joined", init=False)
 
     def __repr__(self):
         return f"<Role> [{self.id}] {self.name}"
@@ -113,23 +114,25 @@ class Role(SqlAlchemyBase, ObjMixin):
         now = get_datetime_now()
 
         def log_role(actionCode: str, recordId: int, changes: Changes):
-            db_sess.add(Log(
-                date=now,
-                actionCode=actionCode,
-                userId=1,
-                userName="System",
-                tableName=TablesBase.Role,
-                recordId=recordId,
-                changes=changes
-            ))
+            db_sess.add(
+                Log(
+                    date=now,
+                    actionCode=actionCode,
+                    userId=1,
+                    userName="System",
+                    tableName=TablesBase.Role,
+                    recordId=recordId,
+                    changes=changes,
+                )
+            )
 
         for role_id in removed_roles:
             log_role(Actions.deleted, role_id, [])
         for role_id in restored_roles:
             log_role(Actions.restored, role_id, [])
-        for (role_id, old_name, name) in updated_roles:
+        for role_id, old_name, name in updated_roles:
             log_role(Actions.updated, role_id, [("name", old_name, name)])
-        for (role_id, name) in new_roles:
+        for role_id, name in new_roles:
             log_role(Actions.added, role_id, [("name", None, name)])
 
         db_sess.commit()

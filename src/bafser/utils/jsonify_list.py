@@ -14,6 +14,7 @@ def jsonify_list(items: list[Any], field_get_dict: str = "get_dict"):
 
 def _getjson(item: Any, f: str) -> Any:
     from .. import JsonObj
+
     if isinstance(item, JsonObj):
         return item.json()
     return getattr(item, f)()

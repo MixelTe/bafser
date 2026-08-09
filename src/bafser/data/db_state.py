@@ -1,6 +1,6 @@
-from sqlalchemy.orm import Session, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
-from .. import SqlAlchemyBase, SingletonMixin
+from .. import SingletonMixin, SqlAlchemyBase
 
 
 class DBState(SqlAlchemyBase, SingletonMixin):

@@ -1,4 +1,5 @@
 from bafser import RolesBase
+
 # from test.data._operations import Operations
 
 
@@ -7,8 +8,5 @@ class Roles(RolesBase):
 
 
 Roles.ROLES = {
-    Roles.user: {
-        "name": "User",
-        "operations": []
-    },
+    Roles.user: {"name": "User", "operations": []},
 }

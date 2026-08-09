@@ -1,9 +1,8 @@
-from typing import Any, Type, TypedDict
+from typing import Any, ClassVar, TypedDict
 
 from ..utils.get_all_vars import get_all_fields
 
-
-_Roles: "Type[RolesBase] | None" = None
+_Roles: "type[RolesBase] | None" = None
 
 
 def get_roles():
@@ -24,7 +23,7 @@ TRoles = dict[TRole, RoleDesc]
 class RolesBase:
     admin = 1
 
-    ROLES: TRoles = {}
+    ROLES: ClassVar[TRoles] = {}
 
     def __init_subclass__(cls, **kwargs: Any):
         global _Roles
@@ -41,4 +40,4 @@ class RolesBase:
     @staticmethod
     def get_all():
         ROLES = get_roles().ROLES
-        return [(RolesBase.admin, "Admin")] + [(id, ROLES[id]["name"]) for id in ROLES.keys()]
+        return [(RolesBase.admin, "Admin")] + [(id, ROLES[id]["name"]) for id in ROLES]

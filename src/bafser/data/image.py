@@ -1,7 +1,8 @@
 import base64
+import builtins
 import os
 from datetime import datetime
-from typing import Any, Optional, Type, TypedDict, TypeVar, override
+from typing import Any, TypedDict, TypeVar, override
 
 from flask import current_app
 from sqlalchemy import ForeignKey, String
@@ -35,11 +36,11 @@ class Image(SqlAlchemyBase, ObjMixin):
     name: Mapped[str] = mapped_column(String(128))
     type: Mapped[str] = mapped_column(String(16))
     creationDate: Mapped[datetime]
-    deletionDate: Mapped[Optional[datetime]] = mapped_column(init=False)
+    deletionDate: Mapped[datetime | None] = mapped_column(init=False)
     createdById: Mapped[int] = mapped_column(ForeignKey(f"{TablesBase.User}.id"))
 
     @classmethod
-    def new(cls: Type[T], creator: UserBase, json: ImageJson) -> tuple[T, None] | tuple[None, TError]:
+    def new(cls: builtins.type[T], creator: UserBase, json: ImageJson) -> tuple[T, None] | tuple[None, TError]:
         (data, name), values_error = get_json_values(json, ("data", str), ("name", str))
         if values_error:
             return None, values_error
@@ -81,11 +82,11 @@ class Image(SqlAlchemyBase, ObjMixin):
         return img, None
 
     @classmethod
-    def new2(cls: Type[T], json: ImageJson, *, creator: UserBase | None = None) -> tuple[T, None] | tuple[None, TError]:
+    def new2(cls: builtins.type[T], json: ImageJson, *, creator: UserBase | None = None) -> tuple[T, None] | tuple[None, TError]:
         return cls.new(creator or UserBase.current, json)
 
     @classmethod
-    def _new(cls: Type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> tuple[None, TError] | tuple[T, None]:
+    def _new(cls: builtins.type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> tuple[None, TError] | tuple[T, None]:
         img = cls(**image_kwargs)
         return img, None
 

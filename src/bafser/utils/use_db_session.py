@@ -1,9 +1,9 @@
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Concatenate, ParamSpec, TypeVar
 
 from flask import g, has_request_context
 from sqlalchemy.orm import Session
-from typing_extensions import Concatenate, ParamSpec
 
 from .. import db_session
 

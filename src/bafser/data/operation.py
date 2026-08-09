@@ -1,4 +1,4 @@
-from typing import Any, Type, TypedDict
+from typing import Any, TypedDict
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -42,7 +42,7 @@ class OperationsBase:
         _Operations = cls
 
 
-_Operations: Type[OperationsBase] | None = None
+_Operations: type[OperationsBase] | None = None
 
 
 def get_operations():
