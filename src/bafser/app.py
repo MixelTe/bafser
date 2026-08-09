@@ -36,6 +36,11 @@ class AppConfig:
         FRONTEND_FOLDER: str = "build",
         JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = timedelta(hours=24),
         JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30),
+        JWT_COOKIE_CSRF_PROTECT: bool = False,
+        JWT_SESSION_COOKIE: bool = False,
+        JWT_COOKIE_DOMAIN: str | None = None,
+        JWT_COOKIE_SAMESITE: Literal["None", "Lax", "Strict"] | None = None,
+        JWT_COOKIE_SECURE: bool = True,
         CACHE_MAX_AGE: int = 31536000,
         MESSAGE_TO_FRONTEND: str = "",
         STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],  # noqa: B006
@@ -56,6 +61,9 @@ class AppConfig:
                 Defaults to 30 minutes.
             CACHE_MAX_AGE (int): 'max-age' for Cache-Control headers in seconds.
                 Defaults to one year.
+            JWT_COOKIE_DOMAIN (str | None): Domain for JWT cookies. Defaults to None.
+            JWT_COOKIE_SAMESITE (Literal["None", "Lax", "Strict"] | None): SameSite policy for JWT cookies. Defaults to None.
+            JWT_COOKIE_SECURE (bool): Whether to set the 'Secure' flag on JWT cookies. Defaults to True.
             MESSAGE_TO_FRONTEND (str): Custom string passed to the client.
             STATIC_FOLDERS (list[str]): URL prefixes treated as static asset directories.
                 Defaults to ["/static/", "/fonts/", "/_next/"].
@@ -85,6 +93,11 @@ class AppConfig:
         self.FRONTEND_FOLDER = FRONTEND_FOLDER
         self.JWT_ACCESS_TOKEN_EXPIRES = JWT_ACCESS_TOKEN_EXPIRES
         self.JWT_ACCESS_TOKEN_REFRESH = JWT_ACCESS_TOKEN_REFRESH
+        self.JWT_COOKIE_CSRF_PROTECT = JWT_COOKIE_CSRF_PROTECT
+        self.JWT_COOKIE_DOMAIN = JWT_COOKIE_DOMAIN
+        self.JWT_COOKIE_SAMESITE = JWT_COOKIE_SAMESITE
+        self.JWT_COOKIE_SECURE = JWT_COOKIE_SECURE
+        self.JWT_SESSION_COOKIE = JWT_SESSION_COOKIE
         self.CACHE_MAX_AGE = CACHE_MAX_AGE
         self.MESSAGE_TO_FRONTEND = MESSAGE_TO_FRONTEND
         self.STATIC_FOLDERS = [*STATIC_FOLDERS]
@@ -228,8 +241,11 @@ def create_app(import_name: str, config: AppConfig):
     app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
     app.config["JWT_SECRET_KEY"] = get_secret_key_rnd(bafser_config.jwt_key_file_path)
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = config.JWT_ACCESS_TOKEN_EXPIRES
-    app.config["JWT_COOKIE_CSRF_PROTECT"] = False
-    app.config["JWT_SESSION_COOKIE"] = False
+    app.config["JWT_SESSION_COOKIE"] = config.JWT_SESSION_COOKIE
+    app.config["JWT_COOKIE_CSRF_PROTECT"] = config.JWT_COOKIE_CSRF_PROTECT
+    app.config["JWT_COOKIE_DOMAIN"] = config.JWT_COOKIE_DOMAIN
+    app.config["JWT_COOKIE_SAMESITE"] = config.JWT_COOKIE_SAMESITE
+    app.config["JWT_COOKIE_SECURE"] = config.JWT_COOKIE_SECURE
     app.secret_key = app.config["JWT_SECRET_KEY"]
     for key, path in config.config:
         app.config[key] = path
