@@ -49,6 +49,8 @@ class AppConfig:
         PAGE404: str = "index.html",
         HEALTH_ROUTE: bool | str = False,
         THREADED: bool = False,
+        CORS_HEADERS_PROD: "AccessControlHeaders | None" = None,
+        CORS_HEADERS_DEV: "AccessControlHeaders | None" = None,
     ):
         """
         Initializes the application configuration settings.
@@ -87,6 +89,10 @@ class AppConfig:
                 but database initialization and migrations are skipped.
                 - **Setup mode (with `--setup`):** The application performs only
                 database initialization and migrations, then exits.
+            CORS_HEADERS_PROD (AccessControlHeaders | None): CORS configuration for production environments.
+                Set to `None` if CORS headers are offloaded to an edge proxy like Nginx.
+            CORS_HEADERS_DEV (AccessControlHeaders | None): CORS configuration for development environments.
+                Defaults to `None`.
         """
         self.data_folders = []
         self.config = []
@@ -106,6 +112,8 @@ class AppConfig:
         self.PAGE404 = PAGE404
         self.HEALTH_ROUTE = "/api/health" if HEALTH_ROUTE is True else HEALTH_ROUTE
         self.THREADED = THREADED
+        self.CORS_HEADERS_PROD = CORS_HEADERS_PROD
+        self.CORS_HEADERS_DEV = CORS_HEADERS_DEV
         self.add_data_folder("IMAGES_FOLDER", bafser_config.images_folder)
         self.add("CACHE_MAX_AGE", CACHE_MAX_AGE)
 
@@ -229,6 +237,43 @@ class AppConfig:
         """
         self.add(key, get_secret_key_rnd(path))
         return self
+
+
+class AccessControlHeaders:
+    """Manages Access Control (CORS) header configuration for API responses.
+
+    Attributes:
+        origin (str): Allowed origin domain(s). Set to `"***"` for dynamic origin
+            reflection (echoing the request's `Origin` header).
+        credentials (bool): Indicates whether the response to the request can be exposed
+            when the credentials flag is true.
+        methods (str): Comma-separated list of allowed HTTP methods.
+        headers (str): Comma-separated list of allowed HTTP request headers.
+    """
+
+    def __init__(
+        self,
+        origin: str = "*",
+        credentials: bool = False,
+        methods: str = "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        headers: str = "Authorization, Content-Type, X-Requested-With, Accept, Origin",
+    ) -> None:
+        """Initializes the AccessControlHeaders configuration.
+
+        Args:
+            origin (str, optional): The allowed origin pattern. Standard origin string,
+                `"*"` for open access, or `"***"` to signal dynamic origin reflection
+                based on incoming request headers. Defaults to `"*"` (Note: if
+                `credentials=True`, `origin` should be specific or dynamic `"***"`).
+            credentials (bool, optional): Allow credentials (cookies, authorization headers).
+                Defaults to `False`.
+            methods (str, optional): Allowed HTTP methods. Defaults to common REST methods.
+            headers (str, optional): Allowed HTTP headers. Defaults to recommended standard set.
+        """
+        self.origin = origin
+        self.credentials = credentials
+        self.methods = methods
+        self.headers = headers
 
 
 def create_app(import_name: str, config: AppConfig):
@@ -370,6 +415,20 @@ def create_app(import_name: str, config: AppConfig):
             except (RuntimeError, KeyError):
                 # Case where there is not a valid JWT
                 pass
+
+        cors_config = config.CORS_HEADERS_DEV if config.DEV_MODE else config.CORS_HEADERS_PROD
+        if cors_config:
+            origin = request.headers.get("Origin", "*") if cors_config.origin == "***" else cors_config.origin
+
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = cors_config.methods
+            response.headers["Access-Control-Allow-Headers"] = cors_config.headers
+
+            if cors_config.credentials:
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+
+            if cors_config.origin == "***":
+                response.headers.add("Vary", "Origin")
 
         return response
 
