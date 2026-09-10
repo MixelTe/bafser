@@ -38,15 +38,24 @@ def revision(args: list[str]):
 
 
 def upgrade(args: list[str]):
-    alembic_cfg = create_alembic_config(dev=True)
+    alembic_cfg = create_alembic_config(dev="--prod" not in args)
     command.upgrade(alembic_cfg, "head")
+
+
+def downgrade(args: list[str]):
+    if len(args) < 1:
+        print("alembic downgrade: error: the following arguments are required: revision")
+        return
+    alembic_cfg = create_alembic_config(dev="--prod" not in args)
+    command.downgrade(alembic_cfg, args[0])
 
 
 def run(args: list[str]):
     scripts = [
         ("init", "create folders and files", init),
         ("revision", "[name] : autogenerate migration script", revision),
-        ("upgrade", "upgrade head", upgrade),
+        ("upgrade", "[--prod] : upgrade head", upgrade),
+        ("downgrade", "<revision> [--prod] : downgrade <revision>", downgrade),
     ]
 
     if len(args) == 0 or args[0] not in (v[0] for v in scripts):
