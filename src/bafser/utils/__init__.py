@@ -24,6 +24,7 @@ from .protected_route import protected_route
 from .randstr import randstr
 from .register_blueprints import register_blueprints
 from .response_not_found import response_not_found
+from .strfind import strfind
 from .use_db_session import use_db_session, use_db_sess
 from .use_user import use_user  # pyright: ignore[reportDeprecated]
 from .use_userId import use_userId  # pyright: ignore[reportDeprecated]
@@ -61,6 +62,7 @@ __all__ = [
     "register_blueprints",
     "response_msg",
     "response_not_found",
+    "strfind",
     "use_db_sess",
     "use_db_session",
     "use_user",

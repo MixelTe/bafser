@@ -51,6 +51,7 @@ from .utils.permission_required import permission_required, permission_required_
 from .utils.protected_route import protected_route
 from .utils.randstr import randstr
 from .utils.response_not_found import response_not_found
+from .utils.strfind import strfind
 from .utils.use_db_session import use_db_session, use_db_sess
 from .utils.use_user import use_user  # pyright: ignore[reportDeprecated]
 from .utils.use_userId import use_userId  # pyright: ignore[reportDeprecated]
@@ -160,6 +161,7 @@ __all__ = [
     "render_docs_page",
     "response_msg",
     "response_not_found",
+    "strfind",
     "update_message_to_frontend",
     "use_db_sess",
     "use_db_session",
