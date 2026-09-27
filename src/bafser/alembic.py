@@ -5,7 +5,7 @@ from alembic.config import Config
 
 import bafser_config
 
-from .utils import get_db_path
+from .utils import get_db_path, get_mysql_url
 
 
 def create_alembic_config(dev: bool):
@@ -14,14 +14,15 @@ def create_alembic_config(dev: bool):
     alembic_cfg.set_main_option("file_template", "%%(year)d_%%(month).2d_%%(day).2d_%%(rev)s_%%(slug)s")
 
     if dev:
-        db_path = get_db_path(bafser_config.db_dev_path)
+        db_path_raw = bafser_config.db_dev_path
         issqlite = True
     else:
-        db_path = get_db_path(bafser_config.db_path)
+        db_path_raw = bafser_config.db_path
         issqlite = not bafser_config.db_mysql
     alembic_cfg.set_main_option("issqlite", "1" if issqlite else "0")
 
     if issqlite:
+        db_path = get_db_path(db_path_raw)
         alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}?check_same_thread=False")
         if not os.path.exists(db_path):
             dirname = os.path.dirname(db_path)
@@ -30,7 +31,9 @@ def create_alembic_config(dev: bool):
             with open(db_path, "w"):
                 pass
     else:
-        alembic_cfg.set_main_option("sqlalchemy.url", f"mysql+pymysql://{db_path}?charset=UTF8mb4")
+        url = get_mysql_url(bafser_config.db_path).render_as_string(hide_password=False)
+        # ConfigParser uses percent signs for interpolation.
+        alembic_cfg.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
     return alembic_cfg
 
 

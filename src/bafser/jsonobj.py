@@ -676,7 +676,6 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
     obj = cast(dict[Any, Any], obj)
     d: dict[Any, Any] = {}
     for k, t in type_hints.items():
-        d[k] = obj[k]
         if k not in obj:
             if k in opt_keys:
                 continue

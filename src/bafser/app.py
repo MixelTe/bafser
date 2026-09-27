@@ -36,11 +36,12 @@ class AppConfig:
         FRONTEND_FOLDER: str = "build",
         JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = timedelta(hours=24),
         JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30),
-        JWT_COOKIE_CSRF_PROTECT: bool = False,
+        JWT_COOKIE_CSRF_PROTECT: bool = True,
         JWT_SESSION_COOKIE: bool = False,
         JWT_COOKIE_DOMAIN: str | None = None,
         JWT_COOKIE_SAMESITE: Literal["None", "Lax", "Strict"] | None = None,
         JWT_COOKIE_SECURE: bool = True,
+        MAX_IMAGE_BYTES: int = 7 * 1024 * 1024,
         CACHE_MAX_AGE: int = 31536000,
         MESSAGE_TO_FRONTEND: str = "",
         STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],  # noqa: B006
@@ -66,6 +67,7 @@ class AppConfig:
             JWT_COOKIE_DOMAIN (str | None): Domain for JWT cookies. Defaults to None.
             JWT_COOKIE_SAMESITE (Literal["None", "Lax", "Strict"] | None): SameSite policy for JWT cookies. Defaults to None.
             JWT_COOKIE_SECURE (bool): Whether to set the 'Secure' flag on JWT cookies. Defaults to True.
+            MAX_IMAGE_BYTES (int): Maximum decoded image upload size in bytes. Defaults to 7 MiB.
             MESSAGE_TO_FRONTEND (str): Custom string passed to the client.
             STATIC_FOLDERS (list[str]): URL prefixes treated as static asset directories.
                 Defaults to ["/static/", "/fonts/", "/_next/"].
@@ -76,12 +78,11 @@ class AppConfig:
                 - `True`: defaults to "/api/health".
                 - `str`: uses the specific path.
                 - `False`: disables the endpoint.
-            THREADED (bool): Enables multithreaded mode.
+            THREADED (bool): Enables multi-worker mode.
 
                 When True, the following changes take effect
 
-                **Logging:** File rotation is disabled, and the log handler is switched to
-                `WatchedFileHandler` to safely support log file rotation.
+                **Logging:** A process-safe rotating file handler is used.
 
                 **`run` function behavior:** The behavior of the `run` function is modified
                 based on the presence of the `--setup` command-line argument
@@ -103,6 +104,9 @@ class AppConfig:
         self.JWT_COOKIE_DOMAIN = JWT_COOKIE_DOMAIN
         self.JWT_COOKIE_SAMESITE = JWT_COOKIE_SAMESITE
         self.JWT_COOKIE_SECURE = JWT_COOKIE_SECURE
+        if MAX_IMAGE_BYTES <= 0:
+            raise ValueError("MAX_IMAGE_BYTES must be positive")
+        self.MAX_IMAGE_BYTES = MAX_IMAGE_BYTES
         self.JWT_SESSION_COOKIE = JWT_SESSION_COOKIE
         self.CACHE_MAX_AGE = CACHE_MAX_AGE
         self.MESSAGE_TO_FRONTEND = MESSAGE_TO_FRONTEND
@@ -115,6 +119,7 @@ class AppConfig:
         self.CORS_HEADERS_PROD = CORS_HEADERS_PROD
         self.CORS_HEADERS_DEV = CORS_HEADERS_DEV
         self.add_data_folder("IMAGES_FOLDER", bafser_config.images_folder)
+        self.add("MAX_IMAGE_BYTES", MAX_IMAGE_BYTES)
         self.add("CACHE_MAX_AGE", CACHE_MAX_AGE)
 
     def add(self, key: str, value: Any) -> "AppConfig":
@@ -256,7 +261,7 @@ class AccessControlHeaders:
         origin: str = "*",
         credentials: bool = False,
         methods: str = "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-        headers: str = "Authorization, Content-Type, X-Requested-With, Accept, Origin",
+        headers: str = "Authorization, Content-Type, X-CSRF-TOKEN, X-Requested-With, Accept, Origin",
     ) -> None:
         """Initializes the AccessControlHeaders configuration.
 
@@ -374,13 +379,9 @@ def create_app(import_name: str, config: AppConfig):
         if request.path.startswith(bafser_config.api_url):
             try:
                 if g.json[1]:
-                    if isinstance(g.json[0], dict) and "password" in g.json[0]:
-                        password = g.json[0]["password"]  # type: ignore
-                        g.json[0]["password"] = "***"
-                        data = json.dumps(g.json[0])[:512]
-                        g.json[0]["password"] = password
-                    else:
-                        data = json.dumps(g.json[0])[:512]
+                    from .logger import redact_sensitive_data
+
+                    data = json.dumps(redact_sensitive_data(g.json[0]))[:512]
                     logreq.info("Request;;%(data)s", {"data": data})
                 else:
                     logreq.info("Request")

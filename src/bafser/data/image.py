@@ -1,8 +1,9 @@
 import base64
+import binascii
 import builtins
 import os
 from datetime import datetime
-from typing import Any, TypedDict, TypeVar, override
+from typing import Any, TypedDict, TypeVar, cast, override
 
 from flask import current_app
 from sqlalchemy import ForeignKey, String
@@ -30,6 +31,16 @@ TFieldName = str
 TValue = Any
 
 
+def _detected_image_type(data: bytes) -> str | None:
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpeg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    return None
+
+
 class Image(SqlAlchemyBase, ObjMixin):
     __tablename__ = TablesBase.Image
 
@@ -44,6 +55,10 @@ class Image(SqlAlchemyBase, ObjMixin):
         (data, name), values_error = get_json_values(json, ("data", str), ("name", str))
         if values_error:
             return None, values_error
+
+        name = name.strip()
+        if not 1 <= len(name) <= 128 or any(ord(char) < 32 for char in name):
+            return None, "img name length must be between 1 and 128 and contain no control characters"
 
         data_splited = data.split(",")
         if len(data_splited) != 2:
@@ -63,6 +78,20 @@ class Image(SqlAlchemyBase, ObjMixin):
             return None, "img mimetype is not in [image/png, image/jpeg, image/gif]"
 
         type = mimetype.split("/")[1]
+        max_image_bytes = cast(int, current_app.config["MAX_IMAGE_BYTES"])
+
+        # Reject malformed content before creating a database record. Checking
+        # magic bytes prevents arbitrary files from being served as images.
+        if len(img_data) > ((max_image_bytes + 2) // 3) * 4:
+            return None, "img data is too large"
+        try:
+            decoded_data = base64.b64decode(img_data, validate=True)
+        except (ValueError, binascii.Error):
+            return None, "img data is not valid base64"
+        if len(decoded_data) > max_image_bytes:
+            return None, "img data is too large"
+        if _detected_image_type(decoded_data) != type:
+            return None, "img content does not match its mimetype"
 
         now = get_datetime_now()
         img, err = cls._new(creator, json, {"name": name, "type": type, "createdById": creator.id, "creationDate": now})
@@ -71,13 +100,20 @@ class Image(SqlAlchemyBase, ObjMixin):
         assert img
         db_sess = creator.db_sess
         db_sess.add(img)
-        db_sess.commit()
+        db_sess.flush()
 
         path = img.get_path()
-        with open(path, "wb") as f:
-            f.write(base64.b64decode(img_data + "=="))
-
-        Log.added(img, creator, now=now)
+        try:
+            with open(path, "wb") as f:
+                f.write(decoded_data)
+            Log.added(img, creator, now=now)
+        except Exception:
+            db_sess.rollback()
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                pass
+            raise
 
         return img, None
 

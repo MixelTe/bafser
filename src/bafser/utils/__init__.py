@@ -8,6 +8,7 @@ from .create_folder_for_file import create_folder_for_file
 from .get_all_vars import get_all_values, get_all_fields
 from .get_datetime_now import get_datetime_now
 from .get_db_path import get_db_path
+from .get_mysql_url import get_mysql_url
 from .get_db_session import get_db_session, override_get_db_session
 from .get_json import get_json
 from .get_json_values_from_req import get_json_values_from_req, get_json_list_from_req
@@ -39,6 +40,7 @@ __all__ = [
     "get_all_values",
     "get_datetime_now",
     "get_db_path",
+    "get_mysql_url",
     "get_db_session",
     "get_json",
     "get_json_list",

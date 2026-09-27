@@ -1,7 +1,15 @@
 db_dev_path = "storage/db/dev.db"
 # db_dev_path = "ENV:DBPATH"
-db_path = "username:UR2hqJDbSfQ@username.mysql.pythonanywhere-services.com/username$default"
+db_path = "username:UR2hqJDbSfQ@example.com/db_mysql"
 # db_path = "ENV:DBPATH"
+# Secure MySQL setup:
+# db_path = ""
+# env values:
+#   DB_PASSWORD_FILE=/run/secrets/db_password
+#   DB_USER=username
+#   DB_HOST=mysql
+#   DB_PORT=3306
+#   DB_NAME=database
 db_mysql = True
 sql_echo = False
 

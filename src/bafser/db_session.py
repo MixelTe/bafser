@@ -7,7 +7,7 @@ from sqlalchemy.engine import Engine
 import bafser_config
 
 from .table_base import TableBase as SqlAlchemyBase
-from .utils import create_folder_for_file, get_db_path, import_all_tables
+from .utils import create_folder_for_file, get_db_path, get_mysql_url, import_all_tables
 
 __factory = None
 
@@ -23,13 +23,15 @@ def global_init(dev: bool):
         setup_sqlite(db_path)
         conn_str = f"sqlite:///{db_path}?check_same_thread=False"
     else:
-        db_path = get_db_path(bafser_config.db_path)
         if bafser_config.db_mysql:
-            conn_str = f"mysql+pymysql://{db_path}?charset=UTF8mb4"
+            conn_str = get_mysql_url(bafser_config.db_path)
         else:
+            db_path = get_db_path(bafser_config.db_path)
             setup_sqlite(db_path)
             conn_str = f"sqlite:///{db_path}?check_same_thread=False"
-    print(f"Connecting to the database at {conn_str}")
+
+    safe_conn_str = sa.engine.make_url(conn_str).render_as_string(hide_password=True)
+    print(f"Connecting to the database at {safe_conn_str}")
 
     engine = sa.create_engine(
         conn_str,

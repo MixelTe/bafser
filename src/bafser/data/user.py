@@ -107,7 +107,9 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         from .. import get_db_session, get_user_by_jwt_identity
 
         try:
-            if "user" in g:
+            # A cached ORM object is not proof that its row is locked. Re-run
+            # the query when a caller explicitly requests SELECT ... FOR UPDATE.
+            if "user" in g and not for_update:
                 return g.user
             verify_jwt_in_request()
             db_sess = get_db_session()

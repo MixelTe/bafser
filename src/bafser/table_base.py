@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Type, TypeVar
 
 from sqlalchemy import MetaData, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, Session, mapped_column
@@ -23,6 +23,13 @@ class TableBase(DeclarativeBase, MappedAsDataclass, SerializerMixin):
     __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_unicode_ci"}
     __fields_hidden_in_log__ = [""]
     metadata = MetaData(naming_convention=convention)
+
+    @staticmethod
+    def extend_table_args(*constraints: Any, **options: Any) -> tuple[Any, ...]:
+        """Add constraints/options without discarding the base table options."""
+        base_options = TableBase.__table_args__
+        assert isinstance(base_options, dict)
+        return (*constraints, {**base_options, **options})  # pyright: ignore[reportUnknownVariableType]
 
     def __repr__(self):
         return f"<{self.__class__.__name__}>"
@@ -251,14 +258,17 @@ class BigIdMixin(MappedAsDataclass):
     id_big: Mapped[str] = mapped_column(String(8), unique=True, index=True, init=False)
 
     @classmethod
-    def get_by_big_id(cls: Type[T], id_big: str, includeDeleted: bool = False, *, db_sess: Session | None = None) -> T | None:
+    def get_by_big_id(cls: Type[T], id_big: str, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None) -> T | None:
         from . import get_db_session
 
         db_sess = db_sess if db_sess else get_db_session()
         if issubclass(cls, ObjMixin):
-            return cls.query(db_sess, includeDeleted).filter(cls.id_big == id_big).first()
+            return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.id_big == id_big).first()
         else:
-            return db_sess.query(cls).filter(cls.id_big == id_big).first()
+            query = db_sess.query(cls)
+            if for_update:
+                query = query.with_for_update()
+            return query.filter(cls.id_big == id_big).first()
 
     def set_unique_big_id(self, *, db_sess: Session | None = None):
         from . import randstr

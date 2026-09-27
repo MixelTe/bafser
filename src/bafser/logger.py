@@ -7,9 +7,39 @@ import time
 from typing import Any
 
 from flask import g, has_request_context, request
+from concurrent_log_handler import ConcurrentRotatingFileHandler
 
 import bafser_config
 from bafser import create_folder_for_file, ip_to_emoji
+
+
+SENSITIVE_FIELD_NAMES = frozenset(
+    {
+        "password",
+        "passwd",
+        "token",
+        "access_token",
+        "refresh_token",
+        "authorization",
+        "secret",
+        "api_secret_key",
+        "apikey",
+        "api_key",
+        "code",
+    }
+)
+
+
+def redact_sensitive_data(value: Any) -> Any:
+    """Return a log-safe copy of nested request data."""
+    if isinstance(value, dict):
+        return {
+            key: "***" if str(key).lower() in SENSITIVE_FIELD_NAMES else redact_sensitive_data(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [redact_sensitive_data(item) for item in value]
+    return value
 
 
 def customTime(*args: Any):
@@ -52,7 +82,7 @@ class RequestFormatter(logging.Formatter):
             record.uid = g.get("userId", get_if_has("uid"))
             g_json = g.get("json", None)
             if g_json is not None and g_json[1]:
-                record.json = json.dumps(g_json[0], indent=self.json_indent)
+                record.json = json.dumps(redact_sensitive_data(g_json[0]), indent=self.json_indent)
             req_start = g.get("req_start", None)
             if req_start:
                 record.duration = time.perf_counter_ns() - req_start
@@ -135,6 +165,7 @@ def get_log_fpath_all(fpath: str) -> list[str]:
 
 
 MaxBytes = 8 * 1000 * 1000
+BackupCount = 5
 
 
 def setLogging():
@@ -238,9 +269,23 @@ def create_log_handler(
 
     config = get_app_config()
     if config.THREADED:
-        handler = logging.handlers.WatchedFileHandler(fpath, encoding="utf-8")
+        # RotatingFileHandler is not safe when several Gunicorn workers write
+        # to the same file. This handler coordinates rotation with a file lock.
+        handler = ConcurrentRotatingFileHandler(
+            fpath,
+            mode="a",
+            encoding="utf-8",
+            maxBytes=MaxBytes,
+            backupCount=BackupCount,
+        )
     else:
-        handler = RotatingFileHandler(fpath, mode="a", encoding="utf-8", maxBytes=MaxBytes)
+        handler = RotatingFileHandler(
+            fpath,
+            mode="a",
+            encoding="utf-8",
+            maxBytes=MaxBytes,
+            backupCount=BackupCount,
+        )
 
     handler.setFormatter(formatter)
     if filter:
