@@ -3,15 +3,17 @@
 ## dependencies
 Python 3.10 or later
 ```
-alembic == 1.16.4
-flask == 3.1.1
-flask_jwt_extended == 4.7.1
+alembic >= 1.16.4, < 2
+cryptography >= 46.0.5, < 51
+concurrent-log-handler >= 0.9.28, < 1
+flask >= 3.1.1, < 4
+flask_jwt_extended >= 4.7.1, < 5
 PyJWT >= 2.0, < 3.0
-PyMySQL == 1.1.1
-sqlalchemy == 2.0.29
-sqlalchemy_serializer == 1.4.22
-typing_extensions >= 4.13.2
-werkzeug == 3.1.3
+PyMySQL >= 1.1.1, < 2
+sqlalchemy >= 2.0.45, < 2.1
+sqlalchemy_serializer >= 1.5.5, < 2
+typing_extensions >= 4.13.2, < 5
+werkzeug >= 3.1.3, < 4
 ```
 
 ## usage
