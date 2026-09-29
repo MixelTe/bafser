@@ -5,7 +5,7 @@ import sys
 import time
 import traceback
 from collections.abc import Callable
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 from urllib.parse import quote
 
@@ -408,7 +408,7 @@ def create_app(import_name: str, config: AppConfig):
         if config.JWT_ACCESS_TOKEN_REFRESH:
             try:
                 exp_timestamp: float = get_jwt()["exp"]  # type: ignore
-                now = datetime.now(UTC)
+                now = datetime.now(timezone.utc)
                 target_timestamp = datetime.timestamp(now + config.JWT_ACCESS_TOKEN_REFRESH)
                 if target_timestamp > exp_timestamp:
                     access_token = create_access_token(identity=get_jwt_identity())

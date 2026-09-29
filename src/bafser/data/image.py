@@ -3,7 +3,9 @@ import binascii
 import builtins
 import os
 from datetime import datetime
-from typing import Any, TypedDict, TypeVar, cast, override
+from typing import Any, TypedDict, TypeVar, cast
+
+from typing_extensions import override
 
 from flask import current_app
 from sqlalchemy import ForeignKey, String

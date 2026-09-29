@@ -8,8 +8,10 @@ version = "2.9.0"
 authors = [{ name = "Mixel Te" }]
 description = "Base for flask server"
 readme = "README.md"
-requires-python = ">= 3.12"
+requires-python = ">=3.10"
 classifiers = [
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
 	"Programming Language :: Python :: 3.12",
 	"Operating System :: OS Independent",
 ]
@@ -24,6 +26,7 @@ dependencies = [
 	"PyMySQL == 1.1.1",
 	"sqlalchemy == 2.0.29",
 	"sqlalchemy_serializer == 1.4.22",
+	"typing_extensions >= 4.13.2",
 	"werkzeug == 3.1.3",
 ]
 

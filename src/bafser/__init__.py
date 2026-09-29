@@ -60,7 +60,7 @@ from .app import AppConfig, AccessControlHeaders, create_app, update_message_to_
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, get_log_fpath_all, add_logger, create_log_handler, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
 from .jsonobj import JsonObj, JsonOpt, Undefined, JsonParseError
-from .doc_api import doc_api, get_api_docs, JsonSingleKey, TJson, TJsonListOf, render_docs_page
+from .doc_api import doc_api, get_api_docs, TJson, TJsonListOf, render_docs_page
 from .dashboard import render_dashboard_page
 
 from .db_session import SqlAlchemyBase
@@ -97,7 +97,6 @@ __all__ = [
     "JsonObj",
     "JsonOpt",
     "JsonParseError",
-    "JsonSingleKey",
     "Log",
     "LogDict",
     "M",

@@ -66,7 +66,7 @@ This guide walks you through setting up a new Bafser project, from installation 
 
 ### Prerequisites
 
-- Python 3.12 or later
+- Python 3.10 or later
 - pip (Python package manager)
 - (Optional) MySQL if you plan to use a production database
 
@@ -477,7 +477,10 @@ Creates a rotating file handler (or watched file handler in threaded mode) with 
 *Decorator* `bafser.doc_api(*, req: Any = None, res: Any = None, desc: str | None = None, jwt: bool | None = None)`
 
 Attaches type information to a Flask route for automatic documentation generation.
-`req` and `res` are Python types (e.g., `UserDict`, `list[str]`).
+`req` and `res` accept Python types (e.g., `UserDict`, `list[str]`) or documentation schemas.
+Use `TJson["img", ImageJson, "type", int]` for an object with multiple fields, or
+`TJsonListOf["id", int, "name", str]` for a list of such objects. These schemas
+describe API documentation; they do not parse or validate requests.
 If `jwt=False`, the endpoint is marked as not requiring authentication.
 
 #### `get_api_docs`
@@ -718,7 +721,8 @@ Suppose you need to add a `phone` field to the User model and enforce uniqueness
 Edit `data/user.py`:
 
 ```python
-from typing import Any, override
+from typing import Any
+from typing_extensions import override
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from bafser import UserBase, UserKwargs

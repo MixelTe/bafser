@@ -1,7 +1,7 @@
 # base for flask server by Mixel Te
 
 ## dependencies
-Python 3.12
+Python 3.10 or later
 ```
 alembic == 1.16.4
 flask == 3.1.1
@@ -9,6 +9,7 @@ flask_jwt_extended == 4.7.1
 PyMySQL == 1.1.1
 sqlalchemy == 2.0.29
 sqlalchemy_serializer == 1.4.22
+typing_extensions >= 4.13.2
 werkzeug == 3.1.3
 ```
 
@@ -136,7 +137,8 @@ run(__name__ == "__main__", None, init_dev_values)
 ### modifying User and Image
 User:
 ```py
-from typing import Any, override
+from typing import Any
+from typing_extensions import override
 from sqlalchemy.orm import Session, Mapped, mapped_column
 from bafser import UserBase, UserKwargs
 
@@ -165,7 +167,8 @@ class User(UserBase):
 ```
 Image:
 ```py
-from typing import TypedDict, override
+from typing import TypedDict
+from typing_extensions import override
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 

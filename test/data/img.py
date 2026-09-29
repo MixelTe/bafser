@@ -1,4 +1,6 @@
-from typing import TypedDict, override
+from typing import TypedDict
+
+from typing_extensions import override
 
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column

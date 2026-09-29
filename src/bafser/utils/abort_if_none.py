@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from flask import abort
 
@@ -6,7 +6,10 @@ if TYPE_CHECKING:
     from bafser import Undefined
 
 
-def abort_if_none[T](value: T | None | type["Undefined"], name: str | None = None, msg: str = "%s not found", code: int = 404) -> T:
+T = TypeVar("T")
+
+
+def abort_if_none(value: T | None | type["Undefined"], name: str | None = None, msg: str = "%s not found", code: int = 404) -> T:
     from bafser import Undefined, response_msg
 
     value = Undefined.default(value)

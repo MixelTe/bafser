@@ -1,4 +1,6 @@
-from typing import Any, Literal, NotRequired, TypedDict
+from typing import Any, Literal, TypedDict
+
+from typing_extensions import NotRequired
 
 from flask import Blueprint, abort, send_from_directory
 
@@ -6,7 +8,6 @@ import bafser_config
 from bafser import (
     JsonObj,
     JsonOpt,
-    JsonSingleKey,
     TJson,
     Undefined,
     UserDict,
@@ -135,7 +136,7 @@ class SomeObj5(JsonObj):
 
 
 @bp.post("/api/post3")
-@doc_api(req=JsonSingleKey["obj", SomeObj5], res=SomeObj5)
+@doc_api(req=TJson["obj", SomeObj5], res=SomeObj5)
 def test_post3():  # type: ignore
     obj = SomeObj5.get_from_req("obj")
     return obj.json()

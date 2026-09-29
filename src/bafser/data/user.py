@@ -17,7 +17,7 @@ _User: "type[UserBase] | None" = None
 TFieldName = str
 TValue = Any
 
-type DefaultGetter = Callable[[bool, bool], "UserBase | None"]
+DefaultGetter = Callable[[bool, bool], "UserBase | None"]
 _current_user_getter: Callable[[DefaultGetter, bool, bool], "UserBase | None"] = lambda get, lazyload, for_update: get(lazyload, for_update)
 
 

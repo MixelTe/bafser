@@ -34,16 +34,16 @@ def redact_sensitive_data(value: Any) -> Any:
     """Return a log-safe copy of nested request data."""
     if isinstance(value, dict):
         return {
-            key: "***" if str(key).lower() in SENSITIVE_FIELD_NAMES else redact_sensitive_data(item)
-            for key, item in value.items()
+            key: "***" if str(key).lower() in SENSITIVE_FIELD_NAMES else redact_sensitive_data(item)  # type: ignore
+            for key, item in value.items()  # type: ignore
         }
     if isinstance(value, (list, tuple)):
-        return [redact_sensitive_data(item) for item in value]
+        return [redact_sensitive_data(item) for item in value]  # type: ignore
     return value
 
 
 def customTime(*args: Any):
-    utc_dt = datetime.datetime.now(datetime.UTC)
+    utc_dt = datetime.datetime.now(datetime.timezone.utc)
     utc_dt += datetime.timedelta(hours=3)
     return utc_dt.timetuple()
 

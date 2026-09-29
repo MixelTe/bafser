@@ -1,11 +1,19 @@
 import inspect
 import json
+import sys
 from collections.abc import Callable
 from collections.abc import Callable as CallableClass
 from dataclasses import dataclass
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import Any, Literal, TypeAliasType, TypeGuard, TypeVar, Union, cast, dataclass_transform, get_args, get_origin, get_type_hints, overload
+from typing import Any, Literal, TypeGuard, TypeVar, Union, cast, get_args, get_origin, get_type_hints, overload
+
+from typing_extensions import dataclass_transform
+
+if sys.version_info >= (3, 12):
+    from typing import TypeAliasType
+else:
+    from typing_extensions import TypeAliasType
 
 from flask import abort, jsonify
 
@@ -19,30 +27,32 @@ class UndefinedMeta(type):
 
 
 class Undefined(metaclass=UndefinedMeta):
-    type T = type[Undefined]
+    T = type["Undefined"]
 
     def __init__(self):
         raise Exception("bafser: Undefined cant be instantiated")
 
     @staticmethod
-    def cast[T](v: T | type["Undefined"]) -> T:
+    def cast(v: "T | type[Undefined]") -> "T":
         """Remove Undefined from type hint"""
         return v  # type: ignore
 
     @staticmethod
-    def defined[T](v: T | type["Undefined"]) -> TypeGuard[T]:
+    def defined(v: "T | type[Undefined]") -> "TypeGuard[T]":
         """Returns true if value is not Undefined"""
         return v is not Undefined
 
     @staticmethod
-    def default[T, K](v: T | type["Undefined"], default: K = None) -> T | K:
+    def default(v: "T | type[Undefined]", default: "K" = None) -> "T | K":
         """Returns `default` if value is Undefined"""
         if v is Undefined:
             return default
         return Undefined.cast(v)
 
 
-type JsonOpt[T] = T | Undefined.T
+T = TypeVar("T")
+K = TypeVar("K")
+JsonOpt = TypeAliasType("JsonOpt", T | Undefined.T, type_params=(T,))
 
 
 class JsonParseError(Exception):
@@ -77,11 +87,11 @@ def _field(
     return JsonField(default=default, default_factory=default_factory, desc=desc, repr=repr)
 
 
-def _noinit_value[T](value: T, *, init: bool = False) -> T:
+def _noinit_value(value: T, *, init: bool = False) -> T:
     return value
 
 
-def _constructor_to_init[T](cls: type[T]) -> type[T]:
+def _constructor_to_init(cls: type[T]) -> type[T]:
     cls.__init__ = cls.__constructor__  # type: ignore
     return cls
 
@@ -258,8 +268,8 @@ class JsonObj:
             self.__exceptions__.append((k, x))
             return k, v
 
-        if isinstance(t, TypeAliasType):
-            t = t.__value__
+        if type(t) is TypeAliasType:
+            t = cast(Any, t).__value__
 
         torigin = get_origin(t)
         targs = get_args(t)
@@ -548,7 +558,7 @@ class JsonObj:
         return jsonify(self.json())
 
 
-type ValidateType = dict[str, ValidateType] | int | float | bool | str | object | None | list[ValidateType]
+ValidateType = Union[dict[str, "ValidateType"], int, float, bool, str, object, None, list["ValidateType"]]
 TC = TypeVar("TC", bound=ValidateType)
 
 
@@ -559,8 +569,8 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         return obj, None  # type: ignore
     # simple type
     try:
-        if isinstance(otype, TypeAliasType):  # type: ignore
-            otype = otype.__value__
+        if type(otype) is TypeAliasType:  # type: ignore
+            otype = cast(Any, otype).__value__
         isinstance(obj, otype)
         good_type = True
     except Exception:
@@ -662,7 +672,8 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
             if err is None:
                 return o, None  # type: ignore
             errs.append(type_name(t) + ": " + err)
-        return None, f" is not {type_name(otype)} tried:\n\t{'\n\t'.join(errs)}"
+        details = "\n\t".join(errs)
+        return None, f" is not {type_name(otype)} tried:\n\t{details}"
 
     # TypedDict
     try:
