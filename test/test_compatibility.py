@@ -24,7 +24,7 @@ class CompatibilityTests(unittest.TestCase):
         self.assertEqual(type_to_json(TJson["item", int], {}), {"item": "number"})
         self.assertEqual(type_to_json(TJsonListOf["item", int], {}), [{"item": "number"}])
         fields = TJson["img", ImageJson, "type", int]
-        expected = {"img": {"data": "string", "name": "string", "desc": "string"}, "type": "number"} # type: ignore
+        expected = {"img": {"data": "string", "name": "string", "desc": "string"}, "type": "number"}  # type: ignore
         self.assertEqual(type_to_json(fields, {}), expected)
         info_fields = type_info(fields, {}).object_fields
         assert isinstance(info_fields, list)
@@ -32,8 +32,8 @@ class CompatibilityTests(unittest.TestCase):
         self.assertEqual(type_to_json(TJsonListOf["img", ImageJson, "type", int], {}), [expected])
 
     def test_sqlalchemy_serializer_with_project_model(self):
-        from test.data.apple import Apple  # noqa: F401
-        from test.data.img import Img  # noqa: F401
+        from test.data.apple import Apple  # type: ignore
+        from test.data.img import Img  # type: ignore
         from test.data.user import User
 
         user = User(login="example", name="Example", balance=0)

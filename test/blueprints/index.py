@@ -1,8 +1,7 @@
 from typing import Any, Literal, TypedDict
 
-from typing_extensions import NotRequired
-
 from flask import Blueprint, abort, send_from_directory
+from typing_extensions import NotRequired
 
 import bafser_config
 from bafser import (

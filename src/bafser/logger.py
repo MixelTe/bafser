@@ -6,12 +6,11 @@ import os
 import time
 from typing import Any
 
-from flask import g, has_request_context, request
 from concurrent_log_handler import ConcurrentRotatingFileHandler
+from flask import g, has_request_context, request
 
 import bafser_config
 from bafser import create_folder_for_file, ip_to_emoji
-
 
 SENSITIVE_FIELD_NAMES = frozenset(
     {

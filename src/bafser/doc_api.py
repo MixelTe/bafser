@@ -12,6 +12,7 @@ from flask import Flask, render_template
 
 from .jsonobj import JsonObj, JsonOpt, Undefined, type_name
 
+
 @dataclass(frozen=True)
 class _JsonDocSpec:
     fields: tuple[tuple[str, Any], ...]
