@@ -592,7 +592,7 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
             if err is None:
                 return obj, None  # type: ignore
             return None, "." + err
-        if isinstance(obj, otype) and not (otype is int and type(obj) is bool):
+        if isinstance(obj, otype) and not (otype is int and type(obj) is bool):  # type: ignore
             return obj, None  # type: ignore
         if obj is Undefined:
             return None, " is undefined"
@@ -634,7 +634,7 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
     # tuple
     if torigin is tuple:
         variadic = len(targs) == 2 and targs[1] is Ellipsis
-        if not isinstance(obj, (list, tuple)) or (not variadic and len(obj) != len(targs)):
+        if not isinstance(obj, (list, tuple)) or (not variadic and len(obj) != len(targs)):  # type: ignore
             return None, f" is not {type_name(otype)}"
         obj = cast(list[Any], obj)
         l: list[Any] = []
