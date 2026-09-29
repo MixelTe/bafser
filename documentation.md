@@ -92,6 +92,8 @@ Bafser provides a CLI command to scaffold a project with the recommended structu
 bafser init_project
 ```
 
+Existing generated files are preserved. Use `bafser init_project --force` only when you intend to replace them.
+
 This will create the following files and directories:
 
 ```
@@ -245,7 +247,9 @@ Each entry includes its signature, parameters, return type, and a brief descript
 Configuration container for the Bafser application. Used to set up frontend paths, JWT settings, static folders, and more.
 
 **Constructor**
-`AppConfig(*, FRONTEND_FOLDER: str = "build", JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = timedelta(hours=24), JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30), CACHE_MAX_AGE: int = 31536000, MESSAGE_TO_FRONTEND: str = "", STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"], DEV_MODE: bool = False, DELAY_MODE: bool = False, PAGE404: str = "index.html", HEALTH_ROUTE: bool | str = False, THREADED: bool = False)`
+`AppConfig(*, FRONTEND_FOLDER: str = "build", JWT_ACCESS_TOKEN_EXPIRES: Literal[False] | timedelta = timedelta(hours=24), JWT_ACCESS_TOKEN_REFRESH: Literal[False] | timedelta = timedelta(minutes=30), CACHE_MAX_AGE: int = 31536000, MESSAGE_TO_FRONTEND: str = "", STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"], DEV_MODE: bool = False, LOG_JSON_RESPONSES: bool | None = None, DELAY_MODE: bool = False, PAGE404: str = "index.html", HEALTH_ROUTE: bool | str = False, THREADED: bool = False)`
+
+`LOG_JSON_RESPONSES=None` follows `DEV_MODE`: JSON response bodies are logged in development and omitted in production. Set it to `True` or `False` to override. Logged response bodies are truncated to 512 characters, and sensitive fields are redacted.
 
 **Methods**
 - `add(key: str, value: Any) -> AppConfig` – Adds a key‑value pair to Flask’s `app.config`.
@@ -505,12 +509,12 @@ Utilities for defining JSON‑serializable objects with optional fields and vali
 
 The `bafser` command provides the following subcommands:
 
-- `init_project` – Scaffolds a new Bafser project.
+- `init_project [--force]` – Scaffolds a new Bafser project; `--force` replaces generated files.
 - `add_user_role <userId> <roleId> [dev]` – Assigns a role to a user.
-- `add_user <login> <password> <name> <roleId> [dev]` – Creates a new user.
-- `change_user_password <login> <new_password> [dev]` – Updates a user’s password.
+- `add_user <login> <name> <roleId> [dev] < password.txt` – Creates a new user; reads the password from stdin.
+- `change_user_password <login> [dev] < password.txt` – Updates a user’s password from stdin.
 - `remove_user_role <userId> <roleId> [dev]` – Removes a role from a user.
-- `alembic <init | revision | upgrade>` – Manages database migrations.
+- `alembic <init [--force] | revision | upgrade>` – Manages database migrations.
 - `configure_webhook <set | delete> [dev]` – (If `bafser_tgapi` is installed) Configures Telegram webhooks.
 - `stickers` – (If `bafser_tgapi` is installed) Manages sticker packs.
 
@@ -625,6 +629,8 @@ def create():
     Log.added(task)  # Log.added makes commit
     return task.get_dict()
 ```
+
+`Log.added` flushes a new record by default so its ID and the audit entry's `recordId` are available even with `commit=False`. Pass `flush=False` to defer this flush. With both `flush=False` and `commit=False`, a new record's `recordId` remains `-1` until the caller updates it. `commit=True` still commits the transaction.
 
 `JsonObj.get_from_req()` automatically parses the JSON body, validates it against the schema, and returns a `JsonObj` instance. If validation fails, it aborts with a 400 error and a descriptive message. This approach is especially useful for complex nested structures, optional fields, and re‑usable request schemas across multiple endpoints.
 
@@ -885,12 +891,14 @@ Visit `/dashboard` to see a table of recent requests with duration, status codes
 If `use_alembic = True` in `bafser_config.py`, you can manage migrations via the CLI:
 
 ```bash
-bafser alembic init          # creates the alembic folder (first time only)
+bafser alembic init          # creates missing Alembic templates; --force replaces them
 bafser alembic revision      # generate a new migration script
 bafser alembic upgrade       # apply all pending migrations
 ```
 
-Migrations are automatically run when the server starts (unless `THREADED=True` and `--setup` is used).
+Create an initial revision before the first server start. When `use_alembic = True`, Bafser does not call `metadata.create_all`; the migration must create the schema. With `use_alembic = False`, Bafser creates missing tables through SQLAlchemy.
+
+Migrations are automatically run when the server starts unless `THREADED=True`; in that case, run setup once with `--setup` before starting workers.
 
 ## 5. Best Practices & Patterns
 
@@ -1001,7 +1009,7 @@ project/
 - Set `THREADED = True` in production to disable file‑based log rotation and enable session‑pool optimizations.
 
 #### Health Checks
-- Enable `HEALTH_ROUTE = True` to expose `/api/health`. Use this endpoint for load‑balancer health checks.
+- Enable `HEALTH_ROUTE = True` to expose `/api/health`, or set a path such as `HEALTH_ROUTE = "/healthz"`. Use this endpoint for load‑balancer health checks.
 - The health endpoint tests database connectivity; add any additional checks your app needs.
 
 ### 5.7 Maintaining Extensibility

@@ -6,6 +6,7 @@ Python 3.10 or later
 alembic == 1.16.4
 flask == 3.1.1
 flask_jwt_extended == 4.7.1
+PyJWT >= 2.0, < 3.0
 PyMySQL == 1.1.1
 sqlalchemy == 2.0.29
 sqlalchemy_serializer == 1.4.22
@@ -16,7 +17,10 @@ werkzeug == 3.1.3
 ## usage
 scripts: `bafser`
 
-init project: `bafser init_project`
+init project: `bafser init_project` (existing generated files are kept; use `--force` to replace them)
+
+With `use_alembic = True`, create an initial migration before starting the app:
+`bafser alembic revision` followed by `bafser alembic upgrade`.
 
 run `gunicorn -w 4 --threads 2 --worker-class gthread -b 0.0.0.0:80 main:app`
 
@@ -25,7 +29,7 @@ or manually
 
 copy `bafser_config.example.py` to project root as `bafser_config.py`
 
-init alimbic `bafser alembic init`
+init alembic `bafser alembic init` (existing templates are kept; use `--force` to replace them)
 
 ### create files:
 

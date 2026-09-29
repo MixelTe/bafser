@@ -1,5 +1,8 @@
+import sys
+
+
 def change_user_password(login: str, password: str, dev: bool):
-    print(f"change_user_password {login=} {password=} {dev=}")
+    print(f"change_user_password {login=} {dev=}")
     from bafser import db_session
     from bafser.data.user import get_user_table
 
@@ -16,7 +19,10 @@ def change_user_password(login: str, password: str, dev: bool):
 
 
 def run(args: list[str]):
-    if not (len(args) == 2 or (len(args) == 3 and args[-1] == "dev")):
-        print("change_user_password: login new_password [dev]")
+    if not (len(args) == 1 or (len(args) == 2 and args[-1] == "dev")):
+        print("change_user_password: login [dev] < password.txt")
     else:
-        change_user_password(args[0], args[1], args[-1] == "dev")
+        password = sys.stdin.readline().rstrip("\r\n")
+        if not password:
+            raise ValueError("Password must be provided on stdin")
+        change_user_password(args[0], password, args[-1] == "dev")

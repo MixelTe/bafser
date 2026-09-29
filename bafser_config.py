@@ -1,6 +1,5 @@
 db_dev_path = "test/db/dev.db"
-db_path = "username:UR2hqJDbSfQ@username.mysql.pythonanywhere-services.com/username$default"
-# db_path = "ENV:DBPATH"
+db_path = "ENV:DBPATH"  # e.g. mysql_user:password@localhost/app_db
 db_mysql = True
 sql_echo = False
 

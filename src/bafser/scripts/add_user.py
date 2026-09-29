@@ -1,5 +1,8 @@
+import sys
+
+
 def add_user(login: str, password: str, name: str, roleId: int, dev: bool):
-    print(f"add_user {login=} {password=} {name=} {roleId=} {dev=}")
+    print(f"add_user {login=} {name=} {roleId=} {dev=}")
     from bafser import Role, db_session
     from bafser.data.user import get_user_table
 
@@ -23,7 +26,10 @@ def add_user(login: str, password: str, name: str, roleId: int, dev: bool):
 
 
 def run(args: list[str]):
-    if not (len(args) == 4 or (len(args) == 5 and args[-1] == "dev")):
-        print("add_user: login password name roleId [dev]")
+    if not (len(args) == 3 or (len(args) == 4 and args[-1] == "dev")):
+        print("add_user: login name roleId [dev] < password.txt")
     else:
-        add_user(args[0], args[1], args[2], int(args[3]), args[-1] == "dev")
+        password = sys.stdin.readline().rstrip("\r\n")
+        if not password:
+            raise ValueError("Password must be provided on stdin")
+        add_user(args[0], password, args[1], int(args[2]), args[-1] == "dev")

@@ -36,11 +36,14 @@ class Role(SqlAlchemyBase, ObjMixin):
         operations_new = get_operations().get_all()
         operations_new_ids = [v[0] for v in operations_new]
         operations_cur = list(db_sess.query(Operation).all())
-        operations_cur_ids = [v.id for v in operations_cur]
+        operations_cur_by_id = {operation.id: operation for operation in operations_cur}
         for operation in operations_new:
             operation_id, operation_name = operation
-            if operation_id not in operations_cur_ids:
+            current_operation = operations_cur_by_id.get(operation_id)
+            if current_operation is None:
                 db_sess.add(Operation(id=operation_id, name=operation_name))
+            elif current_operation.name != operation_name:
+                current_operation.name = operation_name
 
         # update roles
         roles_new_ids = ROLES.keys()

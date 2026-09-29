@@ -41,11 +41,11 @@ def global_init(dev: bool):
         max_overflow=10,
         pool_recycle=3600,
     )
-    __factory = orm.sessionmaker(bind=engine)
-
     import_all_tables()
 
-    SqlAlchemyBase.metadata.create_all(engine)
+    if not bafser_config.use_alembic:
+        SqlAlchemyBase.metadata.create_all(engine)
+    __factory = orm.sessionmaker(bind=engine)
 
 
 def create_session() -> orm.Session:

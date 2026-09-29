@@ -4,10 +4,10 @@ import sys
 
 def cli():
     scripts = [
-        ("init_project", ""),
+        ("init_project", "[--force]"),
         ("add_user_role", "userId roleId [dev]"),
-        ("add_user", "login password name roleId [dev]"),
-        ("change_user_password", "login new_password [dev]"),
+        ("add_user", "login name roleId [dev] < password.txt"),
+        ("change_user_password", "login [dev] < password.txt"),
         ("remove_user_role", "userId roleId [dev]"),
         ("alembic", "<init | revision | upgrade>"),
     ]

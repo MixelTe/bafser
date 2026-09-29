@@ -13,7 +13,10 @@ def create_access_token(user: "UserBase"):
 
 
 def get_user_id_by_jwt_identity(jwt_identity: Any):
-    jwt_identity = json.loads(jwt_identity)
+    try:
+        jwt_identity = json.loads(jwt_identity)
+    except (TypeError, ValueError):
+        return None
     if not isinstance(jwt_identity, list) or len(jwt_identity) != 2:  # type: ignore
         return None
     id, password = jwt_identity  # type: ignore
@@ -26,7 +29,10 @@ def get_user_id_by_jwt_identity(jwt_identity: Any):
 def get_user_by_jwt_identity(db_sess: Session, jwt_identity: Any, *, lazyload: bool = False, for_update: bool = False):
     from .data.user import get_user_table
 
-    jwt_identity = json.loads(jwt_identity)
+    try:
+        jwt_identity = json.loads(jwt_identity)
+    except (TypeError, ValueError):
+        return None
     if not isinstance(jwt_identity, list) or len(jwt_identity) != 2:  # type: ignore
         return None
     id, password = jwt_identity  # type: ignore

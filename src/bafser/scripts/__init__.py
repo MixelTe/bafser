@@ -7,8 +7,8 @@ from .change_user_password import change_user_password
 from .remove_user_role import remove_user_role
 
 
-def alembic_init():
-    _alembic_init([])
+def alembic_init(force: bool = False):
+    _alembic_init(["--force"] if force else [])
 
 
 def alembic_revision(name: str | None = None):

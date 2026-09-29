@@ -1,12 +1,13 @@
 import os
 import uuid
+from functools import partial
 from typing import cast
 
 import bafser_config
 from bafser.scripts import alembic_init
 
 
-def init_project():
+def init_project(force: bool = False):
     r = input("Do you want to change bafser_config? [Y/n]: ")
     if r != "n":
         print("Run again when bafser_config is ready")
@@ -18,24 +19,25 @@ def init_project():
         with_tgapi = True
     except Exception:  # noqa: S110
         pass
+    write = partial(write_file, force=force)
     os.makedirs(bafser_config.data_tables_folder, exist_ok=True)
-    write_file(os.path.join(bafser_config.data_tables_folder, "__init__.py"), data__init__)
-    write_file(os.path.join(bafser_config.data_tables_folder, "_operations.py"), data_operations)
-    write_file(os.path.join(bafser_config.data_tables_folder, "_roles.py"), data_roles)
-    write_file(os.path.join(bafser_config.data_tables_folder, "_tables.py"), data_tables_tgapi if with_tgapi else data_tables)
-    write_file(os.path.join(bafser_config.data_tables_folder, "user.py"), data_user_tgapi if with_tgapi else data_user)
+    write(os.path.join(bafser_config.data_tables_folder, "__init__.py"), data__init__)
+    write(os.path.join(bafser_config.data_tables_folder, "_operations.py"), data_operations)
+    write(os.path.join(bafser_config.data_tables_folder, "_roles.py"), data_roles)
+    write(os.path.join(bafser_config.data_tables_folder, "_tables.py"), data_tables_tgapi if with_tgapi else data_tables)
+    write(os.path.join(bafser_config.data_tables_folder, "user.py"), data_user_tgapi if with_tgapi else data_user)
     if not with_tgapi:
         os.makedirs(bafser_config.blueprints_folder, exist_ok=True)
-        write_file(os.path.join(bafser_config.blueprints_folder, "docs.py"), blueprints_docs_py)
+        write(os.path.join(bafser_config.blueprints_folder, "docs.py"), blueprints_docs_py)
     if with_tgapi:
         bot_folder = cast(str, bafser_config.bot_folder)  # type: ignore
         config_dev_path = cast(str, bafser_config.config_dev_path)  # type: ignore
         os.makedirs(bot_folder, exist_ok=True)
-        write_file(os.path.join(bot_folder, "bot.py"), tgapi_bot_py)
-        write_file(config_dev_path, tgapi_config_dev)
-        write_file(os.path.join(bafser_config.data_tables_folder, "msg.py"), tgapi_data_msg)
-    write_file("main.py", main_tgapi if with_tgapi else main)
-    if not os.path.exists(".gitignore"):
+        write(os.path.join(bot_folder, "bot.py"), tgapi_bot_py)
+        write(config_dev_path, tgapi_config_dev)
+        write(os.path.join(bafser_config.data_tables_folder, "msg.py"), tgapi_data_msg)
+    write("main.py", main_tgapi if with_tgapi else main)
+    if force or not os.path.exists(".gitignore"):
         gitignore = gitignore_base
         gitignore += "\n" + "\n".join(
             ([bafser_config.db_dev_path] if not bafser_config.db_dev_path.startswith("ENV:") else [])
@@ -57,18 +59,24 @@ def init_project():
                 else []
             )
         )
-        write_file(".gitignore", gitignore)
+        write(".gitignore", gitignore)
     if bafser_config.use_alembic:
-        alembic_init()
+        alembic_init(force=force)
 
 
-def write_file(path: str, text: str):
-    with open(path, "w", encoding="utf8") as f:
-        f.write(text)
+def write_file(path: str, text: str, *, force: bool = False):
+    try:
+        with open(path, "w" if force else "x", encoding="utf8") as f:
+            f.write(text)
+    except FileExistsError:
+        print(f"Skipping existing file: {path}")
 
 
 def run(args: list[str]):
-    init_project()
+    if args not in ([], ["--force"]):
+        print("init_project [--force]")
+        return
+    init_project(force="--force" in args)
 
 
 data__init__ = """from ._operations import Operations

@@ -3,6 +3,8 @@ from typing import Any, ClassVar, TypedDict, TypeVar, final
 
 from flask import abort, g, has_request_context
 from flask_jwt_extended import get_jwt_identity, unset_jwt_cookies, verify_jwt_in_request  # type: ignore
+from flask_jwt_extended.exceptions import JWTExtendedException
+from jwt.exceptions import PyJWTError
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship, validates
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -75,7 +77,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         db_sess.add(user)
 
         now = get_datetime_now()
-        Log.added(user, creator, None, now, db_sess=db_sess)
+        Log.added(user, creator, None, now, commit=False, db_sess=db_sess)
 
         for roleId in roles:
             UserRole.new(creator, user.id, roleId, now=now, commit=False, db_sess=db_sess)
@@ -106,22 +108,21 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     def _get_current(lazyload: bool, for_update: bool):
         from .. import get_db_session, get_user_by_jwt_identity
 
-        try:
-            # A cached ORM object is not proof that its row is locked. Re-run
-            # the query when a caller explicitly requests SELECT ... FOR UPDATE.
-            if "user" in g and not for_update:
-                return g.user
-            verify_jwt_in_request()
-            db_sess = get_db_session()
-            user = get_user_by_jwt_identity(db_sess, get_jwt_identity(), lazyload=lazyload, for_update=for_update)
-            g.user = user
-            return user  # type: ignore
-        except Exception:
-            try:
-                g.user = None
-            except Exception:  # noqa: S110
-                pass
+        if not has_request_context():
             return None
+        # A cached ORM object is not proof that its row is locked. Re-run
+        # the query when a caller explicitly requests SELECT ... FOR UPDATE.
+        if "user" in g and not for_update:
+            return g.user
+        try:
+            verify_jwt_in_request()
+        except (JWTExtendedException, PyJWTError):
+            g.user = None
+            return None
+        db_sess = get_db_session()
+        user = get_user_by_jwt_identity(db_sess, get_jwt_identity(), lazyload=lazyload, for_update=for_update)
+        g.user = user
+        return user  # type: ignore
 
     @final
     @classmethod

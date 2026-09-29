@@ -20,7 +20,7 @@ from . import db_session
 from .alembic import alembic_upgrade
 from .authentication import get_user_id_by_jwt_identity
 from .doc_api import init_api_docs
-from .logger import get_logger_dashboard, get_logger_requests, setLogging
+from .logger import get_logger_dashboard, get_logger_requests, redact_sensitive_data, setLogging
 from .utils import get_json, get_secret_key, get_secret_key_rnd, randstr, register_blueprints, response_msg
 
 _config: "AppConfig | None" = None
@@ -46,6 +46,7 @@ class AppConfig:
         MESSAGE_TO_FRONTEND: str = "",
         STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],  # noqa: B006
         DEV_MODE: bool = False,
+        LOG_JSON_RESPONSES: bool | None = None,
         DELAY_MODE: bool = False,
         PAGE404: str = "index.html",
         HEALTH_ROUTE: bool | str = False,
@@ -72,6 +73,8 @@ class AppConfig:
             STATIC_FOLDERS (list[str]): URL prefixes treated as static asset directories.
                 Defaults to ["/static/", "/fonts/", "/_next/"].
             DEV_MODE (bool): If True, enables verbose logging and debug features.
+            LOG_JSON_RESPONSES (bool | None): Log JSON response bodies when True.
+                Defaults to the value of DEV_MODE. Sensitive fields are redacted.
             DELAY_MODE (bool): If True, simulates network latency for UI testing.
             PAGE404 (str): Filename to serve for missing routes (SPA fallback).
             HEALTH_ROUTE (bool | str): Path for health checks.
@@ -112,6 +115,7 @@ class AppConfig:
         self.MESSAGE_TO_FRONTEND = MESSAGE_TO_FRONTEND
         self.STATIC_FOLDERS = [*STATIC_FOLDERS]
         self.DEV_MODE = DEV_MODE
+        self.LOG_JSON_RESPONSES = DEV_MODE if LOG_JSON_RESPONSES is None else LOG_JSON_RESPONSES
         self.DELAY_MODE = DELAY_MODE
         self.PAGE404 = PAGE404
         self.HEALTH_ROUTE = "/api/health" if HEALTH_ROUTE is True else HEALTH_ROUTE
@@ -379,8 +383,6 @@ def create_app(import_name: str, config: AppConfig):
         if request.path.startswith(bafser_config.api_url):
             try:
                 if g.json[1]:
-                    from .logger import redact_sensitive_data
-
                     data = json.dumps(redact_sensitive_data(g.json[0]))[:512]
                     logreq.info("Request;;%(data)s", {"data": data})
                 else:
@@ -396,8 +398,14 @@ def create_app(import_name: str, config: AppConfig):
         logdash.info("", extra={"code": response.status_code})
         if request.path.startswith(bafser_config.api_url):
             try:
-                if response.content_type == "application/json":
-                    logreq.info("Response;%s;%s", response.status_code, str(response.data)[:512])
+                if config.LOG_JSON_RESPONSES and response.is_json and not response.is_streamed and not response.direct_passthrough:
+                    try:
+                        response_json = json.loads(response.get_data())
+                    except (TypeError, ValueError):
+                        logreq.info("Response;%s", response.status_code)
+                    else:
+                        data = json.dumps(redact_sensitive_data(response_json), ensure_ascii=False)[:512]
+                        logreq.info("Response;%s;%s", response.status_code, data)
                 else:
                     logreq.info("Response;%s", response.status_code)
             except Exception as x:
@@ -405,7 +413,9 @@ def create_app(import_name: str, config: AppConfig):
 
         response.set_cookie("MESSAGE_TO_FRONTEND", quote(config.MESSAGE_TO_FRONTEND))
 
-        if config.JWT_ACCESS_TOKEN_REFRESH:
+        access_cookie = app.config.get("JWT_ACCESS_COOKIE_NAME", "access_token_cookie")  # type: ignore
+        access_cookie_already_set = any(header.startswith(f"{access_cookie}=") for header in response.headers.getlist("Set-Cookie"))
+        if config.JWT_ACCESS_TOKEN_REFRESH and response.status_code < 400 and not access_cookie_already_set:
             try:
                 exp_timestamp: float = get_jwt()["exp"]  # type: ignore
                 now = datetime.now(timezone.utc)
@@ -469,7 +479,7 @@ def create_app(import_name: str, config: AppConfig):
 
     if config.HEALTH_ROUTE:
 
-        @app.route("/api/health")
+        @app.route(config.HEALTH_ROUTE)
         def health():  # pyright: ignore[reportUnusedFunction]
             try:
                 with db_session.create_session() as db_sess:

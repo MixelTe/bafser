@@ -57,15 +57,21 @@ class Log(SqlAlchemyBase, IdMixin):
         now: datetime | None = None,
         commit: bool = True,
         db_sess: Session | None = None,
+        *,
+        flush: bool = True,
     ):
+        """Add an audit entry, flushing a new ID by default without committing when commit=False."""
         _changes = None
         if changes is not None:
             _changes = [(key, None, v) for key, v in changes]
         log = Log._create(record, actor, _changes, now, False, db_sess, Actions.added)
         db_sess = log.db_sess
         db_sess.add(record)
+        if flush and isinstance(record, IdMixin) and record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
+            db_sess.flush()
+            log.recordId = record.id
         if commit:
-            if isinstance(record, IdMixin) and record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
+            if not flush and isinstance(record, IdMixin) and record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
                 db_sess.commit()
                 log.recordId = record.id
             db_sess.commit()

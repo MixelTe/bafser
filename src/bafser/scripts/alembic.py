@@ -14,10 +14,15 @@ def init(args: list[str]):
 
     os.makedirs(bafser_config.migrations_folder, exist_ok=True)
     os.makedirs(os.path.join(bafser_config.migrations_folder, "versions"), exist_ok=True)
-    with open(os.path.join(bafser_config.migrations_folder, "env.py"), "w", encoding="utf8") as f:
-        f.write("from bafser.alembic import run\n\nrun()\n")
-    with open(os.path.join(bafser_config.migrations_folder, "script.py.mako"), "w", encoding="utf8") as f:
-        f.write(script_py_mako)
+    for path, content in (
+        (os.path.join(bafser_config.migrations_folder, "env.py"), "from bafser.alembic import run\n\nrun()\n"),
+        (os.path.join(bafser_config.migrations_folder, "script.py.mako"), script_py_mako),
+    ):
+        try:
+            with open(path, "w" if "--force" in args else "x", encoding="utf8") as f:
+                f.write(content)
+        except FileExistsError:
+            print(f"Skipping existing file: {path}")
 
 
 def revision(args: list[str]):
@@ -52,7 +57,7 @@ def downgrade(args: list[str]):
 
 def run(args: list[str]):
     scripts = [
-        ("init", "create folders and files", init),
+        ("init", "[--force] : create folders and files", init),
         ("revision", "[name] : autogenerate migration script", revision),
         ("upgrade", "[--prod] : upgrade head", upgrade),
         ("downgrade", "<revision> [--prod] : downgrade <revision>", downgrade),

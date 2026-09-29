@@ -19,7 +19,7 @@ jobs:
     - name: Check source and behavior
       run: |
         python -m compileall -q src test
-        python -m unittest test.test_compatibility
+        python -m unittest discover -s test -v
 
   build:
     needs: compatibility

@@ -1,7 +1,6 @@
 db_dev_path = "storage/db/dev.db"
 # db_dev_path = "ENV:DBPATH"
-db_path = "username:UR2hqJDbSfQ@example.com/db_mysql"
-# db_path = "ENV:DBPATH"
+db_path = "ENV:DBPATH"  # e.g. mysql_user:password@localhost/app_db
 # Secure MySQL setup:
 # db_path = ""
 # env values:
