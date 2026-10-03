@@ -3,7 +3,6 @@ from typing import Any
 
 from alembic import command
 from alembic.config import Config
-from alembic.environment import AutogenContext
 
 import bafser_config
 
@@ -63,7 +62,7 @@ def run():
 
     issqlite = config.get_main_option("issqlite") == "1"
 
-    def render_item(type_: str, obj: Any, autogen_context: AutogenContext):
+    def render_item(type_: str, obj: Any, autogen_context: Any):
         if type_ == "type" and isinstance(obj, TruncateString):
             return f"sa.String(length={obj.impl.length})"  # type: ignore
         return False
