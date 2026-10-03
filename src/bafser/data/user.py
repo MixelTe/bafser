@@ -9,7 +9,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, Session, declared_attr, lazyload, mapped_column, relationship, validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from .. import ObjMixin, SqlAlchemyBase, TOperation, UserRole, listfind
+from .. import ObjMixin, SqlAlchemyBase, TOperation, TruncateString, UserRole, listfind
 from ..utils import get_datetime_now
 from ._roles import RolesBase
 from ._tables import TablesBase
@@ -47,7 +47,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
 
     login: Mapped[str] = mapped_column(String(64), index=True, unique=True)
     password: Mapped[str] = mapped_column(String(256), init=False)
-    name: Mapped[str] = mapped_column(String(64))
+    name: Mapped[str] = mapped_column(TruncateString(128))
 
     @validates("login")
     def convert_to_lower(self, key: str, value: Any):

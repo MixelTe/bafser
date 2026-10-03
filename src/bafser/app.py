@@ -234,6 +234,7 @@ class AppConfig:
     def add_secret_key_rnd(self, key: str, path: str) -> "AppConfig":
         """
         Generates a random secret key and persists it to a file if it doesn't exist.
+        Missing parent directories are created automatically.
 
         The value is stored in `current_app.config[key]`.
 

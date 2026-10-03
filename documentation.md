@@ -322,6 +322,19 @@ Ensures a table contains exactly one row. Provides `get(db_sess, commit=True)` t
 **`BigIdMixin`**
 Adds a unique short string identifier `id_big` (8 characters). Provides `get_by_big_id(id_big, includeDeleted=False, db_sess=None)` and `set_unique_big_id(db_sess=None)` to generate a collision‑free ID.
 
+
+Use `TruncateString` for text that may exceed a database column's limit:
+
+```py
+from bafser import TruncateString
+from sqlalchemy.orm import Mapped, mapped_column
+
+title: Mapped[str] = mapped_column(TruncateString(128))
+```
+
+Values longer than the declared length are cut when bound to a SQL statement.
+
+
 #### `TablesBase`
 
 *Class* `bafser.TablesBase`

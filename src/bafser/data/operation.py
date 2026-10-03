@@ -3,7 +3,7 @@ from typing import Any, TypedDict
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .. import SqlAlchemyBase
+from .. import SqlAlchemyBase, TruncateString
 from ..utils import get_all_fields, get_all_values
 
 TOperation = tuple[str, str]
@@ -13,7 +13,7 @@ class Operation(SqlAlchemyBase):
     __tablename__ = "Operation"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, unique=True)
-    name: Mapped[str] = mapped_column(String(32))
+    name: Mapped[str] = mapped_column(TruncateString(128))
 
     def __repr__(self):
         return f"<Operation> [{self.id}] {self.name}"

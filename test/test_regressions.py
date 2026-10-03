@@ -41,6 +41,17 @@ class ValidationTests(unittest.TestCase):
 
 
 class AppTests(unittest.TestCase):
+    def test_add_secret_key_rnd_creates_parent_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            key_path = Path(directory) / "nested" / "keys" / "secret.txt"
+
+            first = AppConfig().add_secret_key_rnd("TEST_SECRET", str(key_path))
+            second = AppConfig().add_secret_key_rnd("TEST_SECRET", str(key_path))
+
+            self.assertTrue(key_path.is_file())
+            self.assertEqual(first.config[-1], ("TEST_SECRET", key_path.read_text(encoding="utf8")))
+            self.assertEqual(second.config[-1], first.config[-1])
+
     def make_app(
         self,
         directory: Path,

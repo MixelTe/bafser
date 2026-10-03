@@ -5,11 +5,10 @@ import os
 from datetime import datetime
 from typing import Any, TypedDict, TypeVar, cast
 
-from typing_extensions import override
-
 from flask import current_app
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, Session, mapped_column
+from typing_extensions import override
 
 from .. import Log, ObjMixin, SqlAlchemyBase, UserBase, create_file_response, get_datetime_now, get_json_values
 from ._tables import TablesBase

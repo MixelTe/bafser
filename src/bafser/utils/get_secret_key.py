@@ -1,12 +1,15 @@
 import os
 import uuid
 
+from .create_folder_for_file import create_folder_for_file
+
 
 def get_secret_key_rnd(path: str):
     if os.path.exists(path):
         with open(path, "r", encoding="utf8") as f:
             return f.read()
     else:
+        create_folder_for_file(path)
         with open(path, "w", encoding="utf8") as f:
             key = str(uuid.uuid4())
             f.write(key)

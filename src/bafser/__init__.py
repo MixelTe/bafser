@@ -64,6 +64,7 @@ from .doc_api import doc_api, get_api_docs, TJson, TJsonListOf, render_docs_page
 from .dashboard import render_dashboard_page
 
 from .db_session import SqlAlchemyBase
+from .truncate_string import TruncateString
 from .table_base import IdMixin, ObjMixin, SingletonMixin, BigIdMixin
 from .data._tables import TablesBase
 from .data._roles import RolesBase
@@ -113,6 +114,7 @@ __all__ = [
     "TJsonListOf",
     "TOperation",
     "TablesBase",
+    "TruncateString",
     "Undefined",
     "UserBase",
     "UserDict",

@@ -1,9 +1,8 @@
 from typing import TypedDict
 
-from sqlalchemy import String
 from sqlalchemy.orm import Mapped, Session, mapped_column, relationship
 
-from .. import ObjMixin, SqlAlchemyBase, get_datetime_now
+from .. import ObjMixin, SqlAlchemyBase, TruncateString, get_datetime_now
 from ._roles import RoleDesc, RolesBase, TRole, get_roles
 from ._tables import TablesBase
 from .log import Actions, Changes, Log
@@ -19,7 +18,7 @@ class RoleDict(TypedDict):
 class Role(SqlAlchemyBase, ObjMixin):
     __tablename__ = TablesBase.Role
 
-    name: Mapped[str] = mapped_column(String(32))
+    name: Mapped[str] = mapped_column(TruncateString(128))
 
     permissions: Mapped[list[Permission]] = relationship(lazy="joined", init=False)
 

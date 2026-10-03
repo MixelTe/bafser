@@ -6,7 +6,7 @@ from sqlalchemy import JSON, String
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from sqlalchemy.orm.attributes import get_history
 
-from .. import IdMixin, SqlAlchemyBase, UserBase, get_datetime_now
+from .. import IdMixin, SqlAlchemyBase, TruncateString, UserBase, get_datetime_now
 
 FieldName = str
 NewValue = Any
@@ -38,8 +38,8 @@ class Log(SqlAlchemyBase, IdMixin):
     date: Mapped[datetime]
     actionCode: Mapped[str] = mapped_column(String(16))
     userId: Mapped[int]
-    userName: Mapped[str] = mapped_column(String(64))
-    tableName: Mapped[str] = mapped_column(String(16))
+    userName: Mapped[str] = mapped_column(TruncateString(128))
+    tableName: Mapped[str] = mapped_column(TruncateString(32))
     recordId: Mapped[int]
     changes: Mapped[Changes] = mapped_column(JSON)
 

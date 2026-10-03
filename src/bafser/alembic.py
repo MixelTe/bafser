@@ -53,12 +53,18 @@ def run():
         fileConfig(config.config_file_name)
 
     from .db_session import SqlAlchemyBase
+    from .truncate_string import TruncateString
     from .utils.import_all_tables import import_all_tables
 
     import_all_tables()
     target_metadata = SqlAlchemyBase.metadata
 
     issqlite = config.get_main_option("issqlite") == "1"
+
+    def render_item(type_, obj, autogen_context):
+        if type_ == "type" and isinstance(obj, TruncateString):
+            return f"sa.String(length={obj.impl.length})"
+        return False
 
     def run_migrations_offline() -> None:
         """Run migrations in 'offline' mode.
@@ -79,6 +85,7 @@ def run():
             literal_binds=True,
             dialect_opts={"paramstyle": "named"},
             render_as_batch=issqlite,
+            render_item=render_item,
         )
 
         with context.begin_transaction():
@@ -102,6 +109,7 @@ def run():
                 connection=connection,
                 target_metadata=target_metadata,
                 render_as_batch=issqlite,
+                render_item=render_item,
             )
 
             with context.begin_transaction():
