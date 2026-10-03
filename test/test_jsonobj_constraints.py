@@ -133,7 +133,7 @@ class JsonObjConstraintTests(unittest.TestCase):
             class BadFinite(JsonObj):  # pyright: ignore[reportUnusedClass]
                 value: Any = JsonObj.field(finite=True)
 
-        with self.assertRaisesRegex(TypeError, "BadOverride.name: min_length/max_length requires a string or list field"):
+        with self.assertRaisesRegex(TypeError, "BadOverride.name: min_length/max_length requires a string, list, or tuple field"):
 
             class BadOverride(Profile):  # pyright: ignore[reportUnusedClass]
                 name: int  # pyright: ignore[reportIncompatibleVariableOverride, reportIncompatibleMethodOverride]
