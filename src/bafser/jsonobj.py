@@ -1,5 +1,7 @@
 import inspect
 import json
+import math
+import re
 import sys
 from collections.abc import Callable
 from collections.abc import Callable as CallableClass
@@ -65,14 +67,50 @@ class JsonField:
     default_factory: Callable[[], Any] | None
     desc: str | None
     repr: bool
+    min_value: int | float | None
+    max_value: int | float | None
+    finite: bool
+    min_length: int | None
+    max_length: int | None
+    pattern: re.Pattern[str] | None
+    choices: tuple[Any, ...] | None
+    validators: tuple[Callable[[Any], str | None], ...]
 
 
 @overload
-def _field(*, default_factory: Callable[[], Any], desc: str | None = None, init: bool = True, repr: bool = True) -> Any: ...
+def _field(
+    *,
+    default_factory: Callable[[], Any],
+    desc: str | None = None,
+    init: bool = True,
+    repr: bool = True,
+    min_value: int | float | None = None,
+    max_value: int | float | None = None,
+    finite: bool = False,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    pattern: str | re.Pattern[str] | None = None,
+    choices: tuple[Any, ...] | None = None,
+    validators: tuple[Callable[[Any], str | None], ...] = (),
+) -> Any: ...
 
 
 @overload
-def _field(*, default: Any = Undefined, desc: str | None = None, init: bool = True, repr: bool = True) -> Any: ...
+def _field(
+    *,
+    default: Any = Undefined,
+    desc: str | None = None,
+    init: bool = True,
+    repr: bool = True,
+    min_value: int | float | None = None,
+    max_value: int | float | None = None,
+    finite: bool = False,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    pattern: str | re.Pattern[str] | None = None,
+    choices: tuple[Any, ...] | None = None,
+    validators: tuple[Callable[[Any], str | None], ...] = (),
+) -> Any: ...
 
 
 def _field(
@@ -82,9 +120,102 @@ def _field(
     desc: str | None = None,
     init: bool = True,
     repr: bool = True,
+    min_value: int | float | None = None,
+    max_value: int | float | None = None,
+    finite: bool = False,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    pattern: str | re.Pattern[str] | None = None,
+    choices: tuple[Any, ...] | None = None,
+    validators: tuple[Callable[[Any], str | None], ...] = (),
 ) -> Any:
     """Configure object field"""
-    return JsonField(default=default, default_factory=default_factory, desc=desc, repr=repr)
+    if min_value is not None and max_value is not None and min_value > max_value:
+        raise ValueError("min_value cannot exceed max_value")
+    if not isinstance(finite, bool):  # type: ignore
+        raise TypeError("finite must be a boolean")
+    if min_length is not None and min_length < 0:
+        raise ValueError("min_length cannot be negative")
+    if max_length is not None and max_length < 0:
+        raise ValueError("max_length cannot be negative")
+    if min_length is not None and max_length is not None and min_length > max_length:
+        raise ValueError("min_length cannot exceed max_length")
+    if pattern is not None and not isinstance(pattern, (str, re.Pattern)):  # type: ignore
+        raise TypeError("pattern must be a string or compiled regular expression")
+    if isinstance(pattern, re.Pattern) and not isinstance(pattern.pattern, str):  # type: ignore
+        raise TypeError("pattern must match strings")
+    if choices is not None and not isinstance(choices, tuple):  # type: ignore
+        raise TypeError("choices must be a tuple")
+    if choices == ():
+        raise ValueError("choices cannot be empty")
+    if not all(callable(validator) for validator in validators):
+        raise TypeError("validators must contain callables")
+    compiled_pattern = re.compile(pattern) if isinstance(pattern, str) else pattern
+    return JsonField(
+        default, default_factory, desc, repr, min_value, max_value, finite, min_length, max_length, compiled_pattern, choices, tuple(validators)
+    )
+
+
+def _validate_field_rules(value: Any, field: JsonField) -> str | None:
+    if value is not None:
+        if field.finite and isinstance(value, float) and not math.isfinite(value):
+            return "must be finite"
+        if field.min_value is not None and value < field.min_value:
+            return f"must be at least {field.min_value}"
+        if field.max_value is not None and value > field.max_value:
+            return f"must be at most {field.max_value}"
+        if field.min_length is not None or field.max_length is not None:
+            unit_singular = "character" if isinstance(value, str) else "item"
+            if field.min_length is not None and len(value) < field.min_length:  # type: ignore
+                unit = unit_singular if field.min_length == 1 else unit_singular + "s"
+                return f"must have at least {field.min_length} {unit}"
+            if field.max_length is not None and len(value) > field.max_length:  # type: ignore
+                unit = unit_singular if field.max_length == 1 else unit_singular + "s"
+                return f"must have at most {field.max_length} {unit}"
+        if field.pattern is not None and field.pattern.fullmatch(cast(str, value)) is None:
+            return f"must match pattern {field.pattern.pattern}"
+    if field.choices is not None and not any(type(value) is type(choice) and value == choice for choice in field.choices):
+        return f"must be one of {field.choices!r}"
+    for validator in field.validators:
+        error = validator(value)
+        if error is not None:
+            if not isinstance(error, str):  # type: ignore
+                raise TypeError("field validators must return a string or None")
+            return error
+    return None
+
+
+def _field_type_matches(t: Any, allowed: tuple[type, ...]) -> bool:
+    while type(t) is TypeAliasType:
+        t = cast(Any, t).__value__
+    origin = get_origin(t)
+    args = get_args(t)
+    if origin is JsonOpt and len(args) == 1:
+        return _field_type_matches(args[0], allowed)
+    if origin in (UnionType, Union):
+        args = tuple(arg for arg in args if arg is not NoneType)
+        return bool(args) and all(_field_type_matches(arg, allowed) for arg in args)
+    if origin is Literal:
+        return bool(args) and all(_field_type_matches(type(arg), allowed) for arg in args)
+    t = origin or t
+    return isinstance(t, type) and t is not bool and issubclass(t, allowed)
+
+
+def _check_field_type(cls: type, key: str, annotation: Any, field: JsonField) -> None:
+    if isinstance(annotation, str):
+        namespace = vars(sys.modules[cls.__module__])
+        annotation = eval(annotation, namespace, {cls.__name__: cls})
+
+    def require(condition: bool, allowed: tuple[type, ...], rule: str, expected: str) -> None:
+        if condition and not _field_type_matches(annotation, allowed):
+            raise TypeError(f"{cls.__name__}.{key}: {rule} requires {expected}")
+
+    require(field.finite, (int, float), "finite", "a numeric field")
+    require(field.min_value is not None or field.max_value is not None, (int, float), "min_value/max_value", "a numeric field")
+    require(
+        field.min_length is not None or field.max_length is not None, (str, list, tuple), "min_length/max_length", "a string, list, or tuple field"
+    )
+    require(field.pattern is not None, (str,), "pattern", "a string field")
 
 
 def _noinit_value(value: T, *, init: bool = False) -> T:
@@ -109,6 +240,13 @@ class JsonObj:
             name: str = "anonym"  # optional field with default value
             name: str = JsonObj.field(default="anonym", desc="The name of obj")  # same as prev but with description
             value: int = JsonObj.field(desc="Required field with description")
+            display_name: str = JsonObj.field(min_length=1, max_length=128)
+            age: int = JsonObj.field(min_value=18, max_value=120)
+            score: float = JsonObj.field(finite=True)
+            code: str = JsonObj.field(pattern=r"[A-Z]{2}\\d{2}")
+            tags: list[str] = JsonObj.field(min_length=1, max_length=5)
+            status: str = JsonObj.field(choices=("draft", "published"))
+            email: str = JsonObj.field(validators=(check_email,))
             some2: JsonOpt[SomeObj2]  # nested JsonObjs are supported
             some: JsonOpt["SomeObj"]  # recursive JsonObjs are supported
             one = 1  # ignored if no type alias
@@ -179,6 +317,15 @@ class JsonObj:
             if key == "rect" and isinstance(v, MyRect):
                 return key, v.get_dict()
 
+    Override `_validate_object` for checks involving multiple fields. It runs
+    after type and field validation and returns an error string or None::
+
+        @override
+        def _validate_object(self) -> str | None:
+            if self.end <= self.start:
+                return "end must be after start"
+            return None
+
     Access types for complex logic::
 
         get_type_hints() -> dict[str, Any]
@@ -210,7 +357,10 @@ class JsonObj:
     def __init_subclass__(cls):
         type_hints = inspect.get_annotations(cls)
         repr_fields: list[str] = []
-        cls.__fields__ = {}
+        cls.__fields__ = {key: field for base in reversed(cls.__mro__[1:]) for key, field in getattr(base, "__fields__", {}).items()}
+        cls.__type_hints__ = None
+        cls.__field_types__ = {}
+        cls.__optional_fields__ = []
         for k in type_hints:
             add_to_repr = not k.startswith("_")
             if hasattr(cls, k):
@@ -220,8 +370,12 @@ class JsonObj:
                     setattr(cls, k, v.default)
                     if not v.repr:
                         add_to_repr = False
+                elif k in cls.__dict__:
+                    cls.__fields__.pop(k, None)
             else:
                 setattr(cls, k, Undefined)
+            if k in cls.__fields__:
+                _check_field_type(cls, k, type_hints[k], cls.__fields__[k])
             if add_to_repr:
                 repr_fields.append(k)
         if cls.__repr_fields__ is None:
@@ -459,6 +613,12 @@ class JsonObj:
                 if err:
                     r = k + err
                     break
+                field = self.__fields__.get(k)
+                if field is not None and v is not Undefined:
+                    err = _validate_field_rules(v, field)
+                    if err is not None:
+                        r = k + " " + err
+                        break
             # except Exception as x:
             except JsonParseError as x:
                 self.__exceptions__.append((k, x))
@@ -468,7 +628,13 @@ class JsonObj:
                 t = type_hints[k]
                 return f"{k} is not {type_name(t)}: {x}"
             return f"{k}: {x}"
-        return r
+        if r is not None:
+            return r
+        return self._validate_object()
+
+    def _validate_object(self) -> str | None:
+        """Override to check relationships between fields after field validation."""
+        return None
 
     def is_valid(self):
         """Validate data"""
@@ -543,6 +709,7 @@ class JsonObj:
             def _serialize(self, key: str, v: Any):
                 if key == "rect" and isinstance(v, MyRect):
                     return key, v.get_dict()
+
         """
         return None
 

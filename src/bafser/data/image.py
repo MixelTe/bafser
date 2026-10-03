@@ -101,19 +101,21 @@ class Image(SqlAlchemyBase, ObjMixin):
         assert img
         db_sess = creator.db_sess
         db_sess.add(img)
-        db_sess.flush()
-
-        path = img.get_path()
+        path = None
         try:
+            # Capture attribute history before the flush that assigns the image ID.
+            Log.added(img, creator, now=now, commit=False)
+            path = img.get_path()
             with open(path, "wb") as f:
                 f.write(decoded_data)
-            Log.added(img, creator, now=now)
+            db_sess.commit()
         except Exception:
             db_sess.rollback()
-            try:
-                os.remove(path)
-            except FileNotFoundError:
-                pass
+            if path is not None:
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    pass
             raise
 
         return img, None

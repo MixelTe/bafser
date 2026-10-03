@@ -516,6 +516,36 @@ Renders an HTML page that interactively displays the API documentation. Mount th
 
 Utilities for defining JSON‑serializable objects with optional fields and validation.
 
+Additional field rules can be declared with `JsonObj.field`:
+
+```python
+from bafser import JsonObj, JsonOpt
+
+def check_email(value: str) -> str | None:
+    return None if "@" in value else "must contain @"
+
+class CreateUser(JsonObj):
+    name: str = JsonObj.field(min_length=1, max_length=128)
+    age: int = JsonObj.field(min_value=18, max_value=120)
+    score: float = JsonObj.field(finite=True)
+    code: str = JsonObj.field(pattern=r"[A-Z]{2}\d{2}")
+    status: str = JsonObj.field(choices=("draft", "active"))
+    tags: list[str] = JsonObj.field(min_length=1, max_length=5)
+    email: JsonOpt[str] = JsonObj.field(validators=(check_email,))
+```
+
+`min_value` and `max_value` apply to numbers; `finite=True` rejects `NaN` and
+positive or negative infinity. `min_length` and `max_length` apply
+to strings and lists. Bounds are inclusive. `pattern` accepts a regular expression
+string or compiled pattern and must match the entire string. `choices` accepts a
+nonempty tuple of allowed values. Validators receive the field value and return
+`None` on success or an error string. Type validation runs first, followed by
+the finite check, bounds, pattern, choices, and validators. Rules are skipped for an absent `JsonOpt` field.
+Defaults are validated too. Override `_validate_object() -> str | None` for
+rules involving multiple fields; it runs after all fields pass validation.
+Incompatible rules, such as `min_value` on a `str` field, raise `TypeError` when
+the `JsonObj` class is defined.
+
 ---
 
 ### 3.7 CLI

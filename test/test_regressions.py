@@ -1,5 +1,6 @@
 """Regression tests for request handling, validation, and database writes."""
 
+import base64
 import io
 import importlib
 import os
@@ -174,6 +175,40 @@ class AppTests(unittest.TestCase):
 
 
 class DatabaseTests(unittest.TestCase):
+    def test_image_creation_log_keeps_fields_before_flush(self):
+        from test.data.apple import Apple  # type: ignore
+        from test.data.img import Img  # type: ignore
+        from test.data.user import User
+
+        engine = create_engine("sqlite:///:memory:")
+        SqlAlchemyBase.metadata.create_all(engine)
+        with tempfile.TemporaryDirectory() as directory:
+            app = Flask(__name__)
+            app.config.update(IMAGES_FOLDER=directory, MAX_IMAGE_BYTES=1024)
+            with app.app_context(), Session(engine) as session:
+                actor = User(login="admin", name="Admin", balance=0)
+                actor.set_password("password")
+                session.add(actor)
+                session.commit()
+
+                image_data = base64.b64encode(b"\x89PNG\r\n\x1a\npayload").decode("ascii")
+                image, error = Img.new(actor, {
+                    "name": "poster",
+                    "desc": "test image",
+                    "data": "data:image/png;base64," + image_data,
+                })
+
+                self.assertIsNone(error)
+                self.assertIsNotNone(image)
+                assert image is not None
+                log = session.query(Log).filter_by(tableName=image.__tablename__, recordId=image.id).one()
+                changes = {field: (old, new) for field, old, new in log.changes}
+                self.assertEqual(changes["name"], (None, "poster"))
+                self.assertEqual(changes["desc"], (None, "test image"))
+                self.assertEqual(changes["createdById"], (None, actor.id))
+                self.assertTrue(Path(image.get_path()).is_file())
+        engine.dispose()
+
     def test_log_added_flushes_new_id_without_commit_unless_disabled(self):
         from test.data.apple import Apple  # type: ignore
         from test.data.img import Img  # type: ignore
