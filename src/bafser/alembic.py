@@ -1,7 +1,9 @@
 import os
+from typing import Any
 
 from alembic import command
 from alembic.config import Config
+from alembic.environment import AutogenContext
 
 import bafser_config
 
@@ -61,9 +63,9 @@ def run():
 
     issqlite = config.get_main_option("issqlite") == "1"
 
-    def render_item(type_, obj, autogen_context):
+    def render_item(type_: str, obj: Any, autogen_context: AutogenContext):
         if type_ == "type" and isinstance(obj, TruncateString):
-            return f"sa.String(length={obj.impl.length})"
+            return f"sa.String(length={obj.impl.length})"  # type: ignore
         return False
 
     def run_migrations_offline() -> None:

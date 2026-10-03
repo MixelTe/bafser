@@ -1,6 +1,5 @@
 import re
 import unittest
-
 from typing import Any
 
 from bafser import JsonObj, JsonOpt, JsonParseError, Undefined
@@ -13,7 +12,7 @@ def must_contain_at(value: str) -> str | None:
 class Profile(JsonObj):
     name: str = JsonObj.field(min_length=1, max_length=4)
     age: int = JsonObj.field(min_value=18, max_value=120)
-    email: JsonOpt[str] = JsonObj.field(validators=(must_contain_at,))
+    email: JsonOpt[str] = JsonObj.field(default=Undefined, validators=(must_contain_at,))
 
 
 class ProfileWithDefault(Profile):
@@ -120,24 +119,28 @@ class JsonObjConstraintTests(unittest.TestCase):
 
     def test_incompatible_rules_fail_when_class_is_defined(self):
         with self.assertRaisesRegex(TypeError, "BadNumber.name: min_value/max_value requires a numeric field"):
-            class BadNumber(JsonObj):
+
+            class BadNumber(JsonObj):  # pyright: ignore[reportUnusedClass]
                 name: str = JsonObj.field(min_value=1)
 
         with self.assertRaisesRegex(TypeError, "BadPattern.items: pattern requires a string field"):
-            class BadPattern(JsonObj):
-                items: list[str] = JsonObj.field(pattern="x")
+
+            class BadPattern(JsonObj):  # pyright: ignore[reportUnusedClass]
+                items: list[str] = JsonObj.field(pattern="x")  # pyright: ignore[reportIncompatibleMethodOverride]
 
         with self.assertRaisesRegex(TypeError, "BadFinite.value: finite requires a numeric field"):
-            class BadFinite(JsonObj):
+
+            class BadFinite(JsonObj):  # pyright: ignore[reportUnusedClass]
                 value: Any = JsonObj.field(finite=True)
 
         with self.assertRaisesRegex(TypeError, "BadOverride.name: min_length/max_length requires a string or list field"):
-            class BadOverride(Profile):
-                name: int
+
+            class BadOverride(Profile):  # pyright: ignore[reportUnusedClass]
+                name: int  # pyright: ignore[reportIncompatibleVariableOverride, reportIncompatibleMethodOverride]
 
     def test_string_annotations_and_optional_union(self):
         class OptionalName(JsonObj):
-            name: "JsonOpt[str | None]" = JsonObj.field(min_length=1)
+            name: "JsonOpt[str | None]" = JsonObj.field(default=Undefined, min_length=1)
 
         self.assertIsNone(OptionalName().validate())
         self.assertIsNone(OptionalName(name=None).validate())

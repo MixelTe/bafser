@@ -1,8 +1,8 @@
 """Regression tests for request handling, validation, and database writes."""
 
 import base64
-import io
 import importlib
+import io
 import os
 import sys
 import tempfile
@@ -184,7 +184,7 @@ class DatabaseTests(unittest.TestCase):
         SqlAlchemyBase.metadata.create_all(engine)
         with tempfile.TemporaryDirectory() as directory:
             app = Flask(__name__)
-            app.config.update(IMAGES_FOLDER=directory, MAX_IMAGE_BYTES=1024)
+            app.config.update(IMAGES_FOLDER=directory, MAX_IMAGE_BYTES=1024)  # type: ignore
             with app.app_context(), Session(engine) as session:
                 actor = User(login="admin", name="Admin", balance=0)
                 actor.set_password("password")
@@ -192,11 +192,14 @@ class DatabaseTests(unittest.TestCase):
                 session.commit()
 
                 image_data = base64.b64encode(b"\x89PNG\r\n\x1a\npayload").decode("ascii")
-                image, error = Img.new(actor, {
-                    "name": "poster",
-                    "desc": "test image",
-                    "data": "data:image/png;base64," + image_data,
-                })
+                image, error = Img.new(
+                    actor,
+                    {
+                        "name": "poster",
+                        "desc": "test image",
+                        "data": "data:image/png;base64," + image_data,
+                    },
+                )
 
                 self.assertIsNone(error)
                 self.assertIsNotNone(image)
@@ -274,11 +277,10 @@ class DatabaseTests(unittest.TestCase):
         engine.dispose()
 
     def test_existing_operation_name_is_updated(self):
+        from bafser.data.operation import Operation
         from test.data.apple import Apple  # type: ignore
         from test.data.img import Img  # type: ignore
         from test.data.user import User  # type: ignore
-
-        from bafser.data.operation import Operation
 
         class Operations:
             @staticmethod
