@@ -91,12 +91,12 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return cls(**user_kwargs)
 
     @classmethod
-    def get_lazy(cls, db_sess: Session, id: int, includeDeleted: bool = False, *, for_update: bool = False):
-        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.id == id).options(lazyload(cls.roles)).first()
+    def get_lazy(cls, id: int, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):
+        return cls.query(includeDeleted, for_update=for_update, db_sess=db_sess).filter(cls.id == id).options(lazyload(cls.roles)).first()
 
     @classmethod
-    def get_by_login(cls, db_sess: Session, login: str, includeDeleted: bool = False, *, for_update: bool = False):
-        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.login == login.lower()).first()
+    def get_by_login(cls, login: str, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):
+        return cls.query(includeDeleted, for_update=for_update, db_sess=db_sess).filter(cls.login == login.lower()).first()
 
     @final
     @classmethod
@@ -149,14 +149,14 @@ class UserBase(ObjMixin, SqlAlchemyBase):
     @staticmethod
     def _create_admin(db_sess: Session):
         User = get_user_table()
-        admin = User.get_admin(db_sess)
+        admin = User.get_admin(db_sess=db_sess)
         if admin:
             return admin
         return User.create_admin(db_sess)
 
     @classmethod
-    def get_admin(cls, db_sess: Session):
-        return cls.query(db_sess).join(UserRole).filter(UserRole.roleId == RolesBase.admin).options(lazyload(cls.roles)).first()
+    def get_admin(cls, *, db_sess: Session | None = None):
+        return cls.query(db_sess=db_sess).join(UserRole).filter(UserRole.roleId == RolesBase.admin).options(lazyload(cls.roles)).first()
 
     def is_admin(self):
         return self.has_role(RolesBase.admin)
@@ -169,8 +169,8 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         return u
 
     @classmethod
-    def all_of_role(cls, db_sess: Session, role: int, includeDeleted: bool = False, *, for_update: bool = False):
-        return cls.query(db_sess, includeDeleted, for_update=for_update).join(UserRole).filter(UserRole.roleId == role).all()
+    def all_of_role(cls, role: int, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):
+        return cls.query(includeDeleted, for_update=for_update, db_sess=db_sess).join(UserRole).filter(UserRole.roleId == role).all()
 
     def update_password(self, actor: "UserBase", password: str):
         from .. import Log

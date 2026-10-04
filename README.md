@@ -119,7 +119,15 @@ class SomeTable(SqlAlchemyBase, ObjMixin):
 * `ObjMixin` adds `id` and `deleted` columns
 * `SingletonMixin` adds `id` column
 
-Mixins add `get` methods also
+Mixins also provide `get`, `query`, and `all`. They use the request session by
+default; pass `db_sess` when working outside a request or within a specific
+transaction:
+
+```py
+item = SomeTable.get(item_id)
+item = SomeTable.get(item_id, db_sess=session, for_update=True)
+items = SomeTable.all(db_sess=session)
+```
 
 ```py
 # main.py

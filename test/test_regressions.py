@@ -8,11 +8,11 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from flask import Flask, jsonify, make_response
+from flask import Flask, g, jsonify, make_response
 from flask_jwt_extended import create_access_token, unset_jwt_cookies  # type: ignore
 from flask_jwt_extended.exceptions import NoAuthorizationError
 from sqlalchemy import create_engine, event
@@ -175,6 +175,44 @@ class AppTests(unittest.TestCase):
 
 
 class DatabaseTests(unittest.TestCase):
+    def test_query_helpers_use_optional_request_session(self):
+        from bafser.data.db_state import DBState
+        from test.data.user import User
+
+        engine = create_engine("sqlite:///:memory:")
+        SqlAlchemyBase.metadata.create_all(engine)
+        with Session(engine) as session:
+            user = User(login="admin", name="Admin", balance=0)
+            user.set_password("password")
+            session.add(user)
+            session.flush()
+            log = Log(
+                date=datetime.now(), actionCode="added", userId=user.id,
+                userName=user.name, tableName="User", recordId=user.id, changes=[],
+            )
+            session.add(log)
+            session.commit()
+
+            self.assertEqual(User.get(user.id, db_sess=session), user)
+            self.assertEqual(User.query(db_sess=session).count(), 1)
+            self.assertEqual(User.all(db_sess=session), [user])
+            self.assertEqual(Log.get(log.id, db_sess=session), log)
+            self.assertEqual(Log.query(db_sess=session).count(), 1)
+            self.assertEqual(Log.all(db_sess=session), [log])
+
+            app = Flask(__name__)
+            with app.app_context():
+                g.db_session = session
+                self.assertEqual(User.get(user.id), user)
+                self.assertEqual(Log.all(), [log])
+                self.assertTrue(DBState.get().id == 1)
+
+            user.deleted = True
+            session.commit()
+            self.assertIsNone(User.get(user.id, db_sess=session))
+            self.assertEqual(User.get(user.id, includeDeleted=True, db_sess=session), user)
+        engine.dispose()
+
     def test_image_creation_log_keeps_fields_before_flush(self):
         from test.data.apple import Apple  # type: ignore
         from test.data.img import Img  # type: ignore
@@ -268,7 +306,7 @@ class DatabaseTests(unittest.TestCase):
             with self.assertRaises(IntegrityError):
                 User.new(admin, "new-user", "password", "New User", [999], 0, db_sess=session)
             session.rollback()
-            self.assertIsNone(User.get_by_login(session, "new-user"))
+            self.assertIsNone(User.get_by_login("new-user", db_sess=session))
 
             user = User.new(admin, "new-user", "password", "New User", [1], 0, db_sess=session)
             self.assertIsNotNone(UserRole.get(session, user.id, 1))

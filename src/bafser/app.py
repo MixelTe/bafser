@@ -363,7 +363,7 @@ def create_app(import_name: str, config: AppConfig):
         from .data.user import get_user_table
 
         User = get_user_table()
-        admin = User.get_by_login(db_sess, "admin", includeDeleted=True)
+        admin = User.get_by_login("admin", includeDeleted=True, db_sess=db_sess)
         if admin is not None and admin.check_password("admin"):
             admin.set_password(randstr(16))
             db_sess.commit()

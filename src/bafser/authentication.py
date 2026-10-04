@@ -40,9 +40,9 @@ def get_user_by_jwt_identity(db_sess: Session, jwt_identity: Any, *, lazyload: b
         return None
 
     if lazyload:
-        user = get_user_table().get_lazy(db_sess, id, for_update=for_update)
+        user = get_user_table().get_lazy(id, for_update=for_update, db_sess=db_sess)
     else:
-        user = get_user_table().get(db_sess, id, for_update=for_update)
+        user = get_user_table().get(id, for_update=for_update, db_sess=db_sess)
     if not user:
         return None
     if user.password != jwt_identity[1]:

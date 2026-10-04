@@ -9,9 +9,9 @@ def add_user(login: str, password: str, name: str, roleId: int, dev: bool):
     db_session.global_init(dev)
     with db_session.create_session() as db_sess:
         User = get_user_table()
-        user_admin = User.get_admin(db_sess)
+        user_admin = User.get_admin(db_sess=db_sess)
         assert user_admin
-        existing = User.get_by_login(db_sess, login, includeDeleted=True)
+        existing = User.get_by_login(login, includeDeleted=True, db_sess=db_sess)
         if existing:
             print(f"User with login [{login}] already exist")
             return

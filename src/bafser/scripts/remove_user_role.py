@@ -6,7 +6,7 @@ def remove_user_role(userId: int, roleId: int, dev: bool):
     db_session.global_init(dev)
     with db_session.create_session() as db_sess:
         User = get_user_table()
-        user_admin = User.get_admin(db_sess)
+        user_admin = User.get_admin(db_sess=db_sess)
         assert user_admin
         user = db_sess.get(User, userId)
         if not user:

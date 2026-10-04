@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Type, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, TypeVar
 
 from sqlalchemy import MetaData, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, Session, mapped_column
 from sqlalchemy_serializer import SerializerMixin
-from typing_extensions import Annotated
 
 if TYPE_CHECKING:
     from . import UserBase
@@ -20,8 +19,8 @@ convention = {
 
 class TableBase(DeclarativeBase, MappedAsDataclass, SerializerMixin):
     __abstract__ = True
-    __table_args__ = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_unicode_ci"}
-    __fields_hidden_in_log__ = [""]
+    __table_args__: ClassVar = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_unicode_ci"}
+    __fields_hidden_in_log__: ClassVar = [""]
     metadata = MetaData(naming_convention=convention)
 
     @staticmethod
@@ -56,40 +55,22 @@ class IdMixin(MappedAsDataclass):
     id: Mapped[intpk] = mapped_column(init=False)
 
     @classmethod
-    def query(cls, db_sess: Session, *, for_update: bool = False):
-        q = db_sess.query(cls)
+    def query(cls, *, for_update: bool = False, db_sess: Session | None = None):
+        from . import get_db_session
+
+        session = db_sess if db_sess is not None else get_db_session()
+        q = session.query(cls)
         if for_update:
             q = q.with_for_update()
         return q
 
     @classmethod
-    def query2(cls, *, for_update: bool = False, db_sess: Session | None = None):
-        """Calls cls.query with db session from global context"""
-        from . import get_db_session
-
-        return cls.query(db_sess or get_db_session(), for_update=for_update)
+    def get(cls, id: int, *, for_update: bool = False, db_sess: Session | None = None):
+        return cls.query(for_update=for_update, db_sess=db_sess).filter(cls.id == id).first()
 
     @classmethod
-    def get(cls, db_sess: Session, id: int, *, for_update: bool = False):
-        return cls.query(db_sess, for_update=for_update).filter(cls.id == id).first()
-
-    @classmethod
-    def get2(cls, id: int, *, for_update: bool = False, db_sess: Session | None = None):
-        """Calls cls.get with db session from global context"""
-        from . import get_db_session
-
-        return cls.get(db_sess or get_db_session(), id, for_update=for_update)
-
-    @classmethod
-    def all(cls, db_sess: Session, *, for_update: bool = False):
-        return cls.query(db_sess, for_update=for_update).all()
-
-    @classmethod
-    def all2(cls, *, for_update: bool = False, db_sess: Session | None = None):
-        """Calls cls.all with db session from global context"""
-        from . import get_db_session
-
-        return cls.all(db_sess or get_db_session(), for_update=for_update)
+    def all(cls, *, for_update: bool = False, db_sess: Session | None = None):
+        return cls.query(for_update=for_update, db_sess=db_sess).all()
 
     def __repr__(self):
         return f"<{self.__class__.__name__}> [{self.id}]"
@@ -113,8 +94,11 @@ class ObjMixin(IdMixin):
     deleted: Mapped[bool] = mapped_column(server_default="0", init=False)
 
     @classmethod
-    def query(cls, db_sess: Session, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
-        items = db_sess.query(cls)
+    def query(cls, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):  # pyright: ignore[reportIncompatibleMethodOverride]
+        from . import get_db_session
+
+        session = db_sess if db_sess is not None else get_db_session()
+        items = session.query(cls)
         if for_update:
             items = items.with_for_update()
         if not includeDeleted:
@@ -122,33 +106,12 @@ class ObjMixin(IdMixin):
         return items
 
     @classmethod
-    def query2(cls, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Calls cls.query with db session from global context"""
-        from . import get_db_session
-
-        return cls.query(db_sess or get_db_session(), includeDeleted, for_update=for_update)
+    def get(cls, id: int, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):
+        return cls.query(includeDeleted, for_update=for_update, db_sess=db_sess).filter(cls.id == id).first()
 
     @classmethod
-    def get(cls, db_sess: Session, id: int, includeDeleted: bool = False, *, for_update: bool = False):
-        return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.id == id).first()
-
-    @classmethod
-    def get2(cls, id: int, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):
-        """Calls cls.get with db session from global context"""
-        from . import get_db_session
-
-        return cls.get(db_sess or get_db_session(), id, includeDeleted, for_update=for_update)
-
-    @classmethod
-    def all(cls, db_sess: Session, includeDeleted: bool = False, *, for_update: bool = False):  # pyright: ignore[reportIncompatibleMethodOverride]
-        return cls.query(db_sess, includeDeleted, for_update=for_update).all()
-
-    @classmethod
-    def all2(cls, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Calls cls.all with db session from global context"""
-        from . import get_db_session
-
-        return cls.all(db_sess or get_db_session(), includeDeleted, for_update=for_update)
+    def all(cls, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None):  # pyright: ignore[reportIncompatibleMethodOverride]
+        return cls.query(includeDeleted, for_update=for_update, db_sess=db_sess).all()
 
     def delete(self, actor: "UserBase", commit: bool = True, now: datetime | None = None, db_sess: Session | None = None):
         from . import Log, get_datetime_now
@@ -219,23 +182,20 @@ class SingletonMixin(MappedAsDataclass):
     id: Mapped[intpk] = mapped_column(init=False)
 
     @classmethod
-    def get(cls, db_sess: Session, *, commit: bool = True):
-        obj = db_sess.get(cls, cls._ID)
+    def get(cls, *, db_sess: Session | None = None, commit: bool = True):
+        from . import get_db_session
+
+        session = db_sess if db_sess is not None else get_db_session()
+        obj = session.get(cls, cls._ID)
         if obj:
             return obj
         obj = cls()
         obj.id = cls._ID
         obj.init()
-        db_sess.add(obj)
+        session.add(obj)
         if commit:
-            db_sess.commit()
+            session.commit()
         return obj
-
-    @classmethod
-    def get2(cls, *, db_sess: Session | None = None, commit: bool = True):
-        from . import get_db_session
-
-        return cls.get(db_sess or get_db_session(), commit=commit)
 
     def init(self):
         pass
@@ -258,12 +218,14 @@ class BigIdMixin(MappedAsDataclass):
     id_big: Mapped[str] = mapped_column(String(8), unique=True, index=True, init=False)
 
     @classmethod
-    def get_by_big_id(cls: Type[T], id_big: str, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None) -> T | None:
+    def get_by_big_id(
+        cls: type[T], id_big: str, includeDeleted: bool = False, *, for_update: bool = False, db_sess: Session | None = None
+    ) -> T | None:
         from . import get_db_session
 
         db_sess = db_sess if db_sess else get_db_session()
         if issubclass(cls, ObjMixin):
-            return cls.query(db_sess, includeDeleted, for_update=for_update).filter(cls.id_big == id_big).first()
+            return cls.query(includeDeleted, for_update=for_update, db_sess=db_sess).filter(cls.id_big == id_big).first()
         else:
             query = db_sess.query(cls)
             if for_update:

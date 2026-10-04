@@ -308,8 +308,8 @@ Base class for all SQLAlchemy models. Inherits from `DeclarativeBase`, `Serializ
 
 **`IdMixin`**
 Adds an integer primary key `id` and provides class methods for querying:
-`query(db_sess, for_update=False)`, `get(db_sess, id, for_update=False)`, `all(db_sess, for_update=False)`.
-Also includes `query2`, `get2`, `all2` variants that automatically retrieve the session from the global context.
+`query(*, for_update=False, db_sess=None)`, `get(id, *, for_update=False, db_sess=None)`, `all(*, for_update=False, db_sess=None)`.
+When `db_sess` is omitted, the methods use the request-scoped session.
 
 **`ObjMixin`**
 Extends `IdMixin` with a `deleted` flag for soft‑delete. Overrides query methods to exclude deleted rows by default (`includeDeleted` parameter).
@@ -317,7 +317,7 @@ Provides `delete(actor, commit=True, now=None, db_sess=None)` and `restore(actor
 Customizable via `_on_delete` and `_on_restore` hooks.
 
 **`SingletonMixin`**
-Ensures a table contains exactly one row. Provides `get(db_sess, commit=True)` that returns the singleton instance, creating and initializing it if missing. Override `init()` for custom initialization.
+Ensures a table contains exactly one row. Provides `get(*, db_sess=None, commit=True)` that returns the singleton instance, creating and initializing it if missing. Override `init()` for custom initialization.
 
 **`BigIdMixin`**
 Adds a unique short string identifier `id_big` (8 characters). Provides `get_by_big_id(id_big, includeDeleted=False, db_sess=None)` and `set_unique_big_id(db_sess=None)` to generate a collision‑free ID.
@@ -687,7 +687,7 @@ class TaskDict(TypedDict):
 @doc_api(res=list[TaskDict], desc="List all tasks")
 @protected_route()
 def list_tasks():
-    return jsonify_list(Task.all2())
+    return jsonify_list(Task.all())
 
 @bp.patch("/api/task/<int:task_id>")
 @doc_api(req={"completed": bool}, res=TaskDict, desc="Update a task")
@@ -697,7 +697,7 @@ def update(task_id):
     if error:
         return response_msg(error, 400)
     completed, = values
-    task = Task.get2(task_id)
+    task = Task.get(task_id)
     if not task:
         return response_msg("Task not found", 404)
     task.completed = completed
@@ -708,7 +708,7 @@ def update(task_id):
 @doc_api(res=None, desc="Delete a task")
 @protected_route()
 def delete(task_id):
-    task = abort_if_none(Task.get2(task_id), "task")
+    task = abort_if_none(Task.get(task_id), "task")
     task.delete2()  # soft‑delete with audit log
     return "", 204
 ```
@@ -1003,7 +1003,7 @@ project/
 - Never share a session across threads; the framework already handles this correctly.
 
 #### Query Patterns
-- Use the mixin methods (`get2`, `all2`, `query2`) for convenience, but be aware they fetch the session from the global context. In background tasks, explicitly pass a session.
+- Use the mixin methods (`get`, `all`, `query`) with the request-scoped session. In background tasks, explicitly pass `db_sess`.
 - For complex queries, write raw SQLAlchemy queries but keep them inside model class methods (e.g., `Task.get_by_user`).
 - Leverage `ObjMixin`’s soft‑delete: always consider whether you need `includeDeleted=True`.
 
