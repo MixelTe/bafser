@@ -1,6 +1,9 @@
 name: Publish Python 🐍 distribution 📦 to PyPI
 
-on: [push]
+on:
+  push:
+    tags:
+      - "v*"
 
 jobs:
   compatibility:
@@ -10,44 +13,38 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install package
-      run: python -m pip install .
-    - name: Check source and behavior
-      run: |
-        python -m compileall -q src test
-        python -m unittest discover -s test -v
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package
+        run: python -m pip install .
+      - name: Check source and behavior
+        run: |
+          python -m compileall -q src test
+          python -m unittest discover -s test -v
 
   build:
     needs: compatibility
-    name: >-
-      Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/v')  # only publish to PyPI on tag pushes
+    name: Publish Python 🐍 distribution 📦 to PyPI
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/bafser
     permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
+      id-token: write
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        persist-credentials: false
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.x"
-    - name: Install pypa/build
-      run: >-
-        python3 -m
-        pip install
-        build
-        --user
-    - name: Build a binary wheel and a source tarball
-      run: python3 -m build
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install pypa/build
+        run: python3 -m pip install build --user
+      - name: Build a binary wheel and a source tarball
+        run: python3 -m build
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
