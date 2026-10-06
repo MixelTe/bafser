@@ -1,8 +1,13 @@
 import importlib
 import sys
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 
 def cli():
+    load_dotenv(Path.cwd() / ".env", override=False)
+
     scripts = [
         ("init_project", "[--force]"),
         ("add_user_role", "userId roleId [dev]"),

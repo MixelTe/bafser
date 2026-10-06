@@ -10,6 +10,7 @@ flask >= 3.1.1, < 4
 flask_jwt_extended >= 4.7.1, < 5
 PyJWT >= 2.0, < 3.0
 PyMySQL >= 1.1.1, < 2
+python-dotenv >= 1.0, < 2
 sqlalchemy >= 2.0.45, < 2.1
 sqlalchemy_serializer >= 1.5.5, < 2
 typing_extensions >= 4.13.2, < 5
@@ -18,6 +19,13 @@ werkzeug >= 3.1.3, < 4
 
 ## usage
 scripts: `bafser`
+
+Both `bafser` and `python -m bafser` load `.env` from the current working
+directory before running a command. Existing environment variables take
+precedence; a missing `.env` is allowed. Parent directories are not searched.
+For example, `DBPATH` in `.env` supplies a configuration value declared as
+`db_path = "ENV:DBPATH"`. This loading applies to CLI commands; application
+entry points must load their own `.env` if needed.
 
 init project: `bafser init_project` (existing generated files are kept; use `--force` to replace them)
 
