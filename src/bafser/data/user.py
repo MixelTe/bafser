@@ -23,6 +23,23 @@ DefaultGetter = Callable[[bool, bool], "UserBase | None"]
 _current_user_getter: Callable[[DefaultGetter, bool, bool], "UserBase | None"] = lambda get, lazyload, for_update: get(lazyload, for_update)
 
 
+class _CurrentUser:
+    """Resolve the current user while preserving the owner's type."""
+
+    def __get__(self, instance: T | None, owner: type[T]) -> T:
+        from .. import response_msg
+
+        user = owner.get_current()
+        if user is not None:
+            return user
+
+        if has_request_context():
+            response = response_msg("The JWT has expired", 401)
+            unset_jwt_cookies(response)
+            abort(response)
+        raise Exception("[bafser] No current user")
+
+
 class UserKwargs(TypedDict):
     login: str
     name: str
@@ -124,21 +141,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
         g.user = user
         return user  # type: ignore
 
-    @final
-    @classmethod
-    @property
-    def current(cls):  # pyright: ignore[reportDeprecated]
-        from .. import response_msg
-
-        user = cls.get_current()
-        if user is not None:
-            return user
-
-        if has_request_context():
-            response = response_msg("The JWT has expired", 401)
-            unset_jwt_cookies(response)
-            abort(response)
-        raise Exception("[bafser] No current user")
+    current = _CurrentUser()
 
     @classmethod
     def create_admin(cls, db_sess: Session):

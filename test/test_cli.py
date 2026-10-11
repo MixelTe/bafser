@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 
 
@@ -58,7 +59,7 @@ class CliEnvironmentTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         database = self.project / filename
         self.assertTrue(database.is_file())
-        with sqlite3.connect(database) as connection:
+        with closing(sqlite3.connect(database)) as connection:
             self.assertEqual(connection.execute("SELECT version_num FROM alembic_version").fetchone(), ("cli_env_test",))
             self.assertEqual(connection.execute("SELECT count(*) FROM cli_probe").fetchone(), (0,))
 

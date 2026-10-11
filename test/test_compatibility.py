@@ -1,8 +1,13 @@
 """Core behavior that must work on every supported Python version."""
 
 import unittest
+from unittest.mock import patch
 
-from bafser import JsonObj, JsonOpt, TJson, TJsonListOf, Undefined
+from flask import Flask
+from flask_jwt_extended import JWTManager
+from werkzeug.exceptions import HTTPException
+
+from bafser import JsonObj, JsonOpt, TJson, TJsonListOf, Undefined, UserBase
 from bafser.doc_api import type_info, type_to_json
 
 
@@ -38,6 +43,44 @@ class CompatibilityTests(unittest.TestCase):
 
         user = User(login="example", name="Example", balance=0)
         self.assertEqual(user.to_dict(only=("login", "name", "balance")), {"login": "example", "name": "Example", "balance": 0})
+
+
+class CurrentUserCompatibilityTests(unittest.TestCase):
+    def test_current_resolves_user_from_base_subclass_and_instance(self):
+        from test.data.apple import Apple  # type: ignore
+        from test.data.img import Img  # type: ignore
+        from test.data.user import User
+
+        user = User(login="example", name="Example", balance=0)
+        with patch("bafser.data.user._current_user_getter", return_value=user) as getter:
+            self.assertIs(UserBase.current, user)
+            self.assertIs(User.current, user)
+            self.assertIs(user.current, user)
+        self.assertEqual(getter.call_count, 3)
+        getter.assert_called_with(UserBase._get_current, False, False)
+
+    def test_current_does_not_cache_user_across_contexts(self):
+        first = UserBase.get_fake_system()
+        second = UserBase.get_fake_system()
+        with patch("bafser.data.user._current_user_getter", side_effect=[first, second]):
+            self.assertIs(UserBase.current, first)
+            self.assertIs(UserBase.current, second)
+
+    def test_missing_current_user_outside_request_raises(self):
+        with patch("bafser.data.user._current_user_getter", return_value=None):
+            with self.assertRaisesRegex(Exception, "No current user"):
+                _ = UserBase.current
+
+    def test_missing_current_user_in_request_clears_jwt_and_returns_401(self):
+        app = Flask(__name__)
+        JWTManager(app)
+        with app.test_request_context(), patch("bafser.data.user._current_user_getter", return_value=None):
+            with self.assertRaises(HTTPException) as caught:
+                _ = UserBase.current
+            response = caught.exception.get_response()
+            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.get_json(), {"msg": "The JWT has expired"})
+            self.assertTrue(any("access_token_cookie=;" in cookie for cookie in response.headers.getlist("Set-Cookie")))
 
 
 if __name__ == "__main__":

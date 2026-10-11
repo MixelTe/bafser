@@ -1,0 +1,6 @@
+{
+    "include": ["current_user.py"],
+    "extraPaths": ["../../src"],
+    "pythonVersion": "3.10",
+    "typeCheckingMode": "strict"
+}
