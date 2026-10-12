@@ -37,7 +37,7 @@ from .utils.get_json_values import get_json_values, get_json_list
 from .utils.abort_if_none import abort_if_none
 from .utils.create_file_response import create_file_response
 from .utils.create_folder_for_file import create_folder_for_file
-from .utils.get_datetime_now import get_datetime_now
+from .utils.get_datetime_now import get_datetime_now, get_datetime_utc
 from .utils.get_db_session import get_db_session, override_get_db_session
 from .utils.get_json import get_json
 from .utils.get_json_values_from_req import get_json_values_from_req, get_json_list_from_req
@@ -134,6 +134,7 @@ __all__ = [
     "get_api_docs",
     "get_app_config",
     "get_datetime_now",
+    "get_datetime_utc",
     "get_db_session",
     "get_json",
     "get_json_list",

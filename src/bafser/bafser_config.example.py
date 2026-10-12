@@ -12,6 +12,9 @@ db_path = "ENV:DBPATH"  # e.g. mysql_user:password@localhost/app_db
 db_mysql = True
 sql_echo = False
 
+# Use UTC for shared model timestamps and ISO dates
+datetime_utc = True
+
 use_alembic = True
 migrations_folder = "alembic"
 

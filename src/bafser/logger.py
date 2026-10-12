@@ -43,7 +43,8 @@ def redact_sensitive_data(value: Any) -> Any:
 
 def customTime(*args: Any):
     utc_dt = datetime.datetime.now(datetime.timezone.utc)
-    utc_dt += datetime.timedelta(hours=3)
+    if not getattr(bafser_config, "datetime_utc", False):
+        utc_dt += datetime.timedelta(hours=3)
     return utc_dt.timetuple()
 
 

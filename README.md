@@ -228,3 +228,15 @@ class Img(ImageBase):
 ```csv
 reqid;ip;uid;asctime;method;url;message;code;json
 ```
+
+#### UTC dates (2.12.3)
+
+`get_datetime_utc()` returns the current instant as a timezone-aware UTC datetime.
+It is exported from both `bafser` and `bafser.utils`.
+
+Set `datetime_utc = True` in `bafser_config.py` to use UTC for shared model
+timestamps and file logs. In this mode `get_datetime_now()` delegates to the UTC
+clock, `parse_date()` converts ISO offsets to UTC (naive input is already UTC),
+and model serialization includes a `Z` suffix. SQL `DATETIME` values store UTC
+without a timezone; convert existing local timestamps before enabling this mode.
+Without this setting the legacy behavior is preserved.

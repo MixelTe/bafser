@@ -5,6 +5,8 @@ from sqlalchemy import MetaData, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, MappedAsDataclass, Session, mapped_column
 from sqlalchemy_serializer import SerializerMixin
 
+import bafser_config
+
 if TYPE_CHECKING:
     from . import UserBase
 
@@ -19,6 +21,8 @@ convention = {
 
 class TableBase(DeclarativeBase, MappedAsDataclass, SerializerMixin):
     __abstract__ = True
+    if getattr(bafser_config, "datetime_utc", False):
+        datetime_format = "%Y-%m-%dT%H:%M:%S.%fZ"
     __table_args__: ClassVar = {"mysql_charset": "utf8mb4", "mysql_collate": "utf8mb4_unicode_ci"}
     __fields_hidden_in_log__: ClassVar = [""]
     metadata = MetaData(naming_convention=convention)
