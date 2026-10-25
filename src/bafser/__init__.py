@@ -65,6 +65,7 @@ from .dashboard import render_dashboard_page
 
 from .db_session import SqlAlchemyBase
 from .truncate_string import TruncateString
+from .normalized_column import normalized_column, normalize_search, normalized_update_values, rebuild_normalized_columns, NormalizationError, NormalizedValueTooLongError
 from .table_base import IdMixin, ObjMixin, SingletonMixin, BigIdMixin
 from .locking import ForUpdateRequiredError, LockNotSupportedError
 from .data._tables import TablesBase
@@ -104,6 +105,8 @@ __all__ = [
     "Log",
     "LogDict",
     "M",
+    "NormalizationError",
+    "NormalizedValueTooLongError",
     "ObjMixin",
     "OperationDict",
     "OperationsBase",
@@ -155,6 +158,9 @@ __all__ = [
     "jsonify_list",
     "listfind",
     "log_frontend_error",
+    "normalize_search",
+    "normalized_column",
+    "normalized_update_values",
     "override_get_current_user",
     "override_get_db_session",
     "parse_date",
@@ -162,6 +168,7 @@ __all__ = [
     "permission_required_any",
     "protected_route",
     "randstr",
+    "rebuild_normalized_columns",
     "render_dashboard_page",
     "render_docs_page",
     "response_msg",

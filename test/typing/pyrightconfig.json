@@ -1,5 +1,5 @@
 {
-    "include": ["current_user.py"],
+    "include": ["current_user.py", "normalized_columns.py"],
     "extraPaths": ["../../src"],
     "pythonVersion": "3.10",
     "typeCheckingMode": "strict"

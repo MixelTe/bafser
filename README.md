@@ -241,6 +241,176 @@ and model serialization includes a `Z` suffix. SQL `DATETIME` values store UTC
 without a timezone; convert existing local timestamps before enabling this mode.
 Without this setting the legacy behavior is preserved.
 
+#### Normalized search columns
+
+`normalized_column` declares a stored string derived from a referenced field:
+
+```py
+from functools import partial
+from sqlalchemy import Index
+from sqlalchemy.orm import Mapped, mapped_column
+from bafser import SqlAlchemyBase, ObjMixin, TruncateString, normalized_column, normalize_search
+
+human_search = normalize_search
+
+class Person(SqlAlchemyBase, ObjMixin):
+    __tablename__ = "Person"
+    name: Mapped[str] = mapped_column(TruncateString(128))
+    name_search: Mapped[str] = normalized_column(
+        name, normalizer=human_search,
+    )
+
+Index("ix_person_name_search", Person.name_search, mysql_length=256)
+
+person = Person(name="  ЁЛКА  ")
+assert person.name == "  ЁЛКА  "
+assert person.name_search == "елка"
+person.name = "  НОВОЕ ИМЯ "
+assert person.name_search == "новое имя"
+```
+
+Without `length`, the derived column is `Text`: the full normalized result is
+stored without a helper-imposed length limit. Database type limits still apply.
+The index above uses a 256-character prefix on MySQL and a normal index on SQLite;
+the data itself is never cut to the index prefix. For a MySQL `Text` column, use
+an explicit `Index(..., mysql_length=...)` instead of a plain `index=True`.
+
+With `length=N`, the derived column is `String(N)` and `overflow` controls what
+happens when normalization expands the value past that limit:
+
+| Declaration | Overflow behavior |
+| --- | --- |
+| `normalized_column(name)` | Full result in `Text`; `overflow` has no effect |
+| `normalized_column(name, length=256)` | `truncate` for a `TruncateString` source, otherwise `raise` |
+| `normalized_column(name, length=256, overflow="truncate")` | Always keep the first 256 normalized characters |
+| `normalized_column(name, length=256, overflow="raise")` | Always raise `NormalizedValueTooLongError` on overflow |
+
+For a column with an explicit length limit, `index=True` creates a normal index:
+
+```py
+name_search: Mapped[str] = normalized_column(
+    name, length=256, index=True,
+)
+```
+
+One model can have multiple normalized columns, including several with different
+normalizers for the same source and columns derived from different sources.
+Each field uses its own normalizer and overflow policy.
+
+Truncation occurs in the helper before assignment and SQL, so Python and stored
+values agree. It deliberately drops the searchable tail: a full query longer than
+the stored result may not match. Choose `Text` when the complete search value is
+required. Explicit `overflow` overrides the source-dependent default.
+
+Declare the source above the helper with `mapped_column`, not just an annotation.
+String names, SQL expressions, relationships and fields of unrelated models are
+rejected. Database column names may differ from Python attribute names. Copied
+mixin fields are supported. For inherited sources, use `declared_attr`; stacking
+`classmethod` also gives type checkers the correct type for `cls`:
+
+```py
+@declared_attr
+@classmethod
+def name_search(cls) -> Mapped[str]:
+    return normalized_column(cls.name, length=256, normalizer=human_search)
+```
+
+Derived columns have `init=False`, so constructors do not accept their values.
+Nullability follows the source; an explicit `nullable` option must match it.
+Annotate nullable fields as `Mapped[str | None]`. `None` is preserved without
+calling the normalizer; empty strings remain strings. Derived fields are ordinary
+mapped columns for serialization; use your model's `serialize_rules` if needed.
+
+Assignment listeners run after standard `@validates` handlers. `before_flush`
+recomputes new/changed values from the final source, repairing manual edits to the
+derived field and covering later custom assignment handlers. Unrelated changes
+do not load deferred sources or recompute search strings. Loading an existing
+object does not silently rewrite its stored search data.
+
+`normalize_search(text, *, replace_yo=True, strip_diacritics=True,
+strip_punctuation=True, cyrillic_to_latin=False, transliterate=None)` applies NFKC,
+casefold, ё/diacritic folding, punctuation replacement and whitespace collapse.
+Punctuation becomes spaces, preserving word boundaries. Diacritic removal also
+changes Cyrillic `й` to `и`. Pass the corresponding options as `False` to preserve
+these distinctions; preserving `ё` needs both `replace_yo=False` and
+`strip_diacritics=False`.
+
+`cyrillic_to_latin=True` enables built-in Russian-to-Latin transliteration after
+ё/diacritic folding: `ж -> zh`, `х -> h`, `ц -> ts`, `щ -> sch`, `ю -> yu`,
+`я -> ya`; `ь` and `ъ` are removed. Other characters, including Latin text and
+letters outside the Russian alphabet, are preserved. With default folding,
+`ё -> е -> e` and `й -> и -> i`; disabling folding permits `ё -> yo`, `й -> y`.
+
+```py
+latin_search = partial(normalize_search, cyrillic_to_latin=True)
+assert latin_search("Яна, Ёлка!") == "yana elka"
+```
+
+The existing callable `transliterate` remains available for custom rules. It
+receives NFKC/casefold text before the other transforms and must return a string.
+Custom column normalizers must be pure, deterministic `str -> str` callables;
+reuse the same callable and settings for search input:
+
+```py
+query = Person.query().filter(
+    Person.name_search.contains(human_search(search_text), autoescape=True)
+)
+```
+
+`autoescape=True` treats remaining `%` and `_` literally. To preserve punctuation
+in both stored values and queries, set `strip_punctuation=False` in their shared
+normalizer. Handle empty normalized queries before filtering: punctuation-only
+input now becomes empty. A normal B-tree index helps equality
+and suitable prefix queries; it does not provide efficient arbitrary substring
+search. The derived length is explicit because casefold/transliteration can expand
+text. Fixed-length columns use the overflow policy described above.
+Invalid values/normalizer failures raise `NormalizationError` with model and
+field context. `TruncateString` sources are normalized from `prepare_value()` —
+the portion actually stored — while the original Python attribute is unchanged.
+Ordinary SQLAlchemy string types and `TruncateString` are supported; other bind
+processors, computed/onupdate sources and chains of derived columns are rejected.
+The source must have a concrete Python value when saving; an omitted server
+default cannot be normalized before its INSERT. This also applies to `None` when
+SQLAlchemy would omit it and invoke an INSERT default; supply a concrete string
+or use a source type configured to persist `None` explicitly.
+
+Bulk UPDATE and direct SQL bypass attribute/flush synchronization. Prepare both
+values explicitly for ORM bulk writes:
+
+```py
+from sqlalchemy import update
+from bafser import normalized_update_values
+
+values = normalized_update_values(Person, name="Новое имя")
+session.execute(update(Person).where(Person.id == person_id).values(**values))
+```
+
+The helper accepts Python attribute names and concrete values, adds all affected
+derived fields, and rejects SQL expressions and explicit derived values. It does
+not execute SQL. For guarantees across independent SQL writers, use a database
+generated column or trigger with a database-specific normalization expression.
+Python normalizers are not automatically translated to SQL.
+
+For existing rows or an algorithm/Unicode-data change:
+
+```py
+from bafser import rebuild_normalized_columns
+from sqlalchemy.orm import Session
+
+with Session(engine) as session:
+    count = rebuild_normalized_columns(Person, db_sess=session, batch_size=500)
+    session.commit()
+```
+
+This returns the number of processed rows, includes soft-deleted records, supports
+composite primary keys, and pages by primary key without an open streaming cursor.
+It flushes the supplied session (including its existing changes), never commits or
+closes it, and refreshes database values after flushing. Use a dedicated maintenance
+session; rollback can undo the whole rebuild. For a new column: add it nullable,
+deploy compatible writers, backfill, then enforce the final nullability/index.
+Stop old writers during the transition so they cannot reintroduce stale values.
+Adding the helper to a model alone does not migrate existing database tables.
+
 #### FOR UPDATE
 
 `for_update=True` locks and refreshes matching rows, including instances already

@@ -16,7 +16,11 @@ class TruncateString(TypeDecorator[str]):
             raise ValueError("TruncateString length must be positive")
         super().__init__(length=length, **kwargs)
 
-    def process_bind_param(self, value: str | None, dialect: Dialect) -> str | None:
+    def prepare_value(self, value: str | None) -> str | None:
+        """Return the value that will be stored, without changing an ORM object."""
         if value is None:
             return None
         return value[: self.impl.length]  # type: ignore
+
+    def process_bind_param(self, value: str | None, dialect: Dialect) -> str | None:
+        return self.prepare_value(value)

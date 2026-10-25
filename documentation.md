@@ -352,6 +352,44 @@ title: Mapped[str] = mapped_column(TruncateString(128))
 Values longer than the declared length are cut when bound to a SQL statement.
 
 
+#### Normalized search columns
+
+*Function* `normalized_column(source, *, length=None, normalizer=normalize_search, overflow=None, **mapped_column_options)`
+declares an `init=False` search column referencing an actual string field, not its
+name. Without `length`, the result is stored in `Text` without a helper length
+limit. With a positive `length`, use `String(length)` and resolve `overflow=None`
+to `truncate` for `TruncateString` sources or `raise` otherwise. Explicit
+`overflow="truncate"` / `"raise"` overrides this default; it has no effect without
+a length limit. Truncation happens before assignment, drops the searchable tail,
+and is shared by ordinary writes, bulk values and rebuilds. A MySQL `Text` index
+requires an explicit prefix, e.g. `Index(..., mysql_length=256)`.
+Nullable follows the source. Source assignments update it immediately;
+`before_flush` recomputes from final values on new/affected objects. `TruncateString`
+uses its stored prefix. `NormalizationError` reports invalid values/normalizers;
+`NormalizedValueTooLongError` reports output exceeding the declared length when
+the effective overflow policy is `raise`.
+
+*Function* `normalize_search(text, *, replace_yo=True, strip_diacritics=True,
+strip_punctuation=True, cyrillic_to_latin=False, transliterate=None) -> str`
+performs NFKC, casefold, ё/diacritic folding, punctuation-to-space replacement and
+whitespace collapse. Optional `cyrillic_to_latin=True` transliterates the Russian
+alphabet after folding (`я -> ya`, default `ё -> e`, `й -> i`). Other letters are
+unchanged. Disabling folding preserves `ё -> yo`, `й -> y`. The callable
+`transliterate` remains a custom transform before folding. Use the same normalizer
+for queries. Nullable column values bypass the function and remain `None`.
+Rebuild existing search values after changing defaults or normalization settings.
+
+*Function* `normalized_update_values(model, /, **values) -> dict[str, Any]`
+prepares source and derived values for explicit ORM bulk updates. SQL expressions,
+unknown fields and direct assignment to derived fields are rejected. Unwrapped
+bulk writes and direct SQL do not synchronize derived columns.
+
+*Function* `rebuild_normalized_columns(model, *, db_sess, batch_size=500) -> int`
+recomputes all rows in primary-key pages, including soft-deleted rows, and returns
+the processed count. Flushes without committing; supports composite keys. Use a
+dedicated session and stop old writers during migration/algorithm changes.
+See README for mixin/inheritance, typing, migration and search-index examples.
+
 #### `TablesBase`
 
 *Class* `bafser.TablesBase`
