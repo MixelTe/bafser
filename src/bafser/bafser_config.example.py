@@ -14,7 +14,7 @@ sql_echo = False
 
 # Explicitly emulate FOR UPDATE for test databases without row locking (SQLite).
 # Checks still require a successful query with for_update=True.
-allow_unsupported_for_update_clause = False
+allow_unsupported_for_update_clause: None | bool = None  # None: True in dev
 
 # Use UTC for shared model timestamps and ISO dates
 datetime_utc = True

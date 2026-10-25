@@ -3,6 +3,9 @@ db_path = "ENV:DBPATH"  # e.g. mysql_user:password@localhost/app_db
 db_mysql = True
 sql_echo = False
 
+allow_unsupported_for_update_clause: None | bool = None  # None: True in dev
+datetime_utc = True
+
 use_alembic = True
 migrations_folder = "test/alembic"
 

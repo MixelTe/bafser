@@ -304,6 +304,9 @@ def create_app(import_name: str, config: AppConfig):
     app.secret_key = app.config["JWT_SECRET_KEY"]
     for key, path in config.config:
         app.config[key] = path
+    allow_unsupported_for_update_clause = getattr(bafser_config, "allow_unsupported_for_update_clause", None)
+    if allow_unsupported_for_update_clause is None:
+        bafser_config.allow_unsupported_for_update_clause = config.DEV_MODE
 
     jwt_manager = JWTManager(app)
 
