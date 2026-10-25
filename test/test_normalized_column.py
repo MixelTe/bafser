@@ -24,10 +24,10 @@ class SearchBase(SqlAlchemyBase):
 class SearchItem(SearchBase, ObjMixin):
     __tablename__ = "bafser_search_items"
     name: Mapped[str] = mapped_column("display_name", TruncateString(32))
-    name_search: Mapped[str] = normalized_column(name, length=96, index=True)
-    name_folded: Mapped[str] = normalized_column(name, length=96, normalizer=partial(normalize_search, replace_yo=True))
+    name_search: Mapped[str] = normalized_column(name, length=96, index=True, normalizer=partial(normalize_search, cyrillic_to_latin=False))
+    name_folded: Mapped[str] = normalized_column(name, length=96, normalizer=partial(normalize_search, replace_yo=True, cyrillic_to_latin=False))
     alias: Mapped[str | None] = mapped_column(String(64), default=None)
-    alias_search: Mapped[str | None] = normalized_column(alias, length=128)
+    alias_search: Mapped[str | None] = normalized_column(alias, length=128, normalizer=partial(normalize_search, cyrillic_to_latin=False))
     note: Mapped[str] = mapped_column(String(64), default="")
 
 
@@ -40,37 +40,37 @@ class ShortSearchItem(SearchBase, IdMixin):
 class MultipleSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_multiple_search_items"
     name: Mapped[str] = mapped_column(String(64))
-    name_search: Mapped[str] = normalized_column(name, length=128, index=True)
+    name_search: Mapped[str] = normalized_column(name, length=128, index=True, normalizer=partial(normalize_search, cyrillic_to_latin=False))
     name_latin: Mapped[str] = normalized_column(name, length=128, index=True, normalizer=partial(normalize_search, cyrillic_to_latin=True))
     city: Mapped[str] = mapped_column(String(64))
-    city_search: Mapped[str] = normalized_column(city)
+    city_search: Mapped[str] = normalized_column(city, normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 class TruncatingSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_truncating_search_items"
     name: Mapped[str] = mapped_column(TruncateString(4))
-    name_search: Mapped[str] = normalized_column(name, length=5)
-    name_full: Mapped[str] = normalized_column(name)
+    name_search: Mapped[str] = normalized_column(name, length=5, normalizer=partial(normalize_search, cyrillic_to_latin=False))
+    name_full: Mapped[str] = normalized_column(name, normalizer=partial(normalize_search, cyrillic_to_latin=False))
     alias: Mapped[str | None] = mapped_column(String(32), default=None)
-    alias_search: Mapped[str | None] = normalized_column(alias, length=None)
+    alias_search: Mapped[str | None] = normalized_column(alias, length=None, normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 class StrictTruncateSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_strict_truncate_search"
     name: Mapped[str] = mapped_column(TruncateString(4))
-    name_search: Mapped[str] = normalized_column(name, length=5, overflow="raise")
+    name_search: Mapped[str] = normalized_column(name, length=5, overflow="raise", normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 class ExplicitTruncateSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_explicit_truncate_search"
     name: Mapped[str] = mapped_column(String(32))
-    name_search: Mapped[str] = normalized_column(name, length=5, overflow="truncate")
+    name_search: Mapped[str] = normalized_column(name, length=5, overflow="truncate", normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 class FullTextSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_full_text_search"
     name: Mapped[str] = mapped_column(Text())
-    name_search: Mapped[str] = normalized_column(name)
+    name_search: Mapped[str] = normalized_column(name, normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 full_text_search_index = Index("ix_bafser_full_text_search", FullTextSearchItem.name_search, mysql_length=32)
@@ -79,7 +79,7 @@ full_text_search_index = Index("ix_bafser_full_text_search", FullTextSearchItem.
 class LiteralSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_literal_search_items"
     name: Mapped[str] = mapped_column(String(64))
-    name_search: Mapped[str] = normalized_column(name, length=128, normalizer=partial(normalize_search, strip_punctuation=False))
+    name_search: Mapped[str] = normalized_column(name, length=128, normalizer=partial(normalize_search, strip_punctuation=False, cyrillic_to_latin=False))
 
 
 class LatinSearchItem(SearchBase, IdMixin):
@@ -97,12 +97,12 @@ class CompositeSearchItem(SearchBase):
     group_id: Mapped[int] = mapped_column(primary_key=True)
     item_id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(32))
-    name_search: Mapped[str] = normalized_column(name, length=64)
+    name_search: Mapped[str] = normalized_column(name, length=64, normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 class SearchMixin(MappedAsDataclass):
     label: Mapped[str] = mapped_column(String(32))
-    label_search: Mapped[str] = normalized_column(label, length=64)
+    label_search: Mapped[str] = normalized_column(label, length=64, normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 class FirstMixinItem(SearchBase, SearchMixin, IdMixin):
@@ -124,20 +124,20 @@ class DeclaredSearchItem(AbstractSearchSource):
     @declared_attr
     @classmethod
     def title_search(cls) -> Mapped[str]:
-        return normalized_column(cls.title, length=64)
+        return normalized_column(cls.title, length=64, normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
 
 class DeferredSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_deferred_search"
     title: Mapped[str] = mapped_column(String(32), deferred=True)
-    title_search: Mapped[str] = normalized_column(title, length=64)
+    title_search: Mapped[str] = normalized_column(title, length=64, normalizer=partial(normalize_search, cyrillic_to_latin=False))
     note: Mapped[str] = mapped_column(String(32), default="")
 
 
 class ValidatedSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_validated_search"
     title: Mapped[str] = mapped_column(String(32))
-    title_search: Mapped[str] = normalized_column(title, length=64)
+    title_search: Mapped[str] = normalized_column(title, length=64, normalizer=partial(normalize_search, cyrillic_to_latin=False))
 
     @validates("title")
     def validate_title(self, key, value):
@@ -146,22 +146,22 @@ class ValidatedSearchItem(SearchBase, IdMixin):
 
 class SearchNormalizationTests(unittest.TestCase):
     def test_default_unicode_casefold_and_whitespace(self):
-        self.assertEqual(normalize_search("  ИВАН\u00a0\t Иванов \n"), "иван иванов")
-        self.assertEqual(normalize_search("ＳＴＲＡＳＳＥ Straße"), "strasse strasse")
-        self.assertEqual(normalize_search("E\u0301"), "e")
-        self.assertEqual(normalize_search("  \t\n"), "")
-        self.assertEqual(normalize_search("Ёлка-Йогурт"), "елка иогурт")
+        self.assertEqual(normalize_search("  ИВАН\u00a0\t Иванов \n", cyrillic_to_latin=False), "иван иванов")
+        self.assertEqual(normalize_search("ＳＴＲＡＳＳＥ Straße", cyrillic_to_latin=False), "strasse strasse")
+        self.assertEqual(normalize_search("E\u0301", cyrillic_to_latin=False), "e")
+        self.assertEqual(normalize_search("  \t\n", cyrillic_to_latin=False), "")
+        self.assertEqual(normalize_search("Ёлка-Йогурт", cyrillic_to_latin=False), "елка иогурт")
 
     def test_optional_transforms(self):
-        self.assertEqual(normalize_search("Ёлка-Йогурт", replace_yo=False, strip_diacritics=False, strip_punctuation=False), "ёлка-йогурт")
-        self.assertEqual(normalize_search("Ё Й", strip_diacritics=False), "е й")
-        self.assertEqual(normalize_search("Ё Й", replace_yo=False, strip_diacritics=False), "ё й")
-        self.assertEqual(normalize_search("Été Й", strip_diacritics=False), "été й")
-        self.assertEqual(normalize_search("one-two", strip_punctuation=False), "one-two")
+        self.assertEqual(normalize_search("Ёлка-Йогурт", replace_yo=False, strip_diacritics=False, strip_punctuation=False, cyrillic_to_latin=False), "ёлка-йогурт")
+        self.assertEqual(normalize_search("Ё Й", strip_diacritics=False, cyrillic_to_latin=False), "е й")
+        self.assertEqual(normalize_search("Ё Й", replace_yo=False, strip_diacritics=False, cyrillic_to_latin=False), "ё й")
+        self.assertEqual(normalize_search("Été Й", strip_diacritics=False, cyrillic_to_latin=False), "été й")
+        self.assertEqual(normalize_search("one-two", strip_punctuation=False, cyrillic_to_latin=False), "one-two")
         self.assertEqual(normalize_search("  ЁЛКА! ", transliterate=lambda value: value.replace("ёлка", "YOLKA"), strip_punctuation=True), "yolka")
 
     def test_cyrillic_to_latin_is_opt_in_and_handles_mixed_text(self):
-        self.assertEqual(normalize_search("Яна Юлия"), "яна юлия")
+        self.assertEqual(normalize_search("Яна Юлия", cyrillic_to_latin=False), "яна юлия")
         self.assertEqual(normalize_search("  ЯНА, ЮЛИЯ и ЩУКА ", cyrillic_to_latin=True), "yana yuliya i schuka")
         self.assertEqual(normalize_search("Anna / Анна", cyrillic_to_latin=True), "anna anna")
         self.assertEqual(normalize_search("Съешь хлеб, выпей чаю", cyrillic_to_latin=True), "sesh hleb vypei chayu")

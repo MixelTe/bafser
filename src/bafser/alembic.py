@@ -54,7 +54,7 @@ def run():
         fileConfig(config.config_file_name)
 
     from .db_session import SqlAlchemyBase
-    from .truncate_string import TruncateString
+    from .utils.truncate_string import TruncateString
     from .utils.import_all_tables import import_all_tables
 
     import_all_tables()

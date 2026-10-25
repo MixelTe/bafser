@@ -71,7 +71,7 @@ def normalize_search(
     replace_yo: bool = True,
     strip_diacritics: bool = True,
     strip_punctuation: bool = True,
-    cyrillic_to_latin: bool = False,
+    cyrillic_to_latin: bool = True,
     transliterate: Callable[[str], str] | None = None,
 ) -> str:
     """NFKC/casefold, fold ё/diacritics, replace punctuation and collapse spaces.

@@ -45,6 +45,7 @@ from .utils.get_userId import get_userId_required, get_userId
 from .utils.ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .utils.jsonify_list import jsonify_list
 from .utils.listfind import listfind
+from .utils.normalized_column import normalized_column, normalize_search, normalized_update_values, rebuild_normalized_columns, NormalizationError, NormalizedValueTooLongError
 from .utils.parse_date import parse_date
 from .utils.permission_required import create_permission_required_decorator  # pyright: ignore[reportDeprecated]
 from .utils.permission_required import permission_required, permission_required_any  # pyright: ignore[reportDeprecated]
@@ -52,6 +53,7 @@ from .utils.protected_route import protected_route
 from .utils.randstr import randstr
 from .utils.response_not_found import response_not_found
 from .utils.strfind import strfind
+from .utils.truncate_string import TruncateString
 from .utils.use_db_session import use_db_session, use_db_sess
 from .utils.use_user import use_user  # pyright: ignore[reportDeprecated]
 from .utils.use_userId import use_userId  # pyright: ignore[reportDeprecated]
@@ -64,8 +66,6 @@ from .doc_api import doc_api, get_api_docs, TJson, TJsonListOf, render_docs_page
 from .dashboard import render_dashboard_page
 
 from .db_session import SqlAlchemyBase
-from .truncate_string import TruncateString
-from .normalized_column import normalized_column, normalize_search, normalized_update_values, rebuild_normalized_columns, NormalizationError, NormalizedValueTooLongError
 from .table_base import IdMixin, ObjMixin, SingletonMixin, BigIdMixin
 from .locking import ForUpdateRequiredError, LockNotSupportedError
 from .data._tables import TablesBase
