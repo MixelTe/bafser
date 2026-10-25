@@ -1,6 +1,7 @@
 """Core behavior that must work on every supported Python version."""
 
 import unittest
+from datetime import datetime
 from unittest.mock import patch
 
 from flask import Flask
@@ -35,6 +36,24 @@ class CompatibilityTests(unittest.TestCase):
         assert isinstance(info_fields, list)
         self.assertEqual([field.name for field in info_fields], ["img", "type"])
         self.assertEqual(type_to_json(TJsonListOf["img", ImageJson, "type", int], {}), [expected])
+
+    def test_documentation_optional_alias_fields_and_datetime(self):
+        for list_of, schema in (
+            (False, TJson["active", JsonOpt[bool], "date", datetime, "until", JsonOpt[datetime | None]]),
+            (True, TJsonListOf["active", JsonOpt[bool], "date", datetime, "until", JsonOpt[datetime | None]]),
+        ):
+            with self.subTest(list_of=list_of):
+                expected = {"active?": "boolean", "date": "datetime", "until?": "datetime | null"}
+                self.assertEqual(type_to_json(schema, {}), [expected] if list_of else expected)
+                info = type_info(schema, {})
+                if list_of:
+                    info = info.list_type
+                fields = info.object_fields
+                self.assertEqual([field.name for field in fields], ["active", "date", "until"])
+                self.assertEqual([field.optional for field in fields], [True, False, True])
+                self.assertEqual(fields[0].type.type, "bool")
+                self.assertEqual(fields[1].type.type, "datetime")
+                self.assertEqual([item.type for item in fields[2].type.union_type], ["datetime", "null"])
 
     def test_sqlalchemy_serializer_with_project_model(self):
         from test.data.apple import Apple  # type: ignore

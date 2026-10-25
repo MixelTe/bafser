@@ -1895,7 +1895,7 @@
 					el,
 				};
 			}
-			if (type.type == "str")
+			if (type.type == "str" || type.type == "datetime")
 			{
 				const { upd, input: el } = InputAutoWidth([], "text");
 				const elt = initEl("textarea");

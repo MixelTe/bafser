@@ -85,7 +85,7 @@ class LiteralSearchItem(SearchBase, IdMixin):
 class LatinSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_latin_search_items"
     name: Mapped[str] = mapped_column(String(64))
-    name_search: Mapped[str] = normalized_column(name, length=128, normalizer=partial(normalize_search, cyrillic_to_latin=True))
+    name_search: Mapped[str] = normalized_column(name, length=128)
 
 
 class InheritedSearchItem(SearchItem):
@@ -145,7 +145,7 @@ class ValidatedSearchItem(SearchBase, IdMixin):
 
 
 class SearchNormalizationTests(unittest.TestCase):
-    def test_default_unicode_casefold_and_whitespace(self):
+    def test_unicode_casefold_and_whitespace_without_transliteration(self):
         self.assertEqual(normalize_search("  ИВАН\u00a0\t Иванов \n", cyrillic_to_latin=False), "иван иванов")
         self.assertEqual(normalize_search("ＳＴＲＡＳＳＥ Straße", cyrillic_to_latin=False), "strasse strasse")
         self.assertEqual(normalize_search("E\u0301", cyrillic_to_latin=False), "e")
@@ -160,7 +160,10 @@ class SearchNormalizationTests(unittest.TestCase):
         self.assertEqual(normalize_search("one-two", strip_punctuation=False, cyrillic_to_latin=False), "one-two")
         self.assertEqual(normalize_search("  ЁЛКА! ", transliterate=lambda value: value.replace("ёлка", "YOLKA"), strip_punctuation=True), "yolka")
 
-    def test_cyrillic_to_latin_is_opt_in_and_handles_mixed_text(self):
+    def test_cyrillic_to_latin_is_enabled_by_default_and_handles_mixed_text(self):
+        self.assertEqual(normalize_search("Яна Юлия"), "yana yuliya")
+        self.assertEqual(normalize_search("  ЁЛКА  "), "elka")
+        self.assertEqual(normalize_search("  НОВОЕ ИМЯ "), "novoe imya")
         self.assertEqual(normalize_search("Яна Юлия", cyrillic_to_latin=False), "яна юлия")
         self.assertEqual(normalize_search("  ЯНА, ЮЛИЯ и ЩУКА ", cyrillic_to_latin=True), "yana yuliya i schuka")
         self.assertEqual(normalize_search("Anna / Анна", cyrillic_to_latin=True), "anna anna")

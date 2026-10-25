@@ -19,6 +19,8 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+import bafser_config
+
 from bafser import AppConfig, JsonObj, Log, Role, SqlAlchemyBase, UserRole, create_app
 from bafser.data.user import UserBase
 from bafser.jsonobj import validate_type
@@ -42,6 +44,11 @@ class ValidationTests(unittest.TestCase):
 
 
 class AppTests(unittest.TestCase):
+    def setUp(self):
+        config = patch.object(bafser_config, "allow_unsupported_for_update_clause", None, create=True)
+        config.start()
+        self.addCleanup(config.stop)
+
     def test_add_secret_key_rnd_creates_parent_directory(self):
         with tempfile.TemporaryDirectory() as directory:
             key_path = Path(directory) / "nested" / "keys" / "secret.txt"
@@ -60,7 +67,10 @@ class AppTests(unittest.TestCase):
         health_route: str = "/healthz",
         dev_mode: bool = False,
         log_json_responses: bool | None = None,
+        allow_unsupported_for_update_clause: bool | None = None,
     ):
+        # create_app resolves None in the shared module; each app needs fresh input.
+        bafser_config.allow_unsupported_for_update_clause = allow_unsupported_for_update_clause
         logger = Mock()
         with (
             patch("bafser.app.setLogging"),
@@ -83,6 +93,21 @@ class AppTests(unittest.TestCase):
             )
         app.testing = True
         return app, logger
+
+    def test_for_update_emulation_defaults_follow_each_app_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for dev_mode in (True, False, True):
+                with self.subTest(dev_mode=dev_mode):
+                    self.make_app(Path(directory), dev_mode=dev_mode)
+                    self.assertIs(bafser_config.allow_unsupported_for_update_clause, dev_mode)
+
+    def test_for_update_emulation_explicit_setting_overrides_app_mode(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for dev_mode in (True, False):
+                for setting in (True, False):
+                    with self.subTest(dev_mode=dev_mode, setting=setting):
+                        self.make_app(Path(directory), dev_mode=dev_mode, allow_unsupported_for_update_clause=setting)
+                        self.assertIs(bafser_config.allow_unsupported_for_update_clause, setting)
 
     def test_health_route_uses_configured_path(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -264,9 +264,9 @@ Index("ix_person_name_search", Person.name_search, mysql_length=256)
 
 person = Person(name="  ЁЛКА  ")
 assert person.name == "  ЁЛКА  "
-assert person.name_search == "елка"
+assert person.name_search == "elka"
 person.name = "  НОВОЕ ИМЯ "
-assert person.name_search == "новое имя"
+assert person.name_search == "novoe imya"
 ```
 
 Without `length`, the derived column is `Text`: the full normalized result is
@@ -328,22 +328,24 @@ do not load deferred sources or recompute search strings. Loading an existing
 object does not silently rewrite its stored search data.
 
 `normalize_search(text, *, replace_yo=True, strip_diacritics=True,
-strip_punctuation=True, cyrillic_to_latin=False, transliterate=None)` applies NFKC,
+strip_punctuation=True, cyrillic_to_latin=True, transliterate=None)` applies NFKC,
 casefold, ё/diacritic folding, punctuation replacement and whitespace collapse.
 Punctuation becomes spaces, preserving word boundaries. Diacritic removal also
 changes Cyrillic `й` to `и`. Pass the corresponding options as `False` to preserve
 these distinctions; preserving `ё` needs both `replace_yo=False` and
 `strip_diacritics=False`.
 
-`cyrillic_to_latin=True` enables built-in Russian-to-Latin transliteration after
+Built-in Russian-to-Latin transliteration is enabled by default and runs after
 ё/diacritic folding: `ж -> zh`, `х -> h`, `ц -> ts`, `щ -> sch`, `ю -> yu`,
 `я -> ya`; `ь` and `ъ` are removed. Other characters, including Latin text and
 letters outside the Russian alphabet, are preserved. With default folding,
 `ё -> е -> e` and `й -> и -> i`; disabling folding permits `ё -> yo`, `й -> y`.
+Pass `cyrillic_to_latin=False` to preserve Cyrillic after folding.
 
 ```py
-latin_search = partial(normalize_search, cyrillic_to_latin=True)
-assert latin_search("Яна, Ёлка!") == "yana elka"
+assert normalize_search("Яна, Ёлка!") == "yana elka"
+cyrillic_search = partial(normalize_search, cyrillic_to_latin=False)
+assert cyrillic_search("Яна, Ёлка!") == "яна елка"
 ```
 
 The existing callable `transliterate` remains available for custom rules. It
@@ -456,11 +458,15 @@ and no DBAPI autocommit or externally managed transaction boundaries.
 
 Supported database dialects are MySQL/MariaDB, PostgreSQL and Oracle. Other
 dialects, including SQLite, raise `LockNotSupportedError` when a tracked query
-executes. For test runs without row-lock support, explicitly configure:
+executes unless emulation is enabled. `allow_unsupported_for_update_clause`
+defaults to `None`: `create_app` resolves it to `AppConfig.DEV_MODE`, enabling
+emulation in development and keeping strict checks in production. Before
+`create_app`, `None` or a missing setting keeps strict checks. Explicit `True`
+or `False` overrides the automatic choice. For test runs without row-lock support:
 
 ```py
 # bafser_config.py — test configuration only
-allow_unsupported_for_update_clause = True  # default: False
+allow_unsupported_for_update_clause = True
 ```
 
 This refreshes the objects and emulates transaction-scoped marks, so model checks

@@ -320,10 +320,12 @@ SQLAlchemy queries are not automatically tracked. Entity results are buffered.
 Acquire locks before changing objects: normal autoflush happens before SELECT,
 and refreshing without autoflush can discard pending changes.
 
-Unsupported dialects (including SQLite) raise `LockNotSupportedError` on execution.
-For test configurations, `bafser_config.allow_unsupported_for_update_clause = True`
-(default `False`) permits refreshed reads with emulated marks. Ordinary reads
-without `for_update=True` remain unmarked. This mode does not provide concurrency
+Unsupported dialects (including SQLite) raise `LockNotSupportedError` on execution
+unless emulation is enabled. `bafser_config.allow_unsupported_for_update_clause`
+defaults to `None`; `create_app` resolves it to `AppConfig.DEV_MODE`. Explicit
+`True` or `False` overrides that choice. Before `create_app`, `None` or a missing
+setting keeps strict checks. `True` permits refreshed reads with emulated marks.
+Ordinary reads without `for_update=True` remain unmarked. This mode does not provide concurrency
 protection and does not ignore SQL errors. See README's FOR UPDATE section for
 transaction assumptions, supported dialects and parent-object locking examples.
 When `db_sess` is omitted, the methods use the request-scoped session.
@@ -370,11 +372,12 @@ uses its stored prefix. `NormalizationError` reports invalid values/normalizers;
 the effective overflow policy is `raise`.
 
 *Function* `normalize_search(text, *, replace_yo=True, strip_diacritics=True,
-strip_punctuation=True, cyrillic_to_latin=False, transliterate=None) -> str`
+strip_punctuation=True, cyrillic_to_latin=True, transliterate=None) -> str`
 performs NFKC, casefold, ё/diacritic folding, punctuation-to-space replacement and
-whitespace collapse. Optional `cyrillic_to_latin=True` transliterates the Russian
+whitespace collapse. By default, `cyrillic_to_latin=True` transliterates the Russian
 alphabet after folding (`я -> ya`, default `ё -> e`, `й -> i`). Other letters are
-unchanged. Disabling folding preserves `ё -> yo`, `й -> y`. The callable
+unchanged. Set `cyrillic_to_latin=False` to preserve Cyrillic after folding.
+Disabling folding preserves `ё -> yo`, `й -> y`. The callable
 `transliterate` remains a custom transform before folding. Use the same normalizer
 for queries. Nullable column values bypass the function and remain `None`.
 Rebuild existing search values after changing defaults or normalization settings.
@@ -498,8 +501,9 @@ Flask route decorator that ensures the request contains a valid JWT. If not, ret
 
 #### Date & Parsing
 
-- `get_datetime_now() -> datetime` – Returns a timezone‑aware UTC datetime.
-- `parse_date(s: str) -> datetime | None` – Attempts to parse a date string in multiple formats.
+- `get_datetime_utc() -> datetime` – Returns the current instant as a timezone-aware UTC datetime.
+- `get_datetime_now() -> datetime` – Returns `get_datetime_utc()` when `datetime_utc=True`; otherwise adds three hours while retaining the UTC timezone marker.
+- `parse_date(s: str) -> datetime | None` – Parses an ISO date string, returning `None` on failure. With `datetime_utc=True`, offsets are converted to UTC and the result has no `tzinfo`; input without an offset is treated as UTC. Otherwise, offsets are preserved and a trailing `Z` is removed before parsing.
 
 #### Miscellaneous
 
@@ -553,6 +557,10 @@ Attaches type information to a Flask route for automatic documentation generatio
 Use `TJson["img", ImageJson, "type", int]` for an object with multiple fields, or
 `TJsonListOf["id", int, "name", str]` for a list of such objects. These schemas
 describe API documentation; they do not parse or validate requests.
+Fields declared with `JsonOpt[T]` are optional, including in `TJson` and
+`TJsonListOf`; `T | None` separately permits JSON null. `datetime` is displayed
+as a date-time type, represented as `string` in TypeScript, and edited as a
+string in the request form.
 If `jwt=False`, the endpoint is marked as not requiring authentication.
 
 #### `get_api_docs`
@@ -1086,6 +1094,7 @@ project/
 #### Integration Tests
 - Start the actual Flask app in test mode (`DEV_MODE=True`) and use the `test_client`.
 - The `DELAY_MODE` setting can be used to simulate network latency for UI testing.
+- When creating multiple apps in one process, reset `bafser_config.allow_unsupported_for_update_clause` to the intended value before each `create_app` call and restore it after the test. Use `None` to select the app's `DEV_MODE`; `create_app` stores the resolved boolean in the shared configuration.
 
 #### Testing Authentication
 - The `protected_route` decorator relies on JWT cookies. In tests, you can manually set the cookie after logging in via a test endpoint.

@@ -77,8 +77,9 @@ def normalize_search(
     """NFKC/casefold, fold ё/diacritics, replace punctuation and collapse spaces.
 
     Punctuation becomes whitespace, rather than joining adjacent words.
-    Removing diacritics also changes Cyrillic й to и. Optional Russian-to-Latin
-    transliteration runs after ё/diacritic folding; other letters are preserved.
+    Removing diacritics also changes Cyrillic й to и. Russian-to-Latin
+    transliteration is enabled by default and runs after ё/diacritic folding;
+    set cyrillic_to_latin=False to preserve Cyrillic. Other letters are preserved.
     A custom transliterator receives NFKC/casefold text before those transforms
     and must return a string.
     """
