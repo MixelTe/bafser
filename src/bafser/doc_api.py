@@ -150,7 +150,12 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
         return "null"
 
     if isinstance(otype, _JsonDocSpec):
-        fields = {name: type_to_json(field_type, types, verbose) for name, field_type in otype.fields}
+        fields: dict[str, Any] = {}
+        for name, field_type in otype.fields:
+            if get_origin(field_type) is JsonOpt:
+                name += "?"
+                field_type = get_args(field_type)[0]
+            fields[name] = type_to_json(field_type, types, verbose)
         return [fields] if otype.list_of else fields
 
     torigin = get_origin(otype)
@@ -226,7 +231,7 @@ class EndpointInfo(JsonObj):
 class TypeInfo(JsonObj):
     name: JsonOpt[str] = Undefined
     line: JsonOpt[int] = Undefined
-    type: Literal["tlink", "int", "float", "bool", "str", "null", "any", "literal", "list", "tuple", "dict", "union", "object", "unknown"]
+    type: Literal["tlink", "int", "float", "bool", "str", "null", "any", "literal", "datetime", "list", "tuple", "dict", "union", "object", "unknown"]
     list_type: JsonOpt["TypeInfo"] = Undefined
     tuple_type: JsonOpt[list["TypeInfo"]] = Undefined
     dict_type: JsonOpt[tuple["TypeInfo", "TypeInfo"]] = Undefined
@@ -252,6 +257,8 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         return TypeInfo(type="bool")
     if otype is str:
         return TypeInfo(type="str")
+    if otype is datetime:
+        return TypeInfo(type="datetime")
     if otype in (None, NoneType):
         return TypeInfo(type="null")
     if otype == Any:
@@ -260,7 +267,12 @@ def type_info(otype: Any, types: dict[str, TypeInfo]) -> TypeInfo:
         return TypeInfo(type="object", object_fields=[])
 
     if isinstance(otype, _JsonDocSpec):
-        fields = [TypeInfoField(name=name, type=type_info(field_type, types)) for name, field_type in otype.fields]
+        fields: list[TypeInfoField] = []
+        for name, field_type in otype.fields:
+            optional = get_origin(field_type) is JsonOpt
+            if optional:
+                field_type = get_args(field_type)[0]
+            fields.append(TypeInfoField(name=name, type=type_info(field_type, types), optional=optional))
         result = TypeInfo(type="object", object_fields=fields)
         return TypeInfo(type="list", list_type=result) if otype.list_of else result
 

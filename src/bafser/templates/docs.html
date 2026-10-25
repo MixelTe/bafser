@@ -1219,6 +1219,7 @@
 			if (type.type == "float") return Div(["type", "type_float"], "float");
 			if (type.type == "bool") return Div(["type", "type_bool"], "boolean");
 			if (type.type == "str") return Div(["type", "type_str"], "string");
+			if (type.type == "datetime") return Div(["type", "type_any"], "datetime");
 			if (type.type == "null") return Div(["type", "type_null"], "null");
 			if (type.type == "any") return Div(["type", "type_any"], "any");
 			if (type.type == "literal") return Div(["type", "type_literal"], type.literal.map((v, i) => [
@@ -1340,6 +1341,7 @@
 			if (type.type == "float") return Span("type_type", "number");
 			if (type.type == "bool") return Span("type_type", "boolean");
 			if (type.type == "str") return Span("type_type", "string");
+			if (type.type == "datetime") return Span("type_type", "string");
 			if (type.type == "null") return Span("type_type", "null");
 			if (type.type == "any") return Span("type_type", "any");
 			if (type.type == "literal") return type.literal.map((v, i) => [
@@ -1394,6 +1396,7 @@
 					Span([], ";"),
 					(field.type.type == "int") && Span("type_comment", " // int"),
 					(field.type.type == "float") && Span("type_comment", " // float"),
+					(field.type.type == "datetime") && Span("type_comment", " // datetime"),
 					field.desc && Span("type_comment", " // " + field.desc),
 					Span([], "\n"),
 				]),
