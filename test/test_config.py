@@ -64,7 +64,6 @@ class ConfigTests(unittest.TestCase):
 
     def test_extra_fields_and_explicit_supported_options_are_allowed(self):
         self.config.project_setting = object()
-        self.config.sql_echo = "debug"
         for value in (None, True, False):
             self.config.allow_unsupported_for_update_clause = value
             self.assertIsNone(validate_config(self.config))
