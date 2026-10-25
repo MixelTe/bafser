@@ -2,14 +2,18 @@
 
 try:
     import bafser_config  # type: ignore
-except ModuleNotFoundError:
+except ModuleNotFoundError as error:
+    if error.name != "bafser_config":
+        raise
     import os
     import sys
 
     sys.path.append(os.getcwd())
     try:
         import bafser_config
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as error:
+        if error.name != "bafser_config":
+            raise
         import shutil
 
         current = os.path.dirname(__file__)
@@ -30,6 +34,11 @@ except ModuleNotFoundError:
             with open(cfg_dst, "a", encoding="utf8") as f:
                 f.write("\n" + cfg_tg)
 
+from .validate_config import validate_config
+
+if "bafser_config" in globals():
+    validate_config(bafser_config)  # type: ignore
+
 # ruff: isort: skip_file
 from .utils.response_msg import response_msg
 from .utils.get_json_values import get_json_values, get_json_list
@@ -45,7 +54,14 @@ from .utils.get_userId import get_userId_required, get_userId
 from .utils.ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .utils.jsonify_list import jsonify_list
 from .utils.listfind import listfind
-from .utils.normalized_column import normalized_column, normalize_search, normalized_update_values, rebuild_normalized_columns, NormalizationError, NormalizedValueTooLongError
+from .utils.normalized_column import (
+    normalized_column,
+    normalize_search,
+    normalized_update_values,
+    rebuild_normalized_columns,
+    NormalizationError,
+    NormalizedValueTooLongError,
+)
 from .utils.parse_date import parse_date
 from .utils.permission_required import create_permission_required_decorator  # pyright: ignore[reportDeprecated]
 from .utils.permission_required import permission_required, permission_required_any  # pyright: ignore[reportDeprecated]
@@ -179,4 +195,5 @@ __all__ = [
     "use_db_session",
     "use_user",
     "use_userId",
+    "validate_config",
 ]

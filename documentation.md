@@ -120,6 +120,8 @@ db_dev_path = "storage/dev.db"      # SQLite database for development
 db_path = "ENV:DBPATH"              # Production database (set via environment variable)
 db_mysql = True                     # Use MySQL in production, SQLite in development
 sql_echo = False                    # Print SQL queries to console
+allow_unsupported_for_update_clause = None  # Resolve to DEV_MODE in create_app
+datetime_utc = True                 # UTC timestamps and ISO dates
 
 use_alembic = True                  # Enable Alembic migrations
 migrations_folder = "alembic"       # Where migration scripts are stored
