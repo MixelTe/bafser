@@ -26,6 +26,21 @@ from bafser.data.user import UserBase
 from bafser.jsonobj import validate_type
 
 
+class SqliteLowerTests(unittest.TestCase):
+    def test_lower_preserves_null_and_supports_unicode(self):
+        from bafser import db_session
+
+        engine = create_engine("sqlite:///:memory:")
+        self.addCleanup(engine.dispose)
+        with tempfile.TemporaryDirectory() as directory:
+            # Register on this engine only, without affecting other tests.
+            with patch.object(db_session, "Engine", engine):
+                db_session.setup_sqlite(str(Path(directory) / "test.db"))
+            with engine.connect() as connection:
+                row = connection.exec_driver_sql("SELECT lower(NULL), lower(''), lower('ABC'), lower('ПРИВЕТ')").one()
+                self.assertEqual(tuple(row), (None, "", "abc", "привет"))
+
+
 class ValidationTests(unittest.TestCase):
     def test_unknown_json_fields_cannot_replace_methods(self):
         class Payload(JsonObj):

@@ -57,7 +57,7 @@ def setup_sqlite(db_path: str):
 
     @event.listens_for(Engine, "connect")
     def _(dbapi_connection: Any, connection_record: Any):
-        dbapi_connection.create_function("lower", 1, str.lower)
+        dbapi_connection.create_function("lower", 1, lambda value: value.lower() if value is not None else None)
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
