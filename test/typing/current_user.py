@@ -2,7 +2,7 @@ from datetime import datetime
 
 from typing_extensions import assert_type
 
-from bafser import UserBase, get_datetime_utc
+from bafser import ForUpdateRequiredError, LockNotSupportedError, UserBase, get_datetime_utc
 
 
 class User(UserBase):
@@ -16,3 +16,7 @@ assert_type(get_datetime_utc(), datetime)
 
 def check_instance(user: User) -> None:
     assert_type(user.current, User)
+    assert_type(user.is_for_update, bool)
+    assert_type(user.require_for_update(), None)
+    assert_type(ForUpdateRequiredError(), ForUpdateRequiredError)
+    assert_type(LockNotSupportedError(), LockNotSupportedError)

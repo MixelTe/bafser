@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: bafser-test-root
+      MYSQL_DATABASE: bafser_test
+      MYSQL_USER: bafser
+      MYSQL_PASSWORD: bafser-test
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--host=127.0.0.1", "--silent"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+  tests:
+    build:
+      context: ../..
+      dockerfile: test/mysql/Dockerfile
+    environment:
+      BAFSER_TEST_MYSQL_URL: mysql+pymysql://bafser:bafser-test@mysql/bafser_test?charset=utf8mb4
+    depends_on:
+      mysql:
+        condition: service_healthy

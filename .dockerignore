@@ -1,0 +1,11 @@
+.git
+.venv
+dist
+**/__pycache__
+**/*.egg-info
+bafser_config.py
+storage
+test/db
+test/logs
+test/images
+test/secret_key_jwt.txt

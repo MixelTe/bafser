@@ -229,7 +229,7 @@ class Img(ImageBase):
 reqid;ip;uid;asctime;method;url;message;code;json
 ```
 
-#### UTC dates (2.12.3)
+#### UTC dates
 
 `get_datetime_utc()` returns the current instant as a timezone-aware UTC datetime.
 It is exported from both `bafser` and `bafser.utils`.
@@ -240,3 +240,61 @@ clock, `parse_date()` converts ISO offsets to UTC (naive input is already UTC),
 and model serialization includes a `Z` suffix. SQL `DATETIME` values store UTC
 without a timezone; convert existing local timestamps before enabling this mode.
 Without this setting the legacy behavior is preserved.
+
+#### FOR UPDATE
+
+`for_update=True` locks and refreshes matching rows, including instances already
+loaded in the session. `item.is_for_update` is a read-only, transaction-scoped
+mark; `item.require_for_update()` raises `ForUpdateRequiredError` if it is absent.
+Neither operation acquires a lock:
+
+```py
+class Account(SqlAlchemyBase, ObjMixin):
+    # ... mapped fields ...
+    def withdraw(self, amount: int):
+        self.require_for_update()
+        # Check the current balance, then change it.
+
+account = Account.get(account_id, for_update=True, db_sess=session)
+if account is not None:
+    account.withdraw(amount)
+session.commit()
+```
+
+Obtain the lock before reading values used for a decision or changing the object.
+The query uses SQLAlchemy's normal autoflush: pending changes can be written before
+the locking SELECT. With autoflush disabled, refreshing can discard pending changes.
+
+Tracking covers `query/get/all(for_update=True)` and helpers built on them,
+including both `get_by_big_id` paths. Merely constructing a query does not mark
+anything. Marks are assigned only after successful query/result loading, to
+explicitly selected instances of the helper's model. Relationships are not marked
+automatically, even if eager loading also causes their rows to be locked.
+Scalar projections and direct SQLAlchemy queries are not tracked. The results of
+tracked entity queries are buffered before they are returned, including iteration;
+do not use them for unbounded streaming. Keep the exclusive FOR UPDATE clause
+unmodified; shared locks and `of=` overrides are not supported by tracking.
+
+Marks expire after commit, rollback, session close or object detachment. Rolling
+back a SAVEPOINT conservatively invalidates all marks in that session; releasing
+a SAVEPOINT preserves marks. Failed SQLAlchemy session statements also invalidate
+marks, since a database deadlock can implicitly roll back the transaction.
+The mark is not a database column or a serialized
+field. It records the bafser protocol, not every possible database lock.
+Use ordinary session-owned transactions, transactional tables (InnoDB on MySQL),
+and no DBAPI autocommit or externally managed transaction boundaries.
+
+Supported database dialects are MySQL/MariaDB, PostgreSQL and Oracle. Other
+dialects, including SQLite, raise `LockNotSupportedError` when a tracked query
+executes. For test runs without row-lock support, explicitly configure:
+
+```py
+# bafser_config.py — test configuration only
+allow_unsupported_for_update_clause = True  # default: False
+```
+
+This refreshes the objects and emulates transaction-scoped marks, so model checks
+still work. An ordinary query without `for_update=True` still fails the check.
+In this mode, `is_for_update=True` does not prove a real row lock exists. Test
+concurrent access on MySQL, not SQLite. The setting never suppresses database
+errors such as deadlocks or lock timeouts.

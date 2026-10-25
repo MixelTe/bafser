@@ -7,6 +7,8 @@ from sqlalchemy_serializer import SerializerMixin
 
 import bafser_config
 
+from .locking import ForUpdateRequiredError, for_update_query, is_for_update
+
 if TYPE_CHECKING:
     from . import UserBase
 
@@ -44,6 +46,19 @@ class TableBase(DeclarativeBase, MappedAsDataclass, SerializerMixin):
         return Session.object_session(self)
 
     @property
+    def is_for_update(self) -> bool:
+        """Whether bafser recorded FOR UPDATE in this session/transaction.
+
+        With allow_unsupported_for_update_clause, this may be an emulated lock.
+        """
+        return is_for_update(self)
+
+    def require_for_update(self) -> None:
+        """Require a real or explicitly emulated lock; never acquire one."""
+        if not self.is_for_update:
+            raise ForUpdateRequiredError(f"{type(self).__name__} requires FOR UPDATE in the current transaction")
+
+    @property
     def db_sess(self):
         db_sess = self.get_session()
         assert db_sess, "object is not bound to session"
@@ -65,7 +80,7 @@ class IdMixin(MappedAsDataclass):
         session = db_sess if db_sess is not None else get_db_session()
         q = session.query(cls)
         if for_update:
-            q = q.with_for_update()
+            q = for_update_query(q, cls)
         return q
 
     @classmethod
@@ -104,7 +119,7 @@ class ObjMixin(IdMixin):
         session = db_sess if db_sess is not None else get_db_session()
         items = session.query(cls)
         if for_update:
-            items = items.with_for_update()
+            items = for_update_query(items, cls)
         if not includeDeleted:
             items = items.filter(cls.deleted == False)
         return items
@@ -233,7 +248,7 @@ class BigIdMixin(MappedAsDataclass):
         else:
             query = db_sess.query(cls)
             if for_update:
-                query = query.with_for_update()
+                query = for_update_query(query, cls)
             return query.filter(cls.id_big == id_big).first()
 
     def set_unique_big_id(self, *, db_sess: Session | None = None):

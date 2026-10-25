@@ -12,6 +12,10 @@ db_path = "ENV:DBPATH"  # e.g. mysql_user:password@localhost/app_db
 db_mysql = True
 sql_echo = False
 
+# Explicitly emulate FOR UPDATE for test databases without row locking (SQLite).
+# Checks still require a successful query with for_update=True.
+allow_unsupported_for_update_clause = False
+
 # Use UTC for shared model timestamps and ISO dates
 datetime_utc = True
 

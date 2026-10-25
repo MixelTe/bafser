@@ -66,6 +66,7 @@ from .dashboard import render_dashboard_page
 from .db_session import SqlAlchemyBase
 from .truncate_string import TruncateString
 from .table_base import IdMixin, ObjMixin, SingletonMixin, BigIdMixin
+from .locking import ForUpdateRequiredError, LockNotSupportedError
 from .data._tables import TablesBase
 from .data._roles import RolesBase
 from .data.operation import OperationsBase, OperationDict, TOperation
@@ -90,6 +91,7 @@ __all__ = [
     "AccessControlHeaders",
     "AppConfig",
     "BigIdMixin",
+    "ForUpdateRequiredError",
     "IdMixin",
     "Image",
     "ImageDict",
@@ -98,6 +100,7 @@ __all__ = [
     "JsonObj",
     "JsonOpt",
     "JsonParseError",
+    "LockNotSupportedError",
     "Log",
     "LogDict",
     "M",

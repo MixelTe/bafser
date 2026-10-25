@@ -14,39 +14,39 @@ Building a production‑ready Flask application requires integrating many separa
    Bafser expects a specific project structure (e.g., `blueprints/`, `data/`) and provides base classes (`TablesBase`, `RolesBase`, `OperationsBase`) that automatically discover and validate your custom definitions. This reduces decision fatigue and ensures consistency across projects.
 
 2. **Security by Default**
-   - JWT tokens stored in HTTP‑only cookies (CSRF‑protected).
-   - Automatic password hashing (bcrypt) for user accounts.
-   - Built‑in permission system that ties operations to roles and users.
-   - Soft‑delete (`ObjMixin`) with audit logging for all data changes.
+    - JWT tokens stored in HTTP‑only cookies (CSRF‑protected).
+    - Automatic password hashing (bcrypt) for user accounts.
+    - Built‑in permission system that ties operations to roles and users.
+    - Soft‑delete (`ObjMixin`) with audit logging for all data changes.
 
 3. **Database‑Agnostic Core**
-   Supports SQLite (for development) and MySQL (for production) via a unified SQLAlchemy layer. Alembic migrations are integrated and can be toggled with a single config flag.
+    Supports SQLite (for development) and MySQL (for production) via a unified SQLAlchemy layer. Alembic migrations are integrated and can be toggled with a single config flag.
 
 4. **Observability Built‑In**
-   Comprehensive logging across four distinct channels:
-   - **Request/Response logs** (CSV) for API auditing.
-   - **Error logs** (plain text) for debugging.
-   - **Front‑end client logs** for capturing browser‑side issues.
-   - **Dashboard metrics** (CSV) for performance monitoring.
-   Logs include user ID, IP address (with emoji representation), request duration, and JSON payloads (with sensitive fields masked).
+    Comprehensive logging across four distinct channels:
+    - **Request/Response logs** (CSV) for API auditing.
+    - **Error logs** (plain text) for debugging.
+    - **Front‑end client logs** for capturing browser‑side issues.
+    - **Dashboard metrics** (CSV) for performance monitoring.
+    Logs include user ID, IP address (with emoji representation), request duration, and JSON payloads (with sensitive fields masked).
 
 5. **Developer Experience**
-   - CLI tool (`bafser`) for common tasks (create project, add users, manage roles, run migrations).
-   - Automatic API documentation generation via the `@doc_api` decorator.
-   - Hot‑reload in development mode, delayed‑request simulation for testing UI loaders.
-   - Type hints throughout, enabling full IDE support and static analysis.
+    - CLI tool (`bafser`) for common tasks (create project, add users, manage roles, run migrations).
+    - Automatic API documentation generation via the `@doc_api` decorator.
+    - Hot‑reload in development mode, delayed‑request simulation for testing UI loaders.
+    - Type hints throughout, enabling full IDE support and static analysis.
 
 ### How It Differs from Plain Flask
 
-| Aspect | Plain Flask | Bafser |
-|--------|-------------|--------|
+| Aspect             | Plain Flask                        | Bafser                                                                       |
+|--------------------|------------------------------------|------------------------------------------------------------------------------|
 | **Authentication** | Manual setup of Flask‑JWT‑Extended | Pre‑configured JWT with cookie storage, refresh tokens, and identity helpers |
-| **Authorization** | Custom decorators or extensions | Declarative operations & roles, built‑in permission system |
-| **Database** | SQLAlchemy setup per project | Unified session management, mixins for CRUD, automatic table discovery |
-| **Logging** | Requires separate handlers | Four‑channel logging with structured CSV/JSON output |
-| **Project Layout** | Up to the developer | Enforced blueprint/data/script structure |
-| **API Docs** | Manual or third‑party (Swagger) | Automatic from type hints via `@doc_api` |
-| **CLI** | Flask‑CLI or custom scripts | Integrated `bafser` with user/role management and migration commands |
+| **Authorization**  | Custom decorators or extensions    | Declarative operations & roles, built‑in permission system                   |
+| **Database**       | SQLAlchemy setup per project       | Unified session management, mixins for CRUD, automatic table discovery       |
+| **Logging**        | Requires separate handlers         | Four‑channel logging with structured CSV/JSON output                         |
+| **Project Layout** | Up to the developer                | Enforced blueprint/data/script structure                                     |
+| **API Docs**       | Manual or third‑party (Swagger)    | Automatic from type hints via `@doc_api`                                     |
+| **CLI**            | Flask‑CLI or custom scripts        | Integrated `bafser` with user/role management and migration commands         |
 
 ### Key Design Patterns
 
@@ -58,7 +58,7 @@ Building a production‑ready Flask application requires integrating many separa
 
 ### Philosophy
 
-Bafser believes that a framework should **guide, not restrict**. It provides strong defaults and conventions but remains extensible—every base class can be subclassed and overridden, every config value can be changed, and the underlying Flask app is fully accessible. The goal is to eliminate the repetitive, error‑prone parts of backend development while keeping the power of Flask and SQLAlchemy within reach.
+Bafser believes that a framework should **guide, not restrict**. It provides strong defaults and conventions but remains extensible–every base class can be subclassed and overridden, every config value can be changed, and the underlying Flask app is fully accessible. The goal is to eliminate the repetitive, error‑prone parts of backend development while keeping the power of Flask and SQLAlchemy within reach.
 
 ## 2. Getting Started
 
@@ -309,6 +309,23 @@ Base class for all SQLAlchemy models. Inherits from `DeclarativeBase`, `Serializ
 **`IdMixin`**
 Adds an integer primary key `id` and provides class methods for querying:
 `query(*, for_update=False, db_sess=None)`, `get(id, *, for_update=False, db_sess=None)`, `all(*, for_update=False, db_sess=None)`.
+
+`for_update=True` also refreshes existing ORM instances with `populate_existing()`.
+`SqlAlchemyBase.is_for_update: bool` records a successful bafser locking query for
+the object's current session/transaction; `require_for_update()` raises
+`ForUpdateRequiredError` if that mark is absent. It never obtains a lock.
+Commit, rollback, close and detachment invalidate marks; SAVEPOINT rollback
+conservatively invalidates all marks in the session. Relationships and raw
+SQLAlchemy queries are not automatically tracked. Entity results are buffered.
+Acquire locks before changing objects: normal autoflush happens before SELECT,
+and refreshing without autoflush can discard pending changes.
+
+Unsupported dialects (including SQLite) raise `LockNotSupportedError` on execution.
+For test configurations, `bafser_config.allow_unsupported_for_update_clause = True`
+(default `False`) permits refreshed reads with emulated marks. Ordinary reads
+without `for_update=True` remain unmarked. This mode does not provide concurrency
+protection and does not ignore SQL errors. See README's FOR UPDATE section for
+transaction assumptions, supported dialects and parent-object locking examples.
 When `db_sess` is omitted, the methods use the request-scoped session.
 
 **`ObjMixin`**
@@ -978,7 +995,7 @@ project/
 #### Passwords
 - Bafser’s `UserBase` uses bcrypt for password hashing. Never store plain‑text passwords.
 - When creating users programmatically, use `User.new(...)` which hashes the password automatically.
-- Change the default admin password (`admin`/`admin`) in production—the framework forces a random password if it detects the default.
+- Change the default admin password (`admin`/`admin`) in production–the framework forces a random password if it detects the default.
 
 #### JWT Tokens
 - Tokens are stored in HTTP‑only cookies, which mitigates XSS attacks.
