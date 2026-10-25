@@ -9,9 +9,9 @@ def parse_date(date: str):
             parsed = datetime.fromisoformat(date[:-1] + "+00:00" if date.endswith("Z") else date)
             if parsed.tzinfo is not None:
                 parsed = parsed.astimezone(timezone.utc)
-            return parsed.replace(tzinfo=None), True
+            return parsed.replace(tzinfo=None)
         if date[-1] == "Z":
             date = date[:-1]
-        return datetime.fromisoformat(date), True
+        return datetime.fromisoformat(date)
     except Exception:
-        return None, False
+        return None

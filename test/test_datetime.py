@@ -41,12 +41,12 @@ class DatetimeTests(unittest.TestCase):
     def test_utc_mode_normalizes_offsets_and_treats_naive_input_as_utc(self):
         with patch.object(bafser_config, "datetime_utc", True, create=True):
             for value in ("2026-10-12T18:00:00+03:00", "2026-10-12T15:00:00Z", "2026-10-12T15:00:00"):
-                self.assertEqual(parse_date(value), (datetime(2026, 10, 12, 15, 0), True))
-            self.assertEqual(parse_date("invalid"), (None, False))
+                self.assertEqual(parse_date(value), datetime(2026, 10, 12, 15, 0))
+            self.assertEqual(parse_date("invalid"), None)
 
     def test_legacy_parser_keeps_its_behavior(self):
         with patch.object(bafser_config, "datetime_utc", False, create=True):
-            self.assertEqual(parse_date("2026-10-12T18:00:00+03:00"), (datetime(2026, 10, 12, 18, 0, tzinfo=timezone(timedelta(hours=3))), True))
+            self.assertEqual(parse_date("2026-10-12T18:00:00+03:00"), datetime(2026, 10, 12, 18, 0, tzinfo=timezone(timedelta(hours=3))))
 
     def test_file_logs_use_utc_in_utc_mode(self):
         from bafser.logger import customTime
