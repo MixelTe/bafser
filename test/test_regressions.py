@@ -8,7 +8,8 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
+from enum import Enum
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -215,6 +216,40 @@ class AppTests(unittest.TestCase):
 
 
 class DatabaseTests(unittest.TestCase):
+    def test_log_persists_calendar_dates_and_preserves_datetime_and_enum_values(self):
+        from test.data.apple import Apple  # type: ignore
+        from test.data.img import Img  # type: ignore
+        from test.data.user import User
+
+        class State(Enum):
+            active = "active"
+
+        engine = create_engine("sqlite:///:memory:")
+        self.addCleanup(engine.dispose)
+        SqlAlchemyBase.metadata.create_all(engine)
+        with Session(engine) as session:
+            actor = User(login="calendar", name="Calendar", balance=0)
+            actor.password = "unused"
+            session.add(actor)
+            session.commit()
+            naive = datetime(2026, 10, 28, 14, 30, 12, 123456)
+            aware = naive.replace(tzinfo=timezone(timedelta(hours=3)))
+            log = Log.updated(actor, actor, changes=[
+                ("startDate", None, date(2028, 2, 29)),
+                ("dateRange", date.min, date.max),
+                ("timestamp", naive, aware),
+                ("state", State.active, None),
+                ("quantity", 0, False),
+            ], now=naive, db_sess=session)
+            session.expire_all()
+            self.assertEqual(log.changes, [
+                ["startDate", None, "2028-02-29"],
+                ["dateRange", "0001-01-01", "9999-12-31"],
+                ["timestamp", "2026-10-28T14:30:12.123456", "2026-10-28T14:30:12.123456+03:00"],
+                ["state", "active", None],
+                ["quantity", 0, False],
+            ])
+
     def test_query_helpers_use_optional_request_session(self):
         from bafser.data.db_state import DBState
         from test.data.user import User

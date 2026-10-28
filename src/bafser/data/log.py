@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, TypedDict
 
 from sqlalchemy import JSON, String
@@ -159,7 +159,7 @@ class Log(SqlAlchemyBase, IdMixin):
 
     @staticmethod
     def _serialize(v: Any):
-        if isinstance(v, datetime):
+        if isinstance(v, date):
             return v.isoformat()
         if isinstance(v, enum.Enum):
             return v.value
