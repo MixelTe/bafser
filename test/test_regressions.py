@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 import bafser_config
 
-from bafser import AppConfig, JsonObj, Log, Role, SqlAlchemyBase, UserRole, create_app
+from bafser import AppConfig, JsonObj, Log, PublicError, Role, SqlAlchemyBase, Undefined, UserRole, create_app, response_msg
 from bafser.data.user import UserBase
 from bafser.jsonobj import validate_type
 
@@ -116,6 +116,110 @@ class AppTests(unittest.TestCase):
                 with self.subTest(dev_mode=dev_mode):
                     self.make_app(Path(directory), dev_mode=dev_mode)
                     self.assertIs(bafser_config.allow_unsupported_for_update_clause, dev_mode)
+
+    def test_public_errors_return_approved_payload_and_rollback(self):
+        class Conflict(PublicError):
+            status = 409
+            code = "approved_conflict"
+            details = {"remaining": 0}
+
+        for dev_mode in (False, True):
+            with self.subTest(dev_mode=dev_mode), tempfile.TemporaryDirectory() as directory:
+                app, _ = self.make_app(Path(directory), dev_mode=dev_mode)
+                session = Mock()
+                errors = {
+                    "base": PublicError("Approved text", 422),
+                    "subclass": Conflict("Approved conflict"),
+                    "constructor": PublicError("Constructor fields", 409, "constructor_code", {"remaining": 0}),
+                    "override": Conflict("Override fields", status=403, code="override_code", details=False),
+                    "clear": Conflict("Clear fields", code=None, details=None),
+                    "undefined": Conflict("Inherited fields", code=Undefined, details=Undefined),
+                    "undefined_base": PublicError("No metadata", code=Undefined, details=Undefined),
+                }
+
+                @app.get("/api/failure/<kind>")
+                def failure(kind):
+                    g.db_session = session
+                    raise errors[kind] from RuntimeError("PRIVATE underlying database error")
+
+                client = app.test_client()
+                for kind, status, payload in [
+                    ("base", 422, {"msg": "Approved text"}),
+                    ("subclass", 409, {"msg": "Approved conflict", "code": "approved_conflict", "details": {"remaining": 0}}),
+                    ("constructor", 409, {"msg": "Constructor fields", "code": "constructor_code", "details": {"remaining": 0}}),
+                    ("override", 403, {"msg": "Override fields", "code": "override_code", "details": False}),
+                    ("clear", 409, {"msg": "Clear fields"}),
+                    ("undefined", 409, {"msg": "Inherited fields", "code": "approved_conflict", "details": {"remaining": 0}}),
+                    ("undefined_base", 400, {"msg": "No metadata"}),
+                ]:
+                    session.reset_mock()
+                    response = client.get("/api/failure/" + kind)
+                    self.assertEqual(response.status_code, status)
+                    self.assertEqual(response.get_json(), payload)
+                    session.rollback.assert_called_once()
+
+    def test_unexpected_error_text_and_metadata_are_private(self):
+        class PrivateError(ValueError):
+            status = 409
+            code = "PRIVATE code"
+            details = {"password": "PRIVATE password"}
+
+        for dev_mode in (False, True):
+            with self.subTest(dev_mode=dev_mode), tempfile.TemporaryDirectory() as directory:
+                app, _ = self.make_app(Path(directory), dev_mode=dev_mode)
+                session = Mock()
+                errors = {kind.__name__: kind("PRIVATE SQL and credentials") for kind in (PrivateError, RuntimeError, PermissionError)}
+
+                @app.get("/api/failure/<kind>")
+                def failure(kind):
+                    g.db_session = session
+                    raise errors[kind]
+
+                for kind in errors:
+                    session.reset_mock()
+                    response = app.test_client().get("/api/failure/" + kind)
+                    self.assertEqual(response.status_code, 500)
+                    self.assertEqual(response.get_json(), {"msg": "Internal Server Error"})
+                    session.rollback.assert_called_once()
+
+    def test_explicit_error_text_remains_available(self):
+        with tempfile.TemporaryDirectory() as directory:
+            app, _ = self.make_app(Path(directory))
+
+            @app.get("/api/explicit")
+            def explicit():
+                return response_msg("Explicit approved text", 418)
+
+            response = app.test_client().get("/api/explicit")
+            self.assertEqual(response.status_code, 418)
+            self.assertEqual(response.get_json(), {"msg": "Explicit approved text"})
+
+    def test_json_parse_errors_are_public_but_unexpected_parser_errors_are_private(self):
+        from bafser.jsonobj import JsonParseError
+
+        self.assertTrue(issubclass(JsonParseError, PublicError))
+        with tempfile.TemporaryDirectory() as directory:
+            app, _ = self.make_app(Path(directory))
+
+            class Payload(JsonObj):
+                value: str
+
+                def _parse(self, key, value, data):
+                    if value == "approved":
+                        raise JsonParseError("Approved validation text")
+                    raise ValueError("PRIVATE parser implementation")
+
+            @app.post("/api/parse")
+            def parse():
+                Payload.get_from_req()
+                return {}
+
+            public = app.test_client().post("/api/parse", json={"value": "approved"})
+            self.assertEqual(public.status_code, 400)
+            self.assertIn("Approved validation text", public.get_json()["msg"])
+            private = app.test_client().post("/api/parse", json={"value": "unexpected"})
+            self.assertEqual(private.status_code, 500)
+            self.assertEqual(private.get_json(), {"msg": "Internal Server Error"})
 
     def test_for_update_emulation_explicit_setting_overrides_app_mode(self):
         with tempfile.TemporaryDirectory() as directory:

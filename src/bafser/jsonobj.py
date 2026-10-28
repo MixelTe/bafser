@@ -8,7 +8,7 @@ from collections.abc import Callable as CallableClass
 from dataclasses import dataclass
 from datetime import datetime
 from types import NoneType, UnionType
-from typing import Any, Literal, TypeGuard, TypeVar, Union, cast, get_args, get_origin, get_type_hints, overload
+from typing import Any, Literal, TypeVar, Union, cast, get_args, get_origin, get_type_hints, overload
 
 from typing_extensions import dataclass_transform
 
@@ -19,45 +19,16 @@ else:
 
 from flask import abort, jsonify
 
+from .public_error import PublicError
+from .undefined import Undefined
 from .utils import get_json_list, response_msg
 from .utils.get_json_values_from_req import get_json_from_req
 
-
-class UndefinedMeta(type):
-    def __repr__(cls):
-        return "Undefined"
-
-
-class Undefined(metaclass=UndefinedMeta):
-    T = type["Undefined"]
-
-    def __init__(self):
-        raise Exception("bafser: Undefined cant be instantiated")
-
-    @staticmethod
-    def cast(v: "T | type[Undefined]") -> "T":
-        """Remove Undefined from type hint"""
-        return v  # type: ignore
-
-    @staticmethod
-    def defined(v: "T | type[Undefined]") -> "TypeGuard[T]":
-        """Returns true if value is not Undefined"""
-        return v is not Undefined
-
-    @staticmethod
-    def default(v: "T | type[Undefined]", default: "K" = None) -> "T | K":
-        """Returns `default` if value is Undefined"""
-        if v is Undefined:
-            return default
-        return Undefined.cast(v)
-
-
 T = TypeVar("T")
-K = TypeVar("K")
 JsonOpt = TypeAliasType("JsonOpt", T | Undefined.T, type_params=(T,))
 
 
-class JsonParseError(Exception):
+class JsonParseError(PublicError):
     pass
 
 

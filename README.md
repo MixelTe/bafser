@@ -229,6 +229,31 @@ class Img(ImageBase):
 reqid;ip;uid;asctime;method;url;message;code;json
 ```
 
+#### Public API errors
+
+Raise `PublicError` only when its message is safe to show to API clients:
+
+```py
+from bafser import PublicError
+
+raise PublicError("Please select an available ticket type")  # HTTP 400
+raise PublicError("This action is not allowed", status=403)
+raise PublicError("Limit reached", status=409, code="limit_reached", details={"remaining": 0})
+```
+
+Subclasses can override `status` (400 by default), `code` and `details`;
+`get_dict()` includes only `msg` and the optional public metadata.
+Omitted `code`/`details` or explicit `Undefined` preserve subclass defaults;
+passing `None` explicitly clears them. Constructor arguments can override all
+public fields. 
+`JsonParseError` also inherits `PublicError`. API handlers may expose messages
+from this hierarchy or return explicitly chosen text through `response_msg`.
+Other exceptions return `Internal Server Error` with HTTP 500, including in
+development mode; their text, attributes and chained causes remain server-side.
+Failed public and unexpected requests roll back the request session before
+returning a response. Do not catch arbitrary `ValueError` or `PermissionError`
+and return their text to clients.
+
 #### UTC dates
 
 `get_datetime_utc()` returns the current instant as a timezone-aware UTC datetime.

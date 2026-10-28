@@ -18,6 +18,23 @@ class ExamplePayload(JsonObj):
 
 
 class CompatibilityTests(unittest.TestCase):
+    def test_undefined_reexports_share_one_sentinel(self):
+        from bafser.jsonobj import Undefined as JsonUndefined, UndefinedMeta as JsonUndefinedMeta
+        from bafser.undefined import Undefined as CoreUndefined, UndefinedMeta
+
+        self.assertIs(Undefined, CoreUndefined)
+        self.assertIs(JsonUndefined, CoreUndefined)
+        self.assertIs(JsonUndefinedMeta, UndefinedMeta)
+        self.assertEqual(repr(Undefined), "Undefined")
+        self.assertTrue(Undefined)
+        self.assertFalse(Undefined.defined(Undefined))
+        self.assertTrue(Undefined.defined(None))
+        self.assertIsNone(Undefined.cast(None))
+        self.assertEqual(Undefined.default(Undefined, "fallback"), "fallback")
+        self.assertIsNone(Undefined.default(None, "fallback"))
+        with self.assertRaisesRegex(Exception, "cant be instantiated"):
+            Undefined()
+
     def test_json_optional_field(self):
         payload = ExamplePayload.new({"name": "example"})
         self.assertIsNone(payload.validate())

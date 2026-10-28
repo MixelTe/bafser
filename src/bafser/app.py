@@ -21,6 +21,7 @@ from .alembic import alembic_upgrade
 from .authentication import get_user_id_by_jwt_identity
 from .doc_api import init_api_docs
 from .logger import get_logger_dashboard, get_logger_requests, redact_sensitive_data, setLogging
+from .public_error import PublicError
 from .utils import get_json, get_secret_key, get_secret_key_rnd, randstr, register_blueprints, response_msg
 
 _config: "AppConfig | None" = None
@@ -511,10 +512,25 @@ def create_app(import_name: str, config: AppConfig):
     def no_permission(error: Exception):  # pyright: ignore[reportUnusedFunction]
         return response_msg("No permission", 403)
 
+    def rollback_failed_request():
+        session = g.get("db_session")
+        if session is not None:
+            try:
+                session.rollback()
+            except Exception:
+                logging.exception("Request rollback failed")
+
+    @app.errorhandler(PublicError)
+    def public_error(error: PublicError):  # pyright: ignore[reportUnusedFunction]
+        rollback_failed_request()
+        if request.path.startswith(bafser_config.api_url):
+            return jsonify(error.get_dict()), error.status
+        return make_response("Произошла ошибка", error.status)
+
     @app.errorhandler(500)
     @app.errorhandler(Exception)
     def internal_server_error(error: Exception):  # pyright: ignore[reportUnusedFunction]
-        print(error)
+        rollback_failed_request()
         logging.error("%s\n%s", error, traceback.format_exc())
         if request.path.startswith(bafser_config.api_url):
             return response_msg("Internal Server Error", 500)

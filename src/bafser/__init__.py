@@ -35,6 +35,8 @@ except ModuleNotFoundError as error:
                 f.write("\n" + cfg_tg)
 
 from .validate_config import validate_config
+from .undefined import Undefined, U, UD
+from .public_error import PublicError
 
 if "bafser_config" in globals():
     validate_config(bafser_config)  # type: ignore
@@ -77,7 +79,7 @@ from .utils.use_userId import use_userId  # pyright: ignore[reportDeprecated]
 from .app import AppConfig, AccessControlHeaders, create_app, update_message_to_frontend, get_app_config
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, get_log_fpath_all, add_logger, create_log_handler, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
-from .jsonobj import JsonObj, JsonOpt, Undefined, JsonParseError
+from .jsonobj import JsonObj, JsonOpt, JsonParseError
 from .doc_api import doc_api, get_api_docs, TJson, TJsonListOf, render_docs_page
 from .dashboard import render_dashboard_page
 
@@ -105,6 +107,7 @@ class M:
 
 
 __all__ = [
+    "UD",
     "AccessControlHeaders",
     "AppConfig",
     "BigIdMixin",
@@ -127,6 +130,7 @@ __all__ = [
     "OperationDict",
     "OperationsBase",
     "ParametrizedLogger",
+    "PublicError",
     "Role",
     "RoleDict",
     "RolesBase",
@@ -137,6 +141,7 @@ __all__ = [
     "TOperation",
     "TablesBase",
     "TruncateString",
+    "U",
     "Undefined",
     "UserBase",
     "UserDict",
