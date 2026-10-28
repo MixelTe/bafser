@@ -236,10 +236,14 @@ It is exported from both `bafser` and `bafser.utils`.
 
 Set `datetime_utc = True` in `bafser_config.py` to use UTC for shared model
 timestamps and file logs. In this mode `get_datetime_now()` delegates to the UTC
-clock, `parse_date()` converts ISO offsets to UTC (naive input is already UTC),
+clock, `parse_datetime()` converts ISO offsets to UTC (naive input is already UTC),
 and model serialization includes a `Z` suffix. SQL `DATETIME` values store UTC
 without a timezone; convert existing local timestamps before enabling this mode.
 Without this setting the legacy behavior is preserved.
+
+`parse_date()` returns a `datetime.date` from an ISO date or datetime string.
+It discards the time and offset without shifting the written calendar day,
+independently of `datetime_utc`. Both parsers return `None` for invalid input.
 
 #### Normalized search columns
 

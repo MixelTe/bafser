@@ -18,7 +18,7 @@ from .import_all_tables import import_all_tables
 from .ip_to_emoji import ip_to_emoji, emoji_to_ip
 from .jsonify_list import jsonify_list
 from .listfind import listfind
-from .parse_date import parse_date
+from .parse_date import parse_date, parse_datetime
 from .permission_required import create_permission_required_decorator  # pyright: ignore[reportDeprecated]
 from .permission_required import permission_required, permission_required_any  # pyright: ignore[reportDeprecated]
 from .protected_route import protected_route
@@ -58,6 +58,7 @@ __all__ = [
     "listfind",
     "override_get_db_session",
     "parse_date",
+    "parse_datetime",
     "permission_required",
     "permission_required_any",
     "protected_route",

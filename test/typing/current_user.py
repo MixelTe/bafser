@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from typing_extensions import assert_type
 
-from bafser import ForUpdateRequiredError, LockNotSupportedError, UserBase, get_datetime_utc, validate_config
+from bafser import ForUpdateRequiredError, LockNotSupportedError, UserBase, get_datetime_utc, parse_date, parse_datetime, validate_config
 
 
 class User(UserBase):
@@ -12,6 +12,8 @@ class User(UserBase):
 assert_type(UserBase.current, UserBase)
 assert_type(User.current, User)
 assert_type(get_datetime_utc(), datetime)
+assert_type(parse_date("2026-10-12"), date | None)
+assert_type(parse_datetime("2026-10-12T15:00:00Z"), datetime | None)
 assert_type(validate_config(), None)
 
 

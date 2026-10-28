@@ -62,7 +62,7 @@ from .utils.normalized_column import (
     NormalizationError,
     NormalizedValueTooLongError,
 )
-from .utils.parse_date import parse_date
+from .utils.parse_date import parse_date, parse_datetime
 from .utils.permission_required import create_permission_required_decorator  # pyright: ignore[reportDeprecated]
 from .utils.permission_required import permission_required, permission_required_any  # pyright: ignore[reportDeprecated]
 from .utils.protected_route import protected_route
@@ -180,6 +180,7 @@ __all__ = [
     "override_get_current_user",
     "override_get_db_session",
     "parse_date",
+    "parse_datetime",
     "permission_required",
     "permission_required_any",
     "protected_route",
