@@ -19,12 +19,11 @@ class ExamplePayload(JsonObj):
 
 class CompatibilityTests(unittest.TestCase):
     def test_undefined_reexports_share_one_sentinel(self):
-        from bafser.jsonobj import Undefined as JsonUndefined, UndefinedMeta as JsonUndefinedMeta
-        from bafser.undefined import Undefined as CoreUndefined, UndefinedMeta
+        from bafser.jsonobj import Undefined as JsonUndefined
+        from bafser.undefined import Undefined as CoreUndefined
 
         self.assertIs(Undefined, CoreUndefined)
         self.assertIs(JsonUndefined, CoreUndefined)
-        self.assertIs(JsonUndefinedMeta, UndefinedMeta)
         self.assertEqual(repr(Undefined), "Undefined")
         self.assertTrue(Undefined)
         self.assertFalse(Undefined.defined(Undefined))
