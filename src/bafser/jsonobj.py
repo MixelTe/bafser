@@ -6,7 +6,7 @@ import sys
 from collections.abc import Callable
 from collections.abc import Callable as CallableClass
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from types import NoneType, UnionType
 from typing import Any, Literal, TypeVar, Union, cast, get_args, get_origin, get_type_hints, overload
 
@@ -30,6 +30,16 @@ JsonOpt = TypeAliasType("JsonOpt", T | Undefined.T, type_params=(T,))
 
 class JsonParseError(PublicError):
     pass
+
+
+class UnionParseError(JsonParseError):
+    """All union branches rejected a value, with a reason for each branch."""
+
+    def __init__(self, path: str, failures: list[tuple[Any, JsonParseError]]):
+        self.path = path
+        self.failures = failures
+        reasons = "\n\t".join(f"{type_name(target)}: {error}" for target, error in failures)
+        super().__init__(f"{path} does not match {' | '.join(type_name(target) for target, _ in failures)}:\n\t{reasons}")
 
 
 @dataclass
@@ -256,6 +266,15 @@ class JsonObj:
         obj.dumps()  # -> str
         obj.jsonify()  # -> Response
 
+    Unknown fields are rejected on validation after `_parse` maps input keys.
+    To ignore them for a particular schema (including its subclasses)::
+
+        class ExternalPayload(JsonObj):
+            __allow_unknown_fields__ = True
+            name: str
+
+    The option applies to this schema only; nested schemas use their own option.
+
     Override `__repr_fields__` to change __repr__::
 
         __repr_fields__ = ["name"]
@@ -263,8 +282,10 @@ class JsonObj:
         # or use repr param in JsonObj.field:
         value: int = JsonObj.field(repr=False)
 
-    Override `__datetime_parser__` and `__datetime_serializer__`. Called if `_parse` and `_serialize` didt convert value::
+    Override the date/datetime parsers and serializers. Called if `_parse` and `_serialize` did not convert the value::
 
+        __date_parser__ = date.fromisoformat
+        __date_serializer__ = date.isoformat
         __datetime_parser__ = datetime.fromisoformat
         __datetime_serializer__ = datetime.isoformat
 
@@ -319,6 +340,9 @@ class JsonObj:
     """
 
     __repr_fields__: list[str] | None = _noinit_value(None)
+    __allow_unknown_fields__: bool = _noinit_value(False)
+    __date_parser__: Callable[[Any], date] = _noinit_value(date.fromisoformat)
+    __date_serializer__: Callable[[date], Any] = _noinit_value(date.isoformat)
     __datetime_parser__: Callable[[Any], datetime] = _noinit_value(datetime.fromisoformat)
     __datetime_serializer__: Callable[[datetime], Any] = _noinit_value(datetime.isoformat)
 
@@ -353,7 +377,6 @@ class JsonObj:
             cls.__repr_fields__ = repr_fields
 
     def __constructor__(self, **data: Any):
-        # self._exceptions: list[tuple[str, Exception]] = []
         self.__exceptions__: list[tuple[str, JsonParseError]] = []
 
         for k, v in self.__fields__.items():
@@ -362,16 +385,23 @@ class JsonObj:
 
         type_hints = self.get_field_types()
         for k, v in data.items():
+            _k = k
             if not isinstance(v, object):
                 continue
             t = type_hints.get(k, None)
-            k, v = self.__parse_item__(k, v, t, data)
-            if k is not None and k in type_hints:
-                setattr(self, k, v)
+            try:
+                k, v = self.__parse_item__(k, v, t, data)
+                if k is not None:
+                    if k in type_hints:
+                        setattr(self, k, v)
+                    elif not self.__allow_unknown_fields__:
+                        raise JsonParseError(f"Unexpected field: {k}")
+            except JsonParseError as error:
+                self.__exceptions__.append((k or _k, error))
 
     @classmethod
     def new(cls, json: object):
-        """Create obj from `json: dict[str, Any]` (without validation)"""
+        """Parse fields; validate() reports errors. Union branches are checked while parsing."""
 
         if isinstance(json, dict):
             return cls(**json)
@@ -379,28 +409,26 @@ class JsonObj:
 
     def __parse_item__(self, k: str, v: object, t: Any, json: dict[str, Any]) -> tuple[str | None, Any]:
         type_hints = self.get_field_types()
-        try:
-            r = self._parse(k, v, json)
-            if r is not None:
-                if not isinstance(r, str):
-                    return r
-                k = r
-                t = type_hints.get(k, None)
-                if k not in type_hints:
-                    return k, v
-        # except Exception as x:
-        except JsonParseError as x:
-            self.__exceptions__.append((k, x))
-            return k, v
+        r = self._parse(k, v, json)
+        if r is not None:
+            if not isinstance(r, str):
+                return r
+            k = r
+            t = type_hints.get(k, None)
+            if k not in type_hints:
+                return k, v
 
+        return self.__parse_value__(k, v, t, json)
+
+    def __parse_value__(self, k: str, v: object, t: Any, json: dict[str, Any]) -> tuple[str | None, Any]:
         if type(t) is TypeAliasType:
             t = cast(Any, t).__value__
 
         torigin = get_origin(t)
         targs = get_args(t)
         if isinstance(t, type) and issubclass(t, JsonObj):
-            if not isinstance(v, JsonObj):
-                v = t.new(v)
+            if isinstance(v, dict):
+                v = t.new(v)  # pyright: ignore[reportUnknownArgumentType]
         elif torigin is list and len(targs) == 1 and isinstance(v, list):
             v = cast(list[Any], v)
             t = targs[0]
@@ -412,12 +440,12 @@ class JsonObj:
                 if el is not Undefined and k2 is not None:
                     l.append(el)
             v = l
-        elif torigin is tuple and isinstance(v, list):
+        elif torigin is tuple and isinstance(v, (list, tuple)):
             v = cast(list[Any], v)
             l: list[Any] = []
             variadic = len(targs) == 2 and targs[1] is Ellipsis
-            for i in range(len(v) if variadic else min(len(targs), len(v))):
-                t = targs[0] if variadic else targs[i]
+            for i in range(len(v)):
+                t = targs[0] if variadic else targs[i] if i < len(targs) else Any
                 el = v[i]
                 if not isinstance(el, object):
                     continue
@@ -439,28 +467,41 @@ class JsonObj:
                     d[elk] = el
             v = d
         elif torigin in (UnionType, Union):
-            for t in targs:
-                _, err = validate_type(v, t)
-                if err is None:
-                    _, v = self.__parse_item__(k + f".{type_name(t)}", v, t, json)
-                    break
+            failures: list[tuple[Any, JsonParseError]] = []
+            for target in targs:
+                try:
+                    candidate_json = _copy_parse_value(json)
+                    _, candidate = self.__parse_value__(k, _copy_parse_value(v), target, candidate_json)
+                    _, err = validate_type(candidate, target, True)
+                    if err is not None:
+                        raise JsonParseError(k + err)
+                except JsonParseError as error:
+                    failures.append((target, error))
+                else:
+                    return k, candidate
+            raise UnionParseError(k, failures)
         elif t == datetime and not isinstance(v, datetime):
             try:
                 v = self.__datetime_parser__(v)
-            except Exception:  # noqa: S110
+            except (TypeError, ValueError):
+                pass
+        elif t == date and not isinstance(v, date):
+            try:
+                v = type(self).__date_parser__(v)
+            except (TypeError, ValueError):
                 pass
         elif isinstance(v, dict):
             v = cast(dict[Any, Any], v)
             try:
                 type_hints = get_type_hints(t)  # type: ignore
-                for elk, t in type_hints.items():
-                    if elk not in v:
-                        continue
-                    _, el = self.__parse_item__(k + f".{elk}", v[elk], t, json)
-                    if el is not Undefined:
-                        v[elk] = el
             except (TypeError, AttributeError):
-                pass
+                type_hints = {}
+            for elk, elt in type_hints.items():
+                if elk not in v:
+                    continue
+                _, el = self.__parse_item__(k + f".{elk}", v[elk], elt, json)
+                if el is not Undefined:
+                    v[elk] = el
         return k, v
 
     def _parse(self, key: str, v: Any, json: dict[str, Any]) -> str | tuple[str, Any] | None:
@@ -656,6 +697,8 @@ class JsonObj:
             v = v.json()
         elif isinstance(v, datetime):
             v = type(self).__datetime_serializer__(v)
+        elif isinstance(v, date):
+            v = type(self).__date_serializer__(v)
         elif isinstance(v, (list, tuple)):
             r: list[Any] = []
             for i, el in enumerate(v):  # type: ignore
@@ -697,6 +740,16 @@ class JsonObj:
         return jsonify(self.json())
 
 
+def _copy_parse_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _copy_parse_value(item) for key, item in value.items()}  # pyright: ignore[reportUnknownVariableType]
+    if isinstance(value, list):
+        return [_copy_parse_value(item) for item in value]  # pyright: ignore[reportUnknownVariableType]
+    if isinstance(value, tuple):
+        return tuple(_copy_parse_value(item) for item in value)  # pyright: ignore[reportUnknownVariableType]
+    return value
+
+
 ValidateType = Union[dict[str, "ValidateType"], int, float, bool, str, object, None, list["ValidateType"]]
 TC = TypeVar("TC", bound=ValidateType)
 
@@ -719,12 +772,12 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
             if otype is bool:
                 return obj, None  # type: ignore
         if issubclass(otype, JsonObj):
-            if not isinstance(obj, JsonObj):
-                obj = otype.new(obj)
+            if not isinstance(obj, otype):
+                return None, f" is not {type_name(otype)}"
             err = obj.validate()
             if r and len(obj.__exceptions__) != 0:  # pyright: ignore[reportPrivateUsage]
                 k, x = obj.__exceptions__[0]  # pyright: ignore[reportPrivateUsage]
-                if isinstance(x, JsonParseError):
+                if isinstance(x, JsonParseError):  # pyright: ignore[reportUnnecessaryIsInstance]
                     raise x
                 raise JsonParseError(repr(x)).with_traceback(x.__traceback__)
             if err is None:
@@ -807,7 +860,11 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
     if torigin in (UnionType, Union):
         errs: list[str] = []
         for t in targs:
-            o, err = validate_type(obj, t, r)
+            try:
+                o, err = validate_type(obj, t, r)
+            except JsonParseError as error:
+                errs.append(type_name(t) + ": " + str(error))
+                continue
             if err is None:
                 return o, None  # type: ignore
             errs.append(type_name(t) + ": " + err)

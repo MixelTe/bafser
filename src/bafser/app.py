@@ -19,6 +19,7 @@ import bafser_config
 from . import db_session
 from .alembic import alembic_upgrade
 from .authentication import get_user_id_by_jwt_identity
+from .constants import Constants
 from .doc_api import init_api_docs
 from .logger import get_logger_dashboard, get_logger_requests, redact_sensitive_data, setLogging
 from .public_error import PublicError
@@ -42,7 +43,7 @@ class AppConfig:
         JWT_COOKIE_DOMAIN: str | None = None,
         JWT_COOKIE_SAMESITE: Literal["None", "Lax", "Strict"] | None = None,
         JWT_COOKIE_SECURE: bool = True,
-        MAX_IMAGE_BYTES: int = 7 * 1024 * 1024,
+        MAX_IMAGE_BYTES: int = 7 * Constants.MIB,
         CACHE_MAX_AGE: int = 31536000,
         MESSAGE_TO_FRONTEND: str = "",
         STATIC_FOLDERS: list[str] = ["/static/", "/fonts/", "/_next/"],  # noqa: B006
@@ -543,7 +544,7 @@ def create_app(import_name: str, config: AppConfig):
         return response_msg("Unauthorized", 401)
 
     @jwt_manager.expired_token_loader  # type: ignore
-    def expired_token_loader(jwt_header, jwt_data):  # type: ignore
+    def expired_token_loader(jwt_header: dict[str, Any], jwt_data: dict[str, Any]):  # type: ignore
         if not request.path.startswith(bafser_config.api_url):
             return redirect(bafser_config.login_page_url + "?redirect=" + request.path)
         return response_msg("The JWT has expired", 401)

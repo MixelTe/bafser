@@ -48,7 +48,7 @@ class ValidationTests(unittest.TestCase):
             name: str
 
         payload = Payload.new({"name": "example", "validate": "broken", "extra": 1})
-        self.assertIsNone(payload.validate())
+        self.assertEqual(payload.validate(), "validate: Unexpected field: validate")
         self.assertEqual(payload.json(), {"name": "example"})
         self.assertNotIn("extra", vars(payload))
 
@@ -57,6 +57,35 @@ class ValidationTests(unittest.TestCase):
         self.assertEqual(validate_type((1, "x"), tuple[int, str]), ((1, "x"), None))
         self.assertIsNotNone(validate_type((1, 2), tuple[int, str])[1])
         self.assertEqual(validate_type((1, 2), tuple[int, ...]), ((1, 2), None))
+
+
+class ResponseMsgTests(unittest.TestCase):
+    def setUp(self):
+        context = Flask(__name__).app_context()
+        context.push()
+        self.addCleanup(context.pop)
+
+    def test_plain_message_keeps_default_status_and_shape(self):
+        response = response_msg("Done")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"msg": "Done"})
+
+    def test_optional_fields_match_public_error_response(self):
+        details = {"eventId": 12}
+        response = response_msg("Event is not active", 403, code="event_inactive", details=details)
+        error = PublicError("Event is not active", status=403, code="event_inactive", details=details)
+        self.assertEqual(response.status_code, error.status)
+        self.assertEqual(response.get_json(), error.get_dict())
+
+    def test_none_fields_are_omitted(self):
+        response = response_msg("Done", code=None, details=None)
+        self.assertEqual(response.get_json(), {"msg": "Done"})
+
+    def test_falsey_optional_fields_are_preserved(self):
+        for details in (False, 0, "", [], {}):
+            with self.subTest(details=details):
+                response = response_msg("Done", code="", details=details)
+                self.assertEqual(response.get_json(), {"msg": "Done", "code": "", "details": details})
 
 
 class AppTests(unittest.TestCase):
@@ -409,7 +438,7 @@ class DatabaseTests(unittest.TestCase):
                 session.commit()
 
                 image_data = base64.b64encode(b"\x89PNG\r\n\x1a\npayload").decode("ascii")
-                image, error = Img.new(
+                image = Img.new(
                     actor,
                     {
                         "name": "poster",
@@ -418,7 +447,6 @@ class DatabaseTests(unittest.TestCase):
                     },
                 )
 
-                self.assertIsNone(error)
                 self.assertIsNotNone(image)
                 assert image is not None
                 log = session.query(Log).filter_by(tableName=image.__tablename__, recordId=image.id).one()

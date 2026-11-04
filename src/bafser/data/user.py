@@ -122,7 +122,7 @@ class UserBase(ObjMixin, SqlAlchemyBase):
 
     @final
     @staticmethod
-    def _get_current(lazyload: bool, for_update: bool):
+    def _get_current(lazyload: bool, for_update: bool) -> "UserBase | None":
         from .. import get_db_session, get_user_by_jwt_identity
 
         if not has_request_context():

@@ -3,10 +3,10 @@ from typing import TypedDict
 from typing_extensions import override
 
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, Session, mapped_column
 
 from bafser import Image as ImageBase
-from bafser import ImageKwargs, get_json_values
+from bafser import ImageError, ImageKwargs, get_json_values
 from test.data.user import User
 
 
@@ -21,14 +21,14 @@ class Img(ImageBase):
 
     @classmethod
     @override
-    def new(cls, creator: User, json: ImageJson):  # type: ignore
-        return super().new(creator, json)
+    def new(cls, creator: User, json: ImageJson, *, db_sess: Session | None = None, commit: bool = True):  # type: ignore
+        return super().new(creator, json, db_sess=db_sess, commit=commit)
 
     @classmethod
     @override
     def _new(cls, creator: User, json: ImageJson, image_kwargs: ImageKwargs):  # type: ignore
         desc, values_error = get_json_values(json, ("desc", str))
         if values_error:
-            return None, values_error
+            raise ImageError(values_error)
         img = Img(**image_kwargs, desc=desc)
-        return img, None
+        return img

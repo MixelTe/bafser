@@ -1,6 +1,8 @@
 from datetime import date as calendar_date
 from datetime import datetime, timezone
 
+from ..public_error import PublicError
+
 
 def parse_datetime(date: str) -> datetime | None:
     """Parse an ISO timestamp using the configured UTC or legacy behavior."""
@@ -25,3 +27,11 @@ def parse_date(date: str) -> calendar_date | None:
         return datetime.fromisoformat(date[:-1] + "+00:00" if date.endswith("Z") else date).date()
     except Exception:
         return None
+
+
+def parse_date_required(date: str, message: str = "Invalid date") -> calendar_date:
+    """Parse an ISO date or timestamp, raising PublicError for invalid input."""
+    parsed = parse_date(date)
+    if parsed is None:
+        raise PublicError(message)
+    return parsed

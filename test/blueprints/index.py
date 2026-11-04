@@ -154,9 +154,7 @@ def test_post4():  # type: ignore
 def upload_img():
     img_data = get_json_values_from_req(("img", ImageJson))
 
-    img, image_error = Img.new(User.current, img_data)
-    if image_error:
-        return response_msg(image_error, 400)
+    img = Img.new(User.current, img_data)
     assert img
 
     return {"id": img.id}

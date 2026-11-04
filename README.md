@@ -194,7 +194,7 @@ from typing_extensions import override
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from bafser import Image as ImageBase, ImageKwargs, get_json_values
+from bafser import Image as ImageBase, ImageError, ImageKwargs, get_json_values
 from test.data.user import User
 
 
@@ -209,18 +209,16 @@ class Img(ImageBase):
 
     @classmethod
     @override
-    def new(cls, creator: User, json: ImageJson):  # type: ignore
-        return super().new(creator, json)
+    def new(cls, creator: User, json: ImageJson, *, commit: bool = True):  # type: ignore
+        return super().new(creator, json, commit=commit)
 
     @classmethod
     @override
     def _new(cls, creator: User, json: ImageJson, image_kwargs: ImageKwargs):  # type: ignore
         newColumnData, values_error = get_json_values(json, ("newColumnData", str))
         if values_error:
-            return None, None, values_error
-        img = Img(**image_kwargs, newColumn=newColumnData)
-        changes = [("newColumn", newColumn)]
-        return img, changes, None
+            raise ImageError(values_error)
+        return cls(**image_kwargs, newColumn=newColumnData)
 
 ```
 
@@ -269,6 +267,10 @@ Without this setting the legacy behavior is preserved.
 `parse_date()` returns a `datetime.date` from an ISO date or datetime string.
 It discards the time and offset without shifting the written calendar day,
 independently of `datetime_utc`. Both parsers return `None` for invalid input.
+
+`parse_date_required(value, message="Invalid date")` uses the same calendar rules
+and returns a `datetime.date` or raises `PublicError` (400) with the supplied message.
+It is exported from both `bafser` and `bafser.utils` alongside `parse_date`.
 
 #### Normalized search columns
 

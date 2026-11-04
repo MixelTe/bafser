@@ -1,8 +1,24 @@
 from datetime import date, datetime
 
+from sqlalchemy.orm import Session
 from typing_extensions import assert_type
 
-from bafser import ForUpdateRequiredError, LockNotSupportedError, PublicError, Undefined, UserBase, get_datetime_utc, parse_date, parse_datetime, validate_config
+from bafser import (
+    ForUpdateRequiredError,
+    Image,
+    ImageError,
+    ImageJson,
+    LockNotSupportedError,
+    PublicError,
+    Undefined,
+    UnionParseError,
+    UserBase,
+    get_datetime_utc,
+    parse_date,
+    parse_date_required,
+    parse_datetime,
+    validate_config,
+)
 
 
 class User(UserBase):
@@ -11,8 +27,10 @@ class User(UserBase):
 
 assert_type(UserBase.current, UserBase)
 assert_type(User.current, User)
+assert_type(UnionParseError("value", []).path, str)
 assert_type(get_datetime_utc(), datetime)
 assert_type(parse_date("2026-10-12"), date | None)
+assert_type(parse_date_required("2026-10-12"), date)
 assert_type(parse_datetime("2026-10-12T15:00:00Z"), datetime | None)
 assert_type(validate_config(), None)
 assert_type(PublicError("Invalid input", status=409), PublicError)
@@ -34,3 +52,10 @@ def check_instance(user: User) -> None:
     assert_type(user.require_for_update(), None)
     assert_type(ForUpdateRequiredError(), ForUpdateRequiredError)
     assert_type(LockNotSupportedError(), LockNotSupportedError)
+
+
+def check_image_creation(user: UserBase, payload: ImageJson, session: Session) -> None:
+    assert_type(Image.new(user, payload), Image)
+    assert_type(Image.new(user, payload, commit=False), Image)
+    assert_type(Image.new(user, payload, db_sess=session, commit=False), Image)
+    assert_type(ImageError("Invalid image"), ImageError)

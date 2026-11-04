@@ -7,9 +7,9 @@ from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
 import bafser_config
-from bafser import get_datetime_now, get_datetime_utc, parse_date, parse_datetime
+from bafser import PublicError, get_datetime_now, get_datetime_utc, parse_date, parse_date_required, parse_datetime
 from bafser.utils import get_datetime_utc as utils_utc
-from bafser.utils import parse_date as utils_date, parse_datetime as utils_datetime
+from bafser.utils import parse_date as utils_date, parse_date_required as utils_date_required, parse_datetime as utils_datetime
 
 
 class DatetimeTests(unittest.TestCase):
@@ -52,6 +52,7 @@ class DatetimeTests(unittest.TestCase):
 
     def test_calendar_parser_discards_time_without_timezone_conversion(self):
         self.assertIs(utils_date, parse_date)
+        self.assertIs(utils_date_required, parse_date_required)
         self.assertIs(utils_datetime, parse_datetime)
         self.assertEqual(parse_date(date="2028-02-29"), date(2028, 2, 29))
         cases = [
@@ -70,6 +71,18 @@ class DatetimeTests(unittest.TestCase):
                         parsed = parse_date(value)
                         self.assertIs(type(parsed), date)
                         self.assertEqual(parsed, expected)
+                        self.assertEqual(parse_date_required(value), expected)
+
+    def test_required_calendar_parser_raises_public_error(self):
+        for value in ("", "invalid", "2026-02-29", "2026-10-12T25:00:00", "2026-10-12junk", None, 123):
+            with self.subTest(value=value):
+                with self.assertRaises(PublicError) as caught:
+                    parse_date_required(value)
+                self.assertEqual(str(caught.exception), "Invalid date")
+                self.assertEqual(caught.exception.status, 400)
+        with self.assertRaisesRegex(PublicError, "Укажите корректную дату"):
+            parse_date_required("invalid", message="Укажите корректную дату")
+        self.assertEqual(parse_date_required(date="2028-02-29"), date(2028, 2, 29))
 
     def test_parsers_reject_invalid_inputs(self):
         for parser in (parse_date, parse_datetime):

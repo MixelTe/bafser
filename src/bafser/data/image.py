@@ -1,16 +1,17 @@
 import base64
 import binascii
 import builtins
+import logging
 import os
 from datetime import datetime
-from typing import Any, TypedDict, TypeVar, cast
+from typing import TypedDict, TypeVar, cast
 
 from flask import current_app
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, Session, mapped_column
 from typing_extensions import override
 
-from .. import Log, ObjMixin, SqlAlchemyBase, UserBase, create_file_response, get_datetime_now, get_json_values
+from .. import Log, ObjMixin, PublicError, SqlAlchemyBase, UserBase, create_file_response, get_datetime_now, get_json_values, track_created_file
 from ._tables import TablesBase
 
 
@@ -27,9 +28,10 @@ class ImageKwargs(TypedDict):
 
 
 T = TypeVar("T", bound="Image")
-TError = str
-TFieldName = str
-TValue = Any
+
+
+class ImageError(PublicError):
+    code = "invalid_image"
 
 
 def _detected_image_type(data: bytes) -> str | None:
@@ -52,31 +54,32 @@ class Image(SqlAlchemyBase, ObjMixin):
     createdById: Mapped[int] = mapped_column(ForeignKey(f"{TablesBase.User}.id"))
 
     @classmethod
-    def new(cls: builtins.type[T], creator: UserBase, json: ImageJson) -> tuple[T, None] | tuple[None, TError]:
+    def new(cls: builtins.type[T], creator: UserBase, json: ImageJson, *, db_sess: Session | None = None, commit: bool = True) -> T:
+        """Create in db_sess or the creator's session; rollback/close removes uncommitted files."""
         (data, name), values_error = get_json_values(json, ("data", str), ("name", str))
         if values_error:
-            return None, values_error
+            raise ImageError(values_error)
 
         name = name.strip()
         if not 1 <= len(name) <= 128 or any(ord(char) < 32 for char in name):
-            return None, "img name length must be between 1 and 128 and contain no control characters"
+            raise ImageError("img name length must be between 1 and 128 and contain no control characters")
 
         data_splited = data.split(",")
         if len(data_splited) != 2:
-            return None, "img data is not base64"
+            raise ImageError("img data is not base64")
 
         img_header, img_data = data_splited
         img_header_splited = img_header.split(";")
         if len(img_header_splited) != 2 or img_header_splited[1] != "base64":
-            return None, "img data is not base64"
+            raise ImageError("img data is not base64")
 
         img_header_splited_splited = img_header_splited[0].split(":")
         if len(img_header_splited_splited) != 2:
-            return None, "img data is not base64"
+            raise ImageError("img data is not base64")
         mimetype = img_header_splited_splited[1]
 
         if mimetype not in ["image/png", "image/jpeg", "image/gif"]:
-            return None, "img mimetype is not in [image/png, image/jpeg, image/gif]"
+            raise ImageError("img mimetype is not in [image/png, image/jpeg, image/gif]")
 
         type = mimetype.split("/")[1]
         max_image_bytes = cast(int, current_app.config["MAX_IMAGE_BYTES"])
@@ -84,50 +87,43 @@ class Image(SqlAlchemyBase, ObjMixin):
         # Reject malformed content before creating a database record. Checking
         # magic bytes prevents arbitrary files from being served as images.
         if len(img_data) > ((max_image_bytes + 2) // 3) * 4:
-            return None, "img data is too large"
+            raise ImageError("img data is too large")
         try:
             decoded_data = base64.b64decode(img_data, validate=True)
         except (ValueError, binascii.Error):
-            return None, "img data is not valid base64"
+            raise ImageError("img data is not valid base64")
         if len(decoded_data) > max_image_bytes:
-            return None, "img data is too large"
+            raise ImageError("img data is too large")
         if _detected_image_type(decoded_data) != type:
-            return None, "img content does not match its mimetype"
+            raise ImageError("img content does not match its mimetype")
 
         now = get_datetime_now()
-        img, err = cls._new(creator, json, {"name": name, "type": type, "createdById": creator.id, "creationDate": now})
-        if err:
-            return None, err
-        assert img
-        db_sess = creator.db_sess
+        img = cls._new(creator, json, {"name": name, "type": type, "createdById": creator.id, "creationDate": now})
+        db_sess = db_sess if db_sess is not None else creator.db_sess
         db_sess.add(img)
-        path = None
         try:
-            # Capture attribute history before the flush that assigns the image ID.
-            Log.added(img, creator, now=now, commit=False)
+            # Capture history before the flush which assigns the image ID.
+            Log.added(img, creator, now=now, commit=False, db_sess=db_sess)
             path = img.get_path()
-            with open(path, "wb") as f:
-                f.write(decoded_data)
-            db_sess.commit()
+            with open(path, "xb") as file:
+                track_created_file(img, path)
+                file.write(decoded_data)
+            if commit:
+                db_sess.commit()
         except Exception:
-            db_sess.rollback()
-            if path is not None:
-                try:
-                    os.remove(path)
-                except FileNotFoundError:
-                    pass
+            try:
+                db_sess.rollback()
+            except Exception:
+                # An after_commit callback can fail after SQLAlchemy has marked
+                # the transaction committed. Preserve the original failure;
+                # session close will finalize tracked files safely.
+                logging.exception("Could not roll back failed image creation")
             raise
-
-        return img, None
-
-    @classmethod
-    def new2(cls: builtins.type[T], json: ImageJson, *, creator: UserBase | None = None) -> tuple[T, None] | tuple[None, TError]:
-        return cls.new(creator or UserBase.current, json)
+        return img
 
     @classmethod
-    def _new(cls: builtins.type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> tuple[None, TError] | tuple[T, None]:
-        img = cls(**image_kwargs)
-        return img, None
+    def _new(cls: builtins.type[T], creator: UserBase, json: ImageJson, image_kwargs: ImageKwargs) -> T:
+        return cls(**image_kwargs)
 
     @override
     def _on_delete(self, db_sess: Session, actor: UserBase, now: datetime, commit: bool):

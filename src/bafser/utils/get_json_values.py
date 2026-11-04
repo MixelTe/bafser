@@ -37,7 +37,7 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any]) -> tupl
 
 
 def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwargs: Any) -> tuple[values, error]:
-    from ..jsonobj import validate_type
+    from ..jsonobj import JsonObj, validate_type
     if kwargs != {}:
         raise Exception("dont support kwargs")
     r: list[Any] = []
@@ -52,15 +52,17 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
 
         if field_name in d:
             value = d[field_name]
-            value, err = validate_type(value, field_type)
+            if isinstance(field_type, type) and issubclass(field_type, JsonObj) and isinstance(value, dict):
+                value = field_type.new(value)  # pyright: ignore[reportUnknownArgumentType]
+            value, err = validate_type(value, field_type)  # pyright: ignore[reportUnknownVariableType, reportUnknownArgumentType]
             if err is not None:
-                rv = None if len(field_names) == 1 else list(map(lambda _: None, field_names))
+                rv = None if len(field_names) == 1 else [None for _ in field_names]
                 return rv, field_name + err
             r.append(value)
         elif have_default:
             r.append(default_value)
         else:
-            rv = None if len(field_names) == 1 else list(map(lambda _: None, field_names))
+            rv = None if len(field_names) == 1 else [None for _ in field_names]
             return rv, f"{field_name} is undefined"
     if len(r) == 1:
         return r[0], None
@@ -68,9 +70,11 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
 
 
 def get_json_list(l: list[Any], otype: type[T]) -> tuple[list[T], error]:
-    from ..jsonobj import validate_type
+    from ..jsonobj import JsonObj, validate_type
     r: list[T] = []
     for i, el in enumerate(l):
+        if isinstance(otype, type) and issubclass(otype, JsonObj) and isinstance(el, dict):  # pyright: ignore[reportUnnecessaryIsInstance]
+            el = otype.new(el)  # pyright: ignore[reportUnknownArgumentType]
         el, err = validate_type(el, otype)
         if err is not None:
             return [], f"[{i}]{err}"

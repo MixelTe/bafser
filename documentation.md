@@ -577,9 +577,64 @@ Returns a JSON‑serializable dictionary of all documented endpoints and their t
 
 Renders an HTML page that interactively displays the API documentation. Mount this route to `/docs` or similar.
 
+#### `Constants`
+
+Shared technical constants, imported with `from bafser import Constants`:
+
+* `INT8_MIN/MAX`, `INT16_MIN/MAX`, `INT32_MIN/MAX`, `INT64_MIN/MAX`:
+  signed integer bounds. `UINT8_MAX`, `UINT16_MAX`, `UINT32_MAX`, `UINT64_MAX`:
+  unsigned maxima (unsigned minima are zero).
+* `KIB`, `MIB`, `GIB`, `TIB`: binary byte units (powers of 1024), distinct from
+  decimal KB/MB/GB/TB.
+* `MYSQL_DATE_MIN`, `MYSQL_DATE_MAX`: `datetime.date` bounds 1000-01-01 through
+  9999-12-31. These are the MySQL DATE bounds, rather than Python's full range.
+
+Example: `JsonObj.field(min_value=0, max_value=Constants.INT32_MAX)` and
+`AppConfig(MAX_IMAGE_BYTES=7 * Constants.MIB)`.
+
 #### `JsonObj`, `JsonOpt`, `Undefined`, `JsonParseError`
 
 Utilities for defining JSON‑serializable objects with optional fields and validation.
+
+Fields annotated as `date` parse ISO calendar strings such as `"2026-11-04"`
+using `date.fromisoformat`; `.json()` serializes dates as `"YYYY-MM-DD"`.
+Override `__date_parser__` and `__date_serializer__` to customize the format.
+The separate `__datetime_parser__` and `__datetime_serializer__` continue to
+handle timestamps with their time and offset.
+
+Union branches are fully parsed and validated in declaration order. The first
+successful branch wins: `date | str` converts a valid date string, whereas
+`str | date` keeps the string. Nested `JsonObj` parsers and validators run as
+part of each attempt. Each attempt has independent JSON containers and parse
+errors; rejected attempts do not modify the original input. The enclosing
+field's `_parse` runs once before trying its types.
+
+A ready `JsonObj` is used directly; only JSON containers are copied between
+attempts. Validators must not mutate the model. A selected model is reused
+without reparsing. Validation has no cache: an
+explicit `validate()` / `valid()` checks the selected model again.
+`validate_type` only checks values; it never constructs `JsonObj` instances.
+Use a schema's `new()` / `parse()` to parse complex input before validation.
+If all branches fail, `valid()`
+raises `UnionParseError` (a `JsonParseError`, exported from `bafser`). Its `path`
+identifies the field; `failures` contains each candidate type and parse error.
+Expected rejection uses `JsonParseError`; unexpected hook exceptions propagate
+instead of trying a fallback. Parsers and validators must not modify external
+state: branch isolation cannot undo database, file or global changes.
+
+Unknown fields are rejected by default during `validate()` / `valid()` and request
+parsing. The check runs after `_parse` maps input keys; mapped declared fields are
+accepted. To ignore unknown fields for a schema, set the inherited class option:
+
+```python
+class ExternalPayload(JsonObj):
+    __allow_unknown_fields__ = True
+    name: str
+```
+
+Ignored fields are neither assigned nor serialized. Each nested `JsonObj` uses
+its own setting; arbitrary keys in a declared `dict` field remain valid.
+The option cannot be changed by a key supplied in incoming JSON.
 
 Additional field rules can be declared with `JsonObj.field`:
 
