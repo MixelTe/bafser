@@ -74,6 +74,7 @@ class AppConfig:
             MESSAGE_TO_FRONTEND (str): Custom string passed to the client.
             STATIC_FOLDERS (list[str]): URL prefixes treated as static asset directories.
                 Defaults to ["/static/", "/fonts/", "/_next/"].
+                HTML pages and the SPA fallback keep the regular page cache policy.
             DEV_MODE (bool): If True, enables verbose logging and debug features.
             LOG_JSON_RESPONSES (bool | None): Log JSON response bodies when True.
                 Defaults to the value of DEV_MODE. Sensitive fields are redacted.
@@ -467,9 +468,9 @@ def create_app(import_name: str, config: AppConfig):
 
         if path == "":
             fname = "index.html"
-        elif os.path.exists(config.FRONTEND_FOLDER + "/" + path):
+        elif os.path.isfile(config.FRONTEND_FOLDER + "/" + path):
             fname = path
-        elif os.path.exists(config.FRONTEND_FOLDER + "/" + path + ".html"):
+        elif os.path.isfile(config.FRONTEND_FOLDER + "/" + path + ".html"):
             fname = path + ".html"
         elif "." in os.path.basename(path):
             abort(404)
@@ -477,7 +478,8 @@ def create_app(import_name: str, config: AppConfig):
             fname = config.PAGE404
 
         res = send_from_directory(config.FRONTEND_FOLDER, fname)
-        if any(request.path.startswith(path) for path in config.STATIC_FOLDERS):
+        is_page = fname == config.PAGE404 or fname.lower().endswith((".html", ".htm"))
+        if not is_page and any(request.path.startswith(path) for path in config.STATIC_FOLDERS):
             res.headers.set("Cache-Control", f"public,max-age={config.CACHE_MAX_AGE},immutable")
         else:
             res.headers.set("Cache-Control", "public,max-age=60,stale-while-revalidate=600,stale-if-error=14400")
