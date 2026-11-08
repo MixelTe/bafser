@@ -2,6 +2,7 @@
 
 import unittest
 from datetime import datetime
+from typing import Any, get_type_hints
 from unittest.mock import patch
 
 from flask import Flask
@@ -9,7 +10,7 @@ from flask_jwt_extended import JWTManager
 from werkzeug.exceptions import HTTPException
 
 from bafser import JsonObj, JsonOpt, TJson, TJsonListOf, Undefined, UserBase
-from bafser.doc_api import type_info, type_to_json
+from bafser.doc_api import init_api_docs, type_info, type_to_json
 
 
 class ExamplePayload(JsonObj):
@@ -18,6 +19,32 @@ class ExamplePayload(JsonObj):
 
 
 class CompatibilityTests(unittest.TestCase):
+    def test_jsonobj_annotations_do_not_resolve_to_dict_method(self):
+        hints = get_type_hints(JsonObj)
+        self.assertEqual(hints["__type_hints__"], dict[str, Any] | None)
+        self.assertEqual(hints["__field_types__"], dict[str, Any])
+        for method in (JsonObj._parse, JsonObj.__parse_item__, JsonObj.__parse_value__):
+            with self.subTest(method=method.__name__):
+                self.assertEqual(get_type_hints(method)["json"], dict[str, Any])
+
+        class MappingPayload(JsonObj):
+            values: dict[str, int]
+
+        payload = MappingPayload.new({"values": {"count": 3}})
+        self.assertIsNone(payload.validate())
+        self.assertEqual(payload.dict(), {"values": {"count": 3}})
+        self.assertEqual(MappingPayload.get_field_types(), {"values": dict[str, int]})
+
+    def test_api_documentation_initializes_with_deferred_annotations(self):
+        app = Flask(__name__, static_folder=None)
+
+        @app.get("/example")
+        def example():
+            return {"name": "example"}
+
+        # EndpointInfo construction evaluates annotations inherited from JsonObj.
+        init_api_docs(app)
+
     def test_undefined_reexports_share_one_sentinel(self):
         from bafser.jsonobj import Undefined as JsonUndefined
         from bafser.undefined import Undefined as CoreUndefined

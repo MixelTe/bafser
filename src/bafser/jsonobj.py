@@ -1,3 +1,4 @@
+import builtins
 import inspect
 import json
 import math
@@ -407,7 +408,7 @@ class JsonObj:
             return cls(**json)
         return cls()
 
-    def __parse_item__(self, k: str, v: object, t: Any, json: dict[str, Any]) -> tuple[str | None, Any]:
+    def __parse_item__(self, k: str, v: object, t: Any, json: builtins.dict[str, Any]) -> tuple[str | None, Any]:
         type_hints = self.get_field_types()
         r = self._parse(k, v, json)
         if r is not None:
@@ -420,7 +421,7 @@ class JsonObj:
 
         return self.__parse_value__(k, v, t, json)
 
-    def __parse_value__(self, k: str, v: object, t: Any, json: dict[str, Any]) -> tuple[str | None, Any]:
+    def __parse_value__(self, k: str, v: object, t: Any, json: builtins.dict[str, Any]) -> tuple[str | None, Any]:
         if type(t) is TypeAliasType:
             t = cast(Any, t).__value__
 
@@ -504,7 +505,7 @@ class JsonObj:
                     v[elk] = el
         return k, v
 
-    def _parse(self, key: str, v: Any, json: dict[str, Any]) -> str | tuple[str, Any] | None:
+    def _parse(self, key: str, v: Any, json: builtins.dict[str, Any]) -> str | tuple[str, Any] | None:
         """
         Override `_parse` to map keys and add custom parser::
 
@@ -550,9 +551,10 @@ class JsonObj:
         type_hints = cls.get_type_hints()
         return {k: getattr(cls, k) for k in type_hints if hasattr(cls, k)}
 
-    __type_hints__: dict[str, Any] | None = _noinit_value(None)
-    __fields__: dict[str, JsonField] = _noinit_value({})
-    __field_types__: dict[str, Any] = _noinit_value({})
+    # Python 3.14 evaluates class annotations after dict() is defined below.
+    __type_hints__: builtins.dict[str, Any] | None = _noinit_value(None)
+    __fields__: builtins.dict[str, JsonField] = _noinit_value({})
+    __field_types__: builtins.dict[str, Any] = _noinit_value({})
     __optional_fields__: list[str] = _noinit_value([])
 
     @classmethod
