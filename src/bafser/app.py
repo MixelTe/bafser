@@ -65,8 +65,8 @@ class AppConfig:
                 Use `False` for no expiration. Defaults to 24 hours.
             JWT_ACCESS_TOKEN_REFRESH (Literal[False] | timedelta): Lifespan for refresh tokens.
                 Defaults to 30 minutes.
-            CACHE_MAX_AGE (int): 'max-age' for Cache-Control headers in seconds.
-                Defaults to one year.
+            CACHE_MAX_AGE (int): 'max-age' for bundled static assets in seconds.
+                Defaults to one year. API responses default to private, no-store.
             JWT_COOKIE_DOMAIN (str | None): Domain for JWT cookies. Defaults to None.
             JWT_COOKIE_SAMESITE (Literal["None", "Lax", "Strict"] | None): SameSite policy for JWT cookies. Defaults to None.
             JWT_COOKIE_SECURE (bool): Whether to set the 'Secure' flag on JWT cookies. Defaults to True.
@@ -375,6 +375,11 @@ def create_app(import_name: str, config: AppConfig):
             db_sess.commit()
         db_sess.close()
 
+    api_root = bafser_config.api_url.rstrip("/")
+
+    def is_api_request() -> bool:
+        return request.path == api_root or request.path.startswith(api_root + "/")
+
     @app.before_request
     def before_request():  # type: ignore
         if bafser_config.sql_echo:
@@ -387,7 +392,7 @@ def create_app(import_name: str, config: AppConfig):
             g.userId = get_user_id_by_jwt_identity(get_jwt_identity())
         except Exception:
             g.userId = None
-        if request.path.startswith(bafser_config.api_url):
+        if is_api_request():
             try:
                 if g.json[1]:
                     data = json.dumps(redact_sensitive_data(g.json[0]))[:512]
@@ -403,7 +408,11 @@ def create_app(import_name: str, config: AppConfig):
     @app.after_request
     def after_request(response: Response):  # type: ignore
         logdash.info("", extra={"code": response.status_code})
-        if request.path.startswith(bafser_config.api_url):
+        if is_api_request():
+            if not response.headers.get("Cache-Control"):
+                response.headers["Cache-Control"] = "private, no-store"
+            elif not response.cache_control.public and not response.cache_control.private:
+                response.cache_control.private = True
             try:
                 if config.LOG_JSON_RESPONSES and response.is_json and not response.is_streamed and not response.direct_passthrough:
                     try:
@@ -463,7 +472,7 @@ def create_app(import_name: str, config: AppConfig):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def frontend(path: str):  # type: ignore
-        if request.path.startswith(bafser_config.api_url):
+        if is_api_request():
             abort(404)
 
         if path == "":
@@ -499,7 +508,7 @@ def create_app(import_name: str, config: AppConfig):
 
     @app.errorhandler(404)
     def not_found(error: Exception):  # pyright: ignore[reportUnusedFunction]
-        if request.path.startswith(bafser_config.api_url):
+        if is_api_request():
             return response_msg("Not found", 404)
         return make_response("Страница не найдена", 404)
 

@@ -222,10 +222,36 @@ class Img(ImageBase):
 
 ```
 
+## Docs
+
 #### csv header for requests log
 ```csv
 reqid;ip;uid;asctime;method;url;message;code;json
 ```
+
+### HTTP caching
+
+Responses under the configured `bafser_config.api_url`, including errors,
+default to `Cache-Control: private, no-store`. The API root itself is included;
+similarly named frontend paths are not. Bundled frontend assets keep their
+existing public cache policy.
+
+A route can set its own `Cache-Control`. Existing directives are retained;
+`private` is added unless the response already declares `private` or explicitly
+opts into `public`. This also covers Flask file responses that default to
+`no-cache`. Browser caching of an authenticated response may outlive a login;
+use `no-store` when cached content must not be reused after an account change.
+
+`create_file_response` and `Image.create_file_response` also default to
+`private, no-store`, including when used outside the API prefix. File caching
+must be requested explicitly:
+
+```python
+return create_file_response(path, "font/woff2", "example.woff2", cache_control="private, max-age=3600")
+# Only for a file that is intentionally public:
+return image.create_file_response(cache_control="public, max-age=31536000, immutable")
+```
+
 
 #### Public API errors
 
@@ -243,7 +269,7 @@ Subclasses can override `status` (400 by default), `code` and `details`;
 `get_dict()` includes only `msg` and the optional public metadata.
 Omitted `code`/`details` or explicit `Undefined` preserve subclass defaults;
 passing `None` explicitly clears them. Constructor arguments can override all
-public fields. 
+public fields.
 `JsonParseError` also inherits `PublicError`. API handlers may expose messages
 from this hierarchy or return explicitly chosen text through `response_msg`.
 Other exceptions return `Internal Server Error` with HTTP 500, including in

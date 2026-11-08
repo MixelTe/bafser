@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from flask import Flask
+from flask import Flask, current_app
 from sqlalchemy import create_engine, event
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -53,6 +53,20 @@ class ImageTransactionsTests(unittest.TestCase):
         self.assertTrue(path.is_file())
         self.assertEqual(self.session.query(Img).count(), 1)
         self.assertEqual(self.session.query(Log).count(), 1)
+
+    def test_image_download_defaults_to_no_store_and_allows_explicit_caching(self):
+        image = Img.new(self.actor, self.payload)
+        with current_app.test_request_context():
+            response = image.create_file_response()
+            self.addCleanup(response.close)
+            self.assertTrue(response.cache_control.private)
+            self.assertTrue(response.cache_control.no_store)
+            self.assertEqual(b"".join(response.response), b"\x89PNG\r\n\x1a\npayload")
+            for policy in ("private, max-age=3600", "public, max-age=3600"):
+                with self.subTest(policy=policy):
+                    response = image.create_file_response(cache_control=policy)
+                    self.addCleanup(response.close)
+                    self.assertEqual(response.headers["Cache-Control"], policy)
 
     def test_explicit_session_owns_image_and_audit_with_detached_creator(self):
         actor_id = self.actor.id

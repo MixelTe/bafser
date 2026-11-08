@@ -134,8 +134,8 @@ class Image(SqlAlchemyBase, ObjMixin):
     def _on_restore(self, db_sess: Session, actor: UserBase, now: datetime, commit: bool):
         return os.path.exists(self.get_path())
 
-    def create_file_response(self):
-        return create_file_response(self.get_path(), f"image/{self.type}", self.get_filename())
+    def create_file_response(self, *, cache_control: str = "private, no-store"):
+        return create_file_response(self.get_path(), f"image/{self.type}", self.get_filename(), cache_control=cache_control)
 
     def get_path(self):
         return os.path.join(current_app.config["IMAGES_FOLDER"], f"{self.id}.{self.type}")  # type: ignore
