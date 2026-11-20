@@ -667,9 +667,11 @@ request limits still apply in dev.
 For JSON with unknown length and a WSGI-terminated input stream, the helper reads
 at most the limit plus one byte before parsing. Oversize input is rejected with
 413 rather than accepting a valid truncated prefix; repeated parse attempts in
-that request remain rejected. Excessively nested JSON is rejected with native
-400 Bad Request, like malformed JSON, without entering the view. Non-JSON streams keep the framework's bounded
-stream behavior; their parser and the edge server also enforce the upload policy.
+that request remain rejected. After the size check, JSON is limited to 256 nested
+objects and arrays, counting the root container as level one. Greater depth
+returns 400 Bad Request before JSON decoding or view execution. Non-JSON streams
+keep the framework's bounded stream behavior; their parser and the edge server
+also enforce the upload policy.
 An early hook may inspect stream metadata without reading the body: the helper
 rebuilds an already cached stream with the effective route limit. Hooks that
 consume or parse the body must run after the request policy has been applied;

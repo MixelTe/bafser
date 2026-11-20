@@ -1,6 +1,7 @@
 """Early HTTP policy, error headers, and isolated public request behavior."""
 
 import io
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,7 +9,7 @@ from unittest.mock import Mock, patch
 
 from flask import Request, Response, abort, g, request
 from werkzeug.datastructures import WWWAuthenticate
-from werkzeug.exceptions import RequestEntityTooLarge, TooManyRequests, Unauthorized
+from werkzeug.exceptions import BadRequest, RequestEntityTooLarge, TooManyRequests, Unauthorized
 from werkzeug.test import EnvironBuilder
 
 import bafser_config
@@ -263,13 +264,35 @@ class HttpContractsTests(unittest.TestCase):
                 self.assertNotIn("BODY_SECRET", str(self.logger.info.call_args_list))
 
     def test_json_reader_repeatedly_rejects_excessive_nesting(self):
-        from werkzeug.exceptions import BadRequest
-
         app = self.make_app()
         payload = "[" * 1200 + "0" + "]" * 1200
         with app.test_request_context("/api/deep", method="POST", data=payload, content_type="application/json"):
             for _ in range(2):
                 with self.assertRaises(BadRequest):
+                    read_json(request)
+
+    def test_json_depth_boundary_ignores_string_contents_in_supported_encodings(self):
+        app = self.make_app()
+        # The non-ASCII characters contain bracket bytes in UTF-16.
+        value = '\\"' + "[{" * 257 + "\u015b\u5b00\\"
+        at_limit = '{"value":[' * 128 + json.dumps(value, ensure_ascii=False) + "]}" * 128
+        encodings = ("utf-8", "utf-8-sig", "utf-16", "utf-16-be", "utf-16-le", "utf-32", "utf-32-be", "utf-32-le")
+        for encoding in encodings:
+            with self.subTest(encoding=encoding):
+                body = at_limit.encode(encoding)
+                with app.test_request_context(method="POST", data=body, content_type="application/json"):
+                    parsed, is_json = read_json(request)
+                    self.assertTrue(is_json)
+                    for _ in range(128):
+                        parsed = parsed["value"][0]
+                    self.assertEqual(parsed, value)
+
+                body = ("[" + at_limit + "]").encode(encoding)
+                with (
+                    app.test_request_context(method="POST", data=body, content_type="application/json"),
+                    patch.object(Request, "get_json", side_effect=AssertionError("JSON parser was called")),
+                    self.assertRaises(BadRequest),
+                ):
                     read_json(request)
 
     def test_http_exceptions_keep_status_and_protocol_headers(self):

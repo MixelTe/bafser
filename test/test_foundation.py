@@ -39,6 +39,8 @@ class PackageDiscoveryTests(unittest.TestCase):
 
     def write(self, name, source):
         (self.package / name).write_text(source, encoding="utf8")
+        # A previous lookup may have cached the package directory contents.
+        importlib.invalidate_caches()
 
     def test_regular_package_imports_direct_modules_in_stable_order(self):
         self.write("__init__.py", "")
