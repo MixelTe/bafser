@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bafser"
-version = "2.17.3"
+version = "2.18.0"
 authors = [{ name = "Mixel Te" }]
 description = "Base for flask server"
 readme = "README.md"
@@ -38,15 +38,38 @@ Homepage = "https://github.com/MixelTe/bafser"
 Issues = "https://github.com/MixelTe/bafser/issues"
 
 [project.scripts]
-bafser = "bafser.cli:cli"
+bafser = "bafser_cli:cli"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/bafser"]
+packages = ["src/bafser", "src/bafser_cli"]
 
 [tool.hatch.build.targets.sdist]
-only-include = ["src/bafser"]
+only-include = ["src/bafser", "src/bafser_cli"]
 include = [
   "/LICENSE*",
   "/README.md",
   "/pyproject.toml",
 ]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 150
+
+[tool.ruff.lint]
+select = [
+  "E4", "E7", "E9", "F", "E501",
+  # Focused correctness checks, without a broad style/API migration.
+  "B006", "B012", "B018", "B023", "B026", "B032", "B033",
+  "PGH004", "RUF100",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The facade loads configuration before importing its consumers.
+"src/bafser/__init__.py" = ["E402"]
+
+[tool.pyright]
+include = ["src"]
+exclude = ["**/__pycache__"]
+pythonVersion = "3.10"
+venv = ".venv"
+typeCheckingMode = "strict"

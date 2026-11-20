@@ -12,6 +12,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from typing_extensions import override
 
 from .. import Log, ObjMixin, PublicError, SqlAlchemyBase, UserBase, create_file_response, get_datetime_now, get_json_values, track_created_file
+from ..logger import log_error_details
 from ._tables import TablesBase
 
 
@@ -117,7 +118,11 @@ class Image(SqlAlchemyBase, ObjMixin):
                 # An after_commit callback can fail after SQLAlchemy has marked
                 # the transaction committed. Preserve the original failure;
                 # session close will finalize tracked files safely.
-                logging.exception("Could not roll back failed image creation")
+                logging.error(
+                    "Could not roll back failed image creation",
+                    exc_info=True if log_error_details() else None,
+                    extra={"bafser_safe_message": True},
+                )
             raise
         return img
 

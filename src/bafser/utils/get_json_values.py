@@ -21,7 +21,7 @@ def get_json_values(d: Mapping[str, Any], f1: field_desc[T1]) -> tuple[T1, error
 @overload
 def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2]) -> tuple[tuple[T1, T2], error]: ...  # noqa: E704
 @overload
-def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3]) -> tuple[tuple[T1, T2, T3], error]: ...  # noqa: E704, E501
+def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3]) -> tuple[tuple[T1, T2, T3], error]: ...  # noqa: E704
 @overload
 def get_json_values(d: Mapping[str, Any], f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4]) -> tuple[tuple[T1, T2, T3, T4], error]: ...  # noqa: E704, E501
 @overload
@@ -69,7 +69,7 @@ def get_json_values(d: Mapping[str, Any], *field_names: field_desc[Any], **kwarg
     return r, None
 
 
-def get_json_list(l: list[Any], otype: type[T]) -> tuple[list[T], error]:
+def get_json_list(l: list[Any], otype: type[T]) -> tuple[list[T], error]:  # noqa: E741 -- public keyword argument
     from ..jsonobj import JsonObj, validate_type
     r: list[T] = []
     for i, el in enumerate(l):

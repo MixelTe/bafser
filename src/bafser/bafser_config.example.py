@@ -1,4 +1,9 @@
-db_dev_path = "storage/db/dev.db"
+from pathlib import Path
+
+PROJECT_DIR = Path(__file__).resolve().parent
+STORAGE_DIR = PROJECT_DIR / "storage"
+
+db_dev_path = str(STORAGE_DIR / "db/dev.db")
 # db_dev_path = "ENV:DBPATH"
 db_path = "ENV:DBPATH"  # e.g. mysql_user:password@localhost/app_db
 # Secure MySQL setup:
@@ -20,19 +25,29 @@ allow_unsupported_for_update_clause: None | bool = None  # None: True in dev
 datetime_utc = True
 
 use_alembic = True
-migrations_folder = "alembic"
+migrations_folder = str(PROJECT_DIR / "alembic")
 
-log_info_path = "storage/logs/log_info.csv"
-log_requests_path = "storage/logs/log_requests.csv"
-log_errors_path = "storage/logs/log_errors.log"
-log_frontend_path = "storage/logs/log_frontend.log"
-log_dashboard_path = "storage/logs/log_dashboard.csv"
+# Optional engine limits, per process
+db_pool_size = 5
+db_max_overflow = 10
+db_pool_timeout = 30
+db_pool_recycle = 3600
+db_connect_timeout = 10
+db_read_timeout = 30
+db_write_timeout = 30
+db_hide_parameters: bool | None = None  # None: hidden in production, visible in dev
 
-jwt_key_file_path = "storage/secret_key_jwt.txt"
-images_folder = "storage/images"
+log_info_path = str(STORAGE_DIR / "logs/log_info.csv")
+log_requests_path = str(STORAGE_DIR / "logs/log_requests.csv")
+log_errors_path = str(STORAGE_DIR / "logs/log_errors.log")
+log_frontend_path = str(STORAGE_DIR / "logs/log_frontend.log")
+log_dashboard_path = str(STORAGE_DIR / "logs/log_dashboard.csv")
+
+jwt_key_file_path = str(STORAGE_DIR / "secret_key_jwt.txt")
+images_folder = str(STORAGE_DIR / "images")
 
 login_page_url = "/login"
 api_url = "/api/"
 
-blueprints_folder = "blueprints"
-data_tables_folder = "data"
+blueprints_package = "blueprints"
+data_tables_package = "data"

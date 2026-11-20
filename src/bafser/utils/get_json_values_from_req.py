@@ -23,7 +23,7 @@ def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2]) -> tuple[T1
 @overload
 def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3]) -> tuple[T1, T2, T3]: ...  # noqa: E704
 @overload
-def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4]) -> tuple[T1, T2, T3, T4]: ...  # noqa: E704, E501
+def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4]) -> tuple[T1, T2, T3, T4]: ...  # noqa: E704
 @overload
 def get_json_values_from_req(f1: field_desc[T1], f2: field_desc[T2], f3: field_desc[T3], f4: field_desc[T4], f5: field_desc[T5]) -> tuple[T1, T2, T3, T4, T5]: ...  # noqa: E704, E501
 @overload

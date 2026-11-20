@@ -1,46 +1,15 @@
 # base for flask server by Mixel Te
 
-try:
-    import bafser_config  # type: ignore
-except ModuleNotFoundError as error:
-    if error.name != "bafser_config":
-        raise
-    import os
-    import sys
+from .configuration import load_config
 
-    sys.path.append(os.getcwd())
-    try:
-        import bafser_config
-    except ModuleNotFoundError as error:
-        if error.name != "bafser_config":
-            raise
-        import shutil
-
-        current = os.path.dirname(__file__)
-        cfg_src = os.path.join(current, "bafser_config.example.py")
-        cfg_dst = os.path.join(os.getcwd(), "bafser_config.py")
-        shutil.copy(cfg_src, cfg_dst)
-        with_tgapi = False
-        try:
-            import bafser_tgapi  # type: ignore
-        except ModuleNotFoundError:
-            pass
-        except Exception:
-            with_tgapi = True
-        if with_tgapi:
-            cfg_tg_src = os.path.join(current, "bafser_config.tgapi.py")
-            with open(cfg_tg_src, encoding="utf8") as f:
-                cfg_tg = f.read()
-            with open(cfg_dst, "a", encoding="utf8") as f:
-                f.write("\n" + cfg_tg)
+bafser_config = load_config()
 
 from .validate_config import validate_config
 from .undefined import Undefined, U, UD
 from .public_error import PublicError
 from .constants import Constants
 
-if "bafser_config" in globals():
-    validate_config(bafser_config)  # type: ignore
+validate_config(bafser_config)
 
 # ruff: isort: skip_file
 from .utils.response_msg import response_msg
@@ -78,14 +47,14 @@ from .utils.use_db_session import use_db_session, use_db_sess
 from .utils.use_user import use_user  # pyright: ignore[reportDeprecated]
 from .utils.use_userId import use_userId  # pyright: ignore[reportDeprecated]
 
-from .app import AppConfig, AccessControlHeaders, create_app, update_message_to_frontend, get_app_config
+from .app import AppConfig, AccessControlHeaders, RequestPolicy, request_policy, create_app, update_message_to_frontend, get_app_config
 from .logger import get_logger_frontend, log_frontend_error, get_log_fpath, get_log_fpath_all, add_logger, create_log_handler, ParametrizedLogger
 from .authentication import create_access_token, get_user_by_jwt_identity, get_user_id_by_jwt_identity
 from .jsonobj import JsonObj, JsonOpt, JsonParseError, UnionParseError
 from .doc_api import doc_api, get_api_docs, TJson, TJsonListOf, render_docs_page
 from .dashboard import render_dashboard_page
 
-from .db_session import SqlAlchemyBase
+from .db_session import SqlAlchemyBase, get_engine, dispose_engine
 from .table_base import IdMixin, ObjMixin, SingletonMixin, BigIdMixin
 from .locking import ForUpdateRequiredError, LockNotSupportedError
 from .data._tables import TablesBase
@@ -138,6 +107,7 @@ __all__ = [
     "Role",
     "RoleDict",
     "RolesBase",
+    "RequestPolicy",
     "SingletonMixin",
     "SqlAlchemyBase",
     "TJson",
@@ -162,12 +132,14 @@ __all__ = [
     "create_log_handler",
     "create_permission_required_decorator",
     "doc_api",
+    "dispose_engine",
     "emoji_to_ip",
     "get_api_docs",
     "get_app_config",
     "get_datetime_now",
     "get_datetime_utc",
     "get_db_session",
+    "get_engine",
     "get_json",
     "get_json_list",
     "get_json_list_from_req",
@@ -184,6 +156,7 @@ __all__ = [
     "jsonify_list",
     "listfind",
     "log_frontend_error",
+    "load_config",
     "normalize_search",
     "normalized_column",
     "normalized_update_values",
@@ -200,6 +173,7 @@ __all__ = [
     "render_dashboard_page",
     "render_docs_page",
     "response_msg",
+    "request_policy",
     "response_not_found",
     "strfind",
     "track_created_file",

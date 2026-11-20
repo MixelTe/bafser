@@ -5,7 +5,8 @@ from .response_msg import response_msg
 
 
 def get_userId_required() -> int:
-    userId = g.userId
+    """Return the verified token's ID without querying current user state."""
+    userId = g.get("userId")
     if userId is not None:
         return userId
     response = response_msg("The JWT has expired", 401)
@@ -14,4 +15,5 @@ def get_userId_required() -> int:
 
 
 def get_userId() -> int | None:
-    return g.userId
+    """Return the request's token ID, without checking current user or revocation."""
+    return g.get("userId")

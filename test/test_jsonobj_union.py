@@ -120,7 +120,7 @@ class JsonObjUnionTests(unittest.TestCase):
                 class Broken(JsonObj):
                     value: int
 
-                    def _parse(self, key, value, data):
+                    def _parse(self, key, value, data, phase=phase):
                         if phase == "parse":
                             raise ValueError("programming error")
 

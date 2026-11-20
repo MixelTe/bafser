@@ -45,6 +45,23 @@ class TableBase(DeclarativeBase, MappedAsDataclass, SerializerMixin):
     def get_session(self):
         return Session.object_session(self)
 
+    def _get_write_session(self, db_sess: Session | None = None) -> Session:
+        """Use the owning session, or attach a detached object to an explicit one.
+
+        Never merge an object or silently save its audit in a different session.
+        The caller must choose the transaction before changing the object.
+        """
+        bound = self.get_session()
+        if db_sess is None:
+            if bound is None:
+                raise ValueError("Object is not bound to a session; pass db_sess explicitly")
+            return bound
+        if bound is not None and bound is not db_sess:
+            raise ValueError("Object is bound to a different session")
+        if bound is None:
+            db_sess.add(self)
+        return db_sess
+
     @property
     def is_for_update(self) -> bool:
         """Whether bafser recorded FOR UPDATE in this session/transaction.
@@ -108,6 +125,7 @@ class ObjMixin(IdMixin):
         Return False to prevent the object from being deleted.
         - Override `_on_restore(...)` to run custom logic or block restore.
         Return False to prevent the object from being restored.
+        Hooks receive commit=False; the outer operation owns its final commit.
     """
 
     deleted: Mapped[bool] = mapped_column(server_default="0", init=False)
@@ -121,7 +139,7 @@ class ObjMixin(IdMixin):
         if for_update:
             items = for_update_query(items, cls)
         if not includeDeleted:
-            items = items.filter(cls.deleted == False)
+            items = items.filter(cls.deleted == False)  # noqa: E712
         return items
 
     @classmethod
@@ -136,13 +154,16 @@ class ObjMixin(IdMixin):
         from . import Log, get_datetime_now
 
         now = get_datetime_now() if now is None else now
-        db_sess = db_sess if db_sess else actor.db_sess
-        if not self._on_delete(db_sess, actor, now, commit):
+        if isinstance(self, TableBase):
+            db_sess = self._get_write_session(db_sess)  # pyright: ignore[reportPrivateUsage]
+        elif db_sess is None:
+            db_sess = actor.db_sess
+        if not self._on_delete(db_sess, actor, now, False):
             return False
         self.deleted = True
         if isinstance(self, TableBase):
-            Log.deleted(self, actor, now=now, commit=commit, db_sess=db_sess)
-        elif commit:
+            Log.deleted(self, actor, now=now, commit=False, db_sess=db_sess)
+        if commit:
             db_sess.commit()
         return True
 
@@ -160,13 +181,16 @@ class ObjMixin(IdMixin):
         from . import Log, get_datetime_now
 
         now = get_datetime_now() if now is None else now
-        db_sess = db_sess if db_sess else actor.db_sess
-        if not self._on_restore(db_sess, actor, now, commit):
+        if isinstance(self, TableBase):
+            db_sess = self._get_write_session(db_sess)  # pyright: ignore[reportPrivateUsage]
+        elif db_sess is None:
+            db_sess = actor.db_sess
+        if not self._on_restore(db_sess, actor, now, False):
             return False
         self.deleted = False
         if isinstance(self, TableBase):
-            Log.restored(self, actor, now=now, commit=commit, db_sess=db_sess)
-        elif commit:
+            Log.restored(self, actor, now=now, commit=False, db_sess=db_sess)
+        if commit:
             db_sess.commit()
         return True
 
@@ -205,6 +229,14 @@ class SingletonMixin(MappedAsDataclass):
         from . import get_db_session
 
         session = db_sess if db_sess is not None else get_db_session()
+        # With autoflush disabled, Session.get cannot see a singleton created by
+        # an earlier commit=False call. Reuse that pending row without flushing
+        # unrelated work owned by the caller.
+        for pending in session.new:
+            if isinstance(pending, cls) and pending.id == cls._ID:
+                if commit:
+                    session.commit()
+                return pending
         obj = session.get(cls, cls._ID)
         if obj:
             return obj

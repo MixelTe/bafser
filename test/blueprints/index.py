@@ -3,7 +3,6 @@ from typing import Any, Literal, TypedDict
 from flask import Blueprint, abort, send_from_directory
 from typing_extensions import NotRequired
 
-import bafser_config
 from bafser import (
     JsonObj,
     JsonOpt,
@@ -17,7 +16,6 @@ from bafser import (
     protected_route,
     render_dashboard_page,
     render_docs_page,
-    response_msg,
 )
 from test.data import Operations
 from test.data.img import ImageJson, Img
@@ -46,7 +44,7 @@ def dashboard_page():
 
 @bp.get("/")
 def index():
-    return send_from_directory(bafser_config.blueprints_folder, "index.html")
+    return send_from_directory(bp.root_path, "index.html")
 
 
 @bp.get("/api/user")

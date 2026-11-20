@@ -11,6 +11,7 @@ from contextlib import redirect_stdout
 from datetime import date, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from flask import Flask, g, jsonify, make_response
@@ -22,7 +23,8 @@ from sqlalchemy.orm import Session
 
 import bafser_config
 
-from bafser import AppConfig, JsonObj, Log, PublicError, Role, SqlAlchemyBase, Undefined, UserRole, create_app, response_msg
+from bafser import AppConfig, JsonObj, Log, PublicError, RequestPolicy, Role, SqlAlchemyBase, Undefined, UserRole, create_app, response_msg
+from bafser import create_access_token as create_user_access_token
 from bafser.data.user import UserBase
 from bafser.jsonobj import validate_type
 
@@ -33,13 +35,10 @@ class SqliteLowerTests(unittest.TestCase):
 
         engine = create_engine("sqlite:///:memory:")
         self.addCleanup(engine.dispose)
-        with tempfile.TemporaryDirectory() as directory:
-            # Register on this engine only, without affecting other tests.
-            with patch.object(db_session, "Engine", engine):
-                db_session.setup_sqlite(str(Path(directory) / "test.db"))
-            with engine.connect() as connection:
-                row = connection.exec_driver_sql("SELECT lower(NULL), lower(''), lower('ABC'), lower('ПРИВЕТ')").one()
-                self.assertEqual(tuple(row), (None, "", "abc", "привет"))
+        db_session.setup_sqlite(engine)
+        with engine.connect() as connection:
+            row = connection.exec_driver_sql("SELECT lower(NULL), lower(''), lower('ABC'), lower('ПРИВЕТ')").one()
+            self.assertEqual(tuple(row), (None, "", "abc", "привет"))
 
 
 class ValidationTests(unittest.TestCase):
@@ -113,6 +112,7 @@ class AppTests(unittest.TestCase):
         dev_mode: bool = False,
         log_json_responses: bool | None = None,
         allow_unsupported_for_update_clause: bool | None = None,
+        request_policy: RequestPolicy | None = None,
     ):
         # create_app resolves None in the shared module; each app needs fresh input.
         bafser_config.allow_unsupported_for_update_clause = allow_unsupported_for_update_clause
@@ -132,6 +132,7 @@ class AppTests(unittest.TestCase):
                     HEALTH_ROUTE=health_route,
                     DEV_MODE=dev_mode,
                     LOG_JSON_RESPONSES=log_json_responses,
+                    REQUEST_POLICY=request_policy,
                     JWT_ACCESS_TOKEN_EXPIRES=timedelta(minutes=5),
                     JWT_ACCESS_TOKEN_REFRESH=timedelta(minutes=30),
                 ),
@@ -167,7 +168,7 @@ class AppTests(unittest.TestCase):
                 }
 
                 @app.get("/api/failure/<kind>")
-                def failure(kind):
+                def failure(kind, session=session, errors=errors):
                     g.db_session = session
                     raise errors[kind] from RuntimeError("PRIVATE underlying database error")
 
@@ -200,7 +201,7 @@ class AppTests(unittest.TestCase):
                 errors = {kind.__name__: kind("PRIVATE SQL and credentials") for kind in (PrivateError, RuntimeError, PermissionError)}
 
                 @app.get("/api/failure/<kind>")
-                def failure(kind):
+                def failure(kind, session=session, errors=errors):
                     g.db_session = session
                     raise errors[kind]
 
@@ -291,11 +292,17 @@ class AppTests(unittest.TestCase):
             def ping():
                 return "pong"
 
+            user = SimpleNamespace(id=7, password="stored-hash")
             with app.app_context():
-                token = create_access_token(identity="user")
+                token = create_user_access_token(user)
             client = app.test_client()
             client.set_cookie("access_token_cookie", token)
-            response = client.get("/api/ping")
+            with (
+                patch("bafser.app.get_db_session", return_value=Mock()),
+                patch("bafser.app.renew_access_token", return_value=token) as lookup,
+            ):
+                response = client.get("/api/ping")
+            lookup.assert_called_once()
             cookies = [value for value in response.headers.getlist("Set-Cookie") if value.startswith("access_token_cookie=")]
             self.assertEqual(len(cookies), 1)
             self.assertNotIn("Expires=Thu, 01 Jan 1970", cookies[0])
@@ -311,7 +318,7 @@ class AppTests(unittest.TestCase):
             self.assertEqual(app.test_client().get("/api/secret").status_code, 200)
             self.assertNotIn("secret-value", str(logger.info.call_args_list))
 
-    def test_json_response_body_is_logged_in_dev_with_redaction(self):
+    def test_json_response_body_is_logged_in_dev_without_redaction(self):
         with tempfile.TemporaryDirectory() as directory:
             app, logger = self.make_app(Path(directory), dev_mode=True)
 
@@ -322,8 +329,7 @@ class AppTests(unittest.TestCase):
             self.assertEqual(app.test_client().get("/api/secret").status_code, 200)
             calls = str(logger.info.call_args_list)
             self.assertIn("visible", calls)
-            self.assertIn("***", calls)
-            self.assertNotIn("secret-value", calls)
+            self.assertIn("secret-value", calls)
 
     def test_json_response_logging_can_be_explicitly_disabled_in_dev(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -338,7 +344,10 @@ class AppTests(unittest.TestCase):
 
     def test_json_response_logging_can_be_explicitly_enabled_in_production(self):
         with tempfile.TemporaryDirectory() as directory:
-            app, logger = self.make_app(Path(directory), log_json_responses=True)
+            app, logger = self.make_app(
+                Path(directory), log_json_responses=True,
+                request_policy=RequestPolicy(log_body=True, body_fields=("message",)),
+            )
 
             @app.get("/api/data")
             def data():
@@ -350,8 +359,8 @@ class AppTests(unittest.TestCase):
 
 class DatabaseTests(unittest.TestCase):
     def test_log_persists_calendar_dates_and_preserves_datetime_and_enum_values(self):
-        from test.data.apple import Apple  # type: ignore
-        from test.data.img import Img  # type: ignore
+        from test.data.apple import Apple  # type: ignore  # noqa: F401 - registers ORM tables
+        from test.data.img import Img  # type: ignore  # noqa: F401 - registers ORM tables
         from test.data.user import User
 
         class State(Enum):
@@ -422,7 +431,7 @@ class DatabaseTests(unittest.TestCase):
         engine.dispose()
 
     def test_image_creation_log_keeps_fields_before_flush(self):
-        from test.data.apple import Apple  # type: ignore
+        from test.data.apple import Apple  # type: ignore  # noqa: F401 - registers ORM tables
         from test.data.img import Img  # type: ignore
         from test.data.user import User
 
@@ -458,8 +467,8 @@ class DatabaseTests(unittest.TestCase):
         engine.dispose()
 
     def test_log_added_flushes_new_id_without_commit_unless_disabled(self):
-        from test.data.apple import Apple  # type: ignore
-        from test.data.img import Img  # type: ignore
+        from test.data.apple import Apple  # type: ignore  # noqa: F401 - registers ORM tables
+        from test.data.img import Img  # type: ignore  # noqa: F401 - registers ORM tables
         from test.data.user import User
 
         engine = create_engine("sqlite:///:memory:")
@@ -491,8 +500,8 @@ class DatabaseTests(unittest.TestCase):
         engine.dispose()
 
     def test_failed_role_assignment_does_not_save_user(self):
-        from test.data.apple import Apple  # type: ignore
-        from test.data.img import Img  # type: ignore
+        from test.data.apple import Apple  # type: ignore  # noqa: F401 - registers ORM tables
+        from test.data.img import Img  # type: ignore  # noqa: F401 - registers ORM tables
         from test.data.user import User
 
         engine = create_engine("sqlite:///:memory:")
@@ -523,9 +532,9 @@ class DatabaseTests(unittest.TestCase):
 
     def test_existing_operation_name_is_updated(self):
         from bafser.data.operation import Operation
-        from test.data.apple import Apple  # type: ignore
-        from test.data.img import Img  # type: ignore
-        from test.data.user import User  # type: ignore
+        from test.data.apple import Apple  # type: ignore  # noqa: F401 - registers ORM tables
+        from test.data.img import Img  # type: ignore  # noqa: F401 - registers ORM tables
+        from test.data.user import User  # type: ignore  # noqa: F401 - registers ORM tables
 
         class Operations:
             @staticmethod
@@ -566,7 +575,7 @@ class DatabaseTests(unittest.TestCase):
                     patch.object(db_session.orm, "sessionmaker"),
                     patch.object(SqlAlchemyBase.metadata, "create_all") as create_all,
                 ):
-                    db_session.global_init(dev=False)
+                    db_session.global_init(dev=False, create_tables=not use_alembic)
                 self.assertEqual(create_all.call_count, 0 if use_alembic else 1)
 
 
@@ -613,11 +622,12 @@ class CommandTests(unittest.TestCase):
                 with (
                     patch("builtins.input", return_value="n"),
                     patch.dict(sys.modules, {"bafser_tgapi": None}),
-                    patch("bafser_config.data_tables_folder", "data"),
-                    patch("bafser_config.blueprints_folder", "blueprints"),
+                    patch("bafser_config.data_tables_package", "data"),
+                    patch("bafser_config.blueprints_package", "blueprints"),
                     patch("bafser_config.migrations_folder", "alembic"),
                     patch("bafser_config.use_alembic", True),
                 ):
+                    module.run([])
                     module.run([])
                     paths = [Path("main.py"), Path("data/user.py"), Path("alembic/env.py"), Path(".gitignore")]
                     for path in paths:

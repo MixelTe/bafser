@@ -3,20 +3,22 @@ import re
 
 from alembic import command
 from alembic.script import ScriptDirectory
+from typing_extensions import Callable
 
 import bafser_config
 
 from ..alembic import create_alembic_config
 
 
-def init(args: list[str]):
+def init(args: list[str], *, folder: str | None = None):
     print("alembic init")
 
-    os.makedirs(bafser_config.migrations_folder, exist_ok=True)
-    os.makedirs(os.path.join(bafser_config.migrations_folder, "versions"), exist_ok=True)
+    folder = bafser_config.migrations_folder if folder is None else folder
+    os.makedirs(folder, exist_ok=True)
+    os.makedirs(os.path.join(folder, "versions"), exist_ok=True)
     for path, content in (
-        (os.path.join(bafser_config.migrations_folder, "env.py"), "from bafser.alembic import run\n\nrun()\n"),
-        (os.path.join(bafser_config.migrations_folder, "script.py.mako"), script_py_mako),
+        (os.path.join(folder, "env.py"), "from bafser.alembic import run\n\nrun()\n"),
+        (os.path.join(folder, "script.py.mako"), script_py_mako),
     ):
         try:
             with open(path, "w" if "--force" in args else "x", encoding="utf8") as f:
@@ -56,7 +58,7 @@ def downgrade(args: list[str]):
 
 
 def run(args: list[str]):
-    scripts = [
+    scripts: list[tuple[str, str, Callable[[list[str]], None]]] = [
         ("init", "[--force] : create folders and files", init),
         ("revision", "[name] : autogenerate migration script", revision),
         ("upgrade", "[--prod] : upgrade head", upgrade),
@@ -66,12 +68,12 @@ def run(args: list[str]):
     if len(args) == 0 or args[0] not in (v[0] for v in scripts):
         ml = max(len(v[0]) for v in scripts)
         ml2 = max(len(v[1]) for v in scripts)
-        l = ml + ml2 + 5
+        line_width = ml + ml2 + 5
         t = " Scripts "
-        l2 = l - len(t)
+        l2 = line_width - len(t)
         print("-" * (l2 // 2) + t + "-" * (l2 // 2 + l2 % 2))
         print("\n".join(f"{' ' * (ml - len(v[0]))} {v[0]} : {v[1]}" for v in scripts))
-        print("-" * l)
+        print("-" * line_width)
         return
 
     for s in scripts:

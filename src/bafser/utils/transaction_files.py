@@ -1,7 +1,24 @@
+"""Keep newly created files consistent with their owning database transaction.
+
+Successful commit retains a file; rollback removes it. If a COMMIT outcome cannot
+be verified, retain the file and log file_commit_outcome_unknown. A failed removal
+logs file_rollback_removal_failed. Neither event proves that deletion is safe.
+
+By default diagnostics contain the event, row/model identity, path fingerprint,
+full tracked path and traceback. LOG_ERROR_DETAILS=False in production omits the
+path/exception values even from the source LogRecord seen by host handlers.
+To locate a file in that reduced mode, use the row's path builder or known storage
+candidates and compare sha256(path.encode("utf8", "surrogatepass")).hexdigest()[:24].
+Hash the exact original path string, not file contents or a normalized path.
+After database recovery, reconcile its row/reference before removing a file.
+"""
+
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -21,6 +38,7 @@ class _CreatedFile:
     path: str
     query: Select[Any]
     engine: Engine
+    log_reference: str
     verify: bool = False
 
 
@@ -30,13 +48,63 @@ class _FileTransaction:
     commit_attempted: bool = False
 
 
+def _file_log_reference(path: str, model_name: str, identity: tuple[Any, ...]) -> str:
+    # Paths and string keys can contain secrets. A reproducible fingerprint lets
+    # operators match a retained file without exposing its directory or basename.
+    reference = "[omitted]"
+    if type(path) is str and len(path) <= 32768:
+        reference = hashlib.sha256(path.encode("utf8", errors="surrogatepass")).hexdigest()[:24]
+    if len(model_name) > 64 or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", model_name) is None:
+        model_name = "[omitted]"
+    key = "[omitted]"
+    if len(identity) <= 4 and all(type(value) is int and value.bit_length() <= 64 for value in identity):
+        key = ",".join(str(value) for value in identity)
+    return f"ref={reference} row={model_name}:{key}"
+
+
+def _log_file_error(file_record: _CreatedFile, error: Exception, *, outcome_unknown: bool) -> None:
+    from ..logger import log_error_details
+
+    event_name = "file_commit_outcome_unknown" if outcome_unknown else "file_rollback_removal_failed"
+    if log_error_details():
+        message = (
+            "Could not establish file commit outcome; retaining file %s for reconciliation"
+            if outcome_unknown
+            else "Could not remove rolled-back file %s"
+        )
+        logging.error(
+            "%s %s; " + message,
+            event_name,
+            file_record.log_reference,
+            file_record.path,
+            exc_info=(type(error), error, error.__traceback__),
+        )
+        return
+
+    # A host handler may use a plain formatter. Keep raw paths, exception values
+    # and traceback objects out of the reduced-mode LogRecord itself.
+    exception_type = type(error).__name__
+    if len(exception_type) > 64 or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", exception_type) is None:
+        exception_type = "Exception"
+    detail = "; retaining file for reconciliation" if outcome_unknown else ""
+    logging.error(
+        "%s %s error=%s%s",
+        event_name,
+        file_record.log_reference,
+        exception_type,
+        detail,
+        extra={"bafser_safe_message": True},
+    )
+
+
 def track_created_file(record: SqlAlchemyBase, path: str) -> None:
     """Track an exclusively created file owned by a flushed ORM record.
 
     Call after opening the new path with ``xb``, before writing. Ordinary
     rollback/close removes it. An ambiguous COMMIT is checked with a fresh
     transaction; if the database cannot establish the outcome, retain the file
-    and log its path for reconciliation. Existing files must never be tracked.
+    and log its path for reconciliation (a file/row reference in reduced mode).
+    Existing files must never be tracked.
     Transactions must be owned by an Engine-bound Session, not managed through
     an external Connection transaction.
     """
@@ -55,7 +123,8 @@ def track_created_file(record: SqlAlchemyBase, path: str) -> None:
         .where(*(column == value for column, value in zip(state.mapper.primary_key, state.identity)))
     )
     pending: dict[SessionTransaction, _FileTransaction] = session.info.setdefault(_TRANSACTION_FILES, {})
-    pending.setdefault(transaction, _FileTransaction()).files.append(_CreatedFile(path, query, engine))
+    reference = _file_log_reference(path, state.mapper.class_.__name__, state.identity)
+    pending.setdefault(transaction, _FileTransaction()).files.append(_CreatedFile(path, query, engine, reference))
 
 
 @event.listens_for(Session, "before_commit")
@@ -111,14 +180,14 @@ def _discard_created_files(session: Session, transaction: SessionTransaction) ->
                     exists = connection.execute(file_record.query).first() is not None
                 if exists:
                     continue
-            except Exception:
-                logging.exception("Could not establish file commit outcome; retaining file %s for reconciliation", file_record.path)
+            except Exception as error:
+                _log_file_error(file_record, error, outcome_unknown=True)
                 continue
         try:
             os.remove(file_record.path)
         except FileNotFoundError:
             pass
-        except OSError:
-            logging.exception("Could not remove rolled-back file %s", file_record.path)
+        except OSError as error:
+            _log_file_error(file_record, error, outcome_unknown=False)
     if not pending:
         session.info.pop(_TRANSACTION_FILES, None)

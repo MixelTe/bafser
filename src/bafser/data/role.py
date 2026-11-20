@@ -29,7 +29,13 @@ class Role(SqlAlchemyBase, ObjMixin):
         return self.to_dict(only=("id", "name"))  # type: ignore
 
     @staticmethod
-    def update_roles_permissions(db_sess: Session):
+    def update_roles_permissions(db_sess: Session, *, commit: bool = True):
+        """Synchronize permissions in the caller's transaction, flushing the Session.
+
+        Flushes also apply with autoflush disabled; loaded roles expose the
+        synchronized permissions immediately, including with commit=False.
+        """
+        db_sess.flush()
         ROLES = get_roles().ROLES
         # add new operations
         operations_new = get_operations().get_all()
@@ -46,7 +52,7 @@ class Role(SqlAlchemyBase, ObjMixin):
 
         # update roles
         roles_new_ids = ROLES.keys()
-        roles = db_sess.query(Role).all()
+        roles = db_sess.query(Role).populate_existing().all()
         roles_cur_ids = [v.id for v in roles]
         removed_roles: list[int] = []
         restored_roles: list[int] = []
@@ -109,6 +115,7 @@ class Role(SqlAlchemyBase, ObjMixin):
             role.id = role_id
             new_roles.append((role_id, name))
             db_sess.add(role)
+            roles.append(role)
 
             for operation in operations:
                 db_sess.add(Permission(roleId=role_id, operationId=operation[0]))
@@ -120,7 +127,7 @@ class Role(SqlAlchemyBase, ObjMixin):
                 Log(
                     date=now,
                     actionCode=actionCode,
-                    userId=1,
+                    userId=None,
                     userName="System",
                     tableName=TablesBase.Role,
                     recordId=recordId,
@@ -137,4 +144,11 @@ class Role(SqlAlchemyBase, ObjMixin):
         for role_id, name in new_roles:
             log_role(Actions.added, role_id, [("name", None, name)])
 
-        db_sess.commit()
+        # Permission writes use foreign keys directly, so refresh the cached
+        # collections only after those writes are visible within the transaction.
+        db_sess.flush()
+        for role in roles:
+            db_sess.expire(role, ["permissions"])
+
+        if commit:
+            db_sess.commit()

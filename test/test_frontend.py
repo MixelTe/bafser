@@ -17,7 +17,7 @@ class FrontendTests(unittest.TestCase):
         self.directory = Path(temporary.name)
         self.frontend = self.directory / "frontend"
         self.frontend.mkdir()
-        self.index = b"<!doctype html><title>TicketSystem</title>"
+        self.index = b"<!doctype html><title>Example app</title>"
         (self.frontend / "index.html").write_bytes(self.index)
 
         with (

@@ -23,7 +23,12 @@ class ConfigTests(unittest.TestCase):
         self.assertIsNone(validate_config())
 
     def test_each_base_field_is_required(self):
-        fields = [name for name in vars(self.config) if not name.startswith("_")]
+        fields = (
+            "db_dev_path", "db_path", "db_mysql", "sql_echo", "datetime_utc", "use_alembic", "migrations_folder",
+            "log_info_path", "log_requests_path", "log_errors_path", "log_frontend_path", "log_dashboard_path",
+            "jwt_key_file_path", "images_folder", "login_page_url", "api_url", "blueprints_package", "data_tables_package",
+            "allow_unsupported_for_update_clause",
+        )
         for name in fields:
             with self.subTest(name=name):
                 value = vars(self.config).pop(name)
@@ -41,6 +46,11 @@ class ConfigTests(unittest.TestCase):
             ("db_dev_path", (None, "", " ", "ENV:", "ENV: ")),
             ("api_url", (None, "", "api/", "/api?x=1", "/api#fragment")),
             ("jwt_key_file_path", (None, Path("key.txt"), "", "\0")),
+            ("blueprints_package", ("", "..app", "app/routes", "class.routes", 1, False)),
+            ("data_tables_package", ("", "data\\models", ".data", "data..models", 1)),
+            ("db_pool_size", (0, -1, True, "5")),
+            ("db_pool_timeout", (0, -1, True, float("inf"), float("nan"))),
+            ("db_hide_parameters", (0, "true")),
         ):
             original = getattr(self.config, name)
             for value in values:
@@ -114,8 +124,29 @@ class ConfigTests(unittest.TestCase):
             self.assertIn("bafser_missing_config_dependency", result.stderr)
             self.assertEqual(config_path.read_text(encoding="utf8"), source)
 
-    def test_missing_config_is_created_and_can_be_validated(self):
+    def test_missing_config_uses_memory_defaults_without_creating_files(self):
         with tempfile.TemporaryDirectory() as directory:
-            result = self.run_import(directory, "from bafser import validate_config; validate_config()")
+            result = self.run_import(
+                directory,
+                "from bafser import validate_config; validate_config(); import bafser_config; print(bafser_config.PROJECT_DIR)",
+            )
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertTrue((Path(directory) / "bafser_config.py").is_file())
+            self.assertEqual(result.stdout.strip(), str(Path(directory).resolve()))
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_old_folder_fields_are_rejected_even_alongside_new_names(self):
+        self.config.blueprints_folder = "secret-path"
+        self.config.data_tables_folder = "secret-path"
+        with self.assertRaisesRegex(ValueError, "blueprints_folder: replaced by blueprints_package") as error:
+            validate_config(self.config)
+        self.assertNotIn("secret-path", str(error.exception))
+
+    def test_optional_engine_settings_can_be_omitted_and_packages_disabled(self):
+        for name in list(vars(self.config)):
+            if name.startswith("db_pool_") or name in (
+                "db_max_overflow", "db_connect_timeout", "db_read_timeout", "db_write_timeout", "db_hide_parameters",
+            ):
+                delattr(self.config, name)
+        self.config.blueprints_package = None
+        self.config.data_tables_package = None
+        self.assertIsNone(validate_config(self.config))

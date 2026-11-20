@@ -433,17 +433,17 @@ class JsonObj:
         elif torigin is list and len(targs) == 1 and isinstance(v, list):
             v = cast(list[Any], v)
             t = targs[0]
-            l: list[Any] = []
+            parsed_items: list[Any] = []
             for i, el in enumerate(v):
                 if not isinstance(el, object):
                     continue
                 k2, el = self.__parse_item__(k + f".{i}", el, t, json)
                 if el is not Undefined and k2 is not None:
-                    l.append(el)
-            v = l
+                    parsed_items.append(el)
+            v = parsed_items
         elif torigin is tuple and isinstance(v, (list, tuple)):
             v = cast(list[Any], v)
-            l: list[Any] = []
+            parsed_items: list[Any] = []
             variadic = len(targs) == 2 and targs[1] is Ellipsis
             for i in range(len(v)):
                 t = targs[0] if variadic else targs[i] if i < len(targs) else Any
@@ -452,10 +452,10 @@ class JsonObj:
                     continue
                 k2, el = self.__parse_item__(k + f".{i}", el, t, json)
                 if el is not Undefined and k2 is not None:
-                    l.append(el)
-            while not variadic and len(l) < len(targs):
-                l.append(Undefined)
-            v = tuple(l)
+                    parsed_items.append(el)
+            while not variadic and len(parsed_items) < len(targs):
+                parsed_items.append(Undefined)
+            v = tuple(parsed_items)
         elif torigin is dict and len(targs) == 2 and isinstance(v, dict):
             v = cast(dict[Any, Any], v)
             t = targs[1]
@@ -816,13 +816,13 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         if not isinstance(obj, (list, tuple)):
             return None, f" is not {type_name(otype)}"
         obj = cast(list[Any], obj)
-        l: list[Any] = []
+        validated_items: list[Any] = []
         for i, el in enumerate(obj):
             o, err = validate_type(el, t, r)
             if err is not None:
                 return None, f"[{i}]{err}"
-            l.append(o)
-        return l, None  # type: ignore
+            validated_items.append(o)
+        return validated_items, None  # type: ignore
 
     # tuple
     if torigin is tuple:
@@ -830,13 +830,13 @@ def validate_type(obj: Any, otype: type[TC], r: bool = False) -> tuple[TC, None]
         if not isinstance(obj, (list, tuple)) or (not variadic and len(obj) != len(targs)):  # type: ignore
             return None, f" is not {type_name(otype)}"
         obj = cast(list[Any], obj)
-        l: list[Any] = []
+        validated_items: list[Any] = []
         for i, el in enumerate(obj):
             o, err = validate_type(el, targs[0] if variadic else targs[i], r)
             if err is not None:
                 return None, f"[{i}]{err}"
-            l.append(o)
-        return tuple(l), None  # type: ignore
+            validated_items.append(o)
+        return tuple(validated_items), None  # type: ignore
 
     # generic dict
     if torigin is dict and len(targs) == 2:

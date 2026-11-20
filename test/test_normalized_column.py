@@ -79,7 +79,9 @@ full_text_search_index = Index("ix_bafser_full_text_search", FullTextSearchItem.
 class LiteralSearchItem(SearchBase, IdMixin):
     __tablename__ = "bafser_literal_search_items"
     name: Mapped[str] = mapped_column(String(64))
-    name_search: Mapped[str] = normalized_column(name, length=128, normalizer=partial(normalize_search, strip_punctuation=False, cyrillic_to_latin=False))
+    name_search: Mapped[str] = normalized_column(
+        name, length=128, normalizer=partial(normalize_search, strip_punctuation=False, cyrillic_to_latin=False),
+    )
 
 
 class LatinSearchItem(SearchBase, IdMixin):
@@ -153,7 +155,10 @@ class SearchNormalizationTests(unittest.TestCase):
         self.assertEqual(normalize_search("Ёлка-Йогурт", cyrillic_to_latin=False), "елка иогурт")
 
     def test_optional_transforms(self):
-        self.assertEqual(normalize_search("Ёлка-Йогурт", replace_yo=False, strip_diacritics=False, strip_punctuation=False, cyrillic_to_latin=False), "ёлка-йогурт")
+        self.assertEqual(
+            normalize_search("Ёлка-Йогурт", replace_yo=False, strip_diacritics=False, strip_punctuation=False, cyrillic_to_latin=False),
+            "ёлка-йогурт",
+        )
         self.assertEqual(normalize_search("Ё Й", strip_diacritics=False, cyrillic_to_latin=False), "е й")
         self.assertEqual(normalize_search("Ё Й", replace_yo=False, strip_diacritics=False, cyrillic_to_latin=False), "ё й")
         self.assertEqual(normalize_search("Été Й", strip_diacritics=False, cyrillic_to_latin=False), "été й")
@@ -425,7 +430,10 @@ class NormalizedColumnTests(unittest.TestCase):
         self.session.commit()
         needle = normalize_search("YANA", cyrillic_to_latin=True)
         self.assertEqual(self.session.scalars(select(LatinSearchItem).where(LatinSearchItem.name_search.contains(needle))).one().id, item.id)
-        self.session.execute(update(LatinSearchItem).where(LatinSearchItem.id == item.id).values(**normalized_update_values(LatinSearchItem, name="ЮЛИЯ")))
+        self.session.execute(
+            update(LatinSearchItem).where(LatinSearchItem.id == item.id)
+            .values(**normalized_update_values(LatinSearchItem, name="ЮЛИЯ"))
+        )
         self.session.commit()
         self.assertEqual(item.name_search, "yuliya")
 
@@ -443,7 +451,11 @@ class NormalizedColumnTests(unittest.TestCase):
         self.assertEqual(item.note, "note")
 
     def test_bulk_helper_rejects_expressions_derived_and_unknown_fields(self):
-        for values, error in (({"name": func.upper(SearchItem.name)}, NormalizationError), ({"name_search": "manual"}, TypeError), ({"missing": "value"}, TypeError)):
+        for values, error in (
+            ({"name": func.upper(SearchItem.name)}, NormalizationError),
+            ({"name_search": "manual"}, TypeError),
+            ({"missing": "value"}, TypeError),
+        ):
             with self.subTest(values=values), self.assertRaises(error):
                 normalized_update_values(SearchItem, **values)
         self.assertEqual(normalized_update_values(SearchItem, note="x"), {"note": "x"})
@@ -476,7 +488,10 @@ class NormalizedColumnTests(unittest.TestCase):
         self.assertEqual(items[0].name_search, "outdated")
 
     def test_rebuild_supports_composite_primary_keys_and_repeated_runs(self):
-        self.session.add_all([CompositeSearchItem(group_id=group, item_id=index, name=f" NAME {group} {index} ") for group in (1, 2) for index in (1, 2, 3)])
+        self.session.add_all([
+            CompositeSearchItem(group_id=group, item_id=index, name=f" NAME {group} {index} ")
+            for group in (1, 2) for index in (1, 2, 3)
+        ])
         self.session.commit()
         self.session.execute(update(CompositeSearchItem).values(name_search="outdated"))
         self.session.commit()
@@ -503,7 +518,10 @@ class NormalizedColumnTests(unittest.TestCase):
 class InvalidConfigurationTests(unittest.TestCase):
     def test_bad_helper_arguments(self):
         source = mapped_column(String(32))
-        for kwargs in ({"length": 0}, {"length": True}, {"length": 10, "init": True}, {"length": 10, "default": ""}, {"length": 10, "overflow": "ignore"}):
+        for kwargs in (
+            {"length": 0}, {"length": True}, {"length": 10, "init": True},
+            {"length": 10, "default": ""}, {"length": 10, "overflow": "ignore"},
+        ):
             with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
                 normalized_column(source, **kwargs)
         with self.assertRaises(TypeError):

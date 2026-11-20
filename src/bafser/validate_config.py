@@ -1,5 +1,7 @@
 """Validate the base configuration before importing configuration consumers."""
 
+import keyword
+import math
 from types import ModuleType
 
 
@@ -28,11 +30,12 @@ def validate_config(config: ModuleType | None = None) -> None:
         "images_folder",
         "login_page_url",
         "api_url",
-        "blueprints_folder",
-        "data_tables_folder",
     )
     bool_fields = ("db_mysql", "sql_echo", "datetime_utc", "use_alembic")
     bool_none_fields = ("allow_unsupported_for_update_clause",)
+    for old_name in ("blueprints_folder", "data_tables_folder"):
+        if hasattr(config, old_name):
+            errors.append(f"{old_name}: replaced by {old_name.removesuffix('_folder')}_package")
     for name in (*string_fields, *bool_fields, *bool_none_fields):
         if not hasattr(config, name):
             errors.append(f"{name}: required field is missing")
@@ -60,6 +63,40 @@ def validate_config(config: ModuleType | None = None) -> None:
                 errors.append(f"{name}: expected bool or None")
         else:
             raise ValueError("validate_config is broken")
+
+    for name in ("blueprints_package", "data_tables_package"):
+        if not hasattr(config, name):
+            errors.append(f"{name}: required field is missing")
+            continue
+        value = getattr(config, name)
+        if value is not None and (
+            not isinstance(value, str) or not value or any(not part.isidentifier() or keyword.iskeyword(part) for part in value.split("."))
+        ):
+            errors.append(f"{name}: expected an absolute Python package name or None")
+
+    optional_numbers = {
+        "db_pool_size": (1, True),
+        "db_max_overflow": (0, True),
+        "db_pool_timeout": (0, False),
+        "db_pool_recycle": (-1, True),
+        "db_connect_timeout": (0, False),
+        "db_read_timeout": (0, False),
+        "db_write_timeout": (0, False),
+    }
+    for name, (minimum, integer) in optional_numbers.items():
+        if not hasattr(config, name):
+            continue
+        value = getattr(config, name)
+        if isinstance(value, bool) or not isinstance(value, int if integer else (int, float)):
+            errors.append(f"{name}: expected {'int' if integer else 'number'}")
+        elif (isinstance(value, float) and not math.isfinite(value)) or value < minimum or (minimum == 0 and not integer and value == 0):
+            errors.append(f"{name}: invalid numeric limit")
+    if (
+        hasattr(config, "db_hide_parameters")
+        and getattr(config, "db_hide_parameters") is not None
+        and type(getattr(config, "db_hide_parameters")) is not bool
+    ):
+        errors.append("db_hide_parameters: expected bool or None")
 
     if errors:
         raise ValueError("Invalid bafser_config:\n" + "\n".join(f"- {error}" for error in errors))

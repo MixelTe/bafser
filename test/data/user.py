@@ -25,8 +25,11 @@ class User(UserBase):
 
     @classmethod
     @override
-    def new(cls, creator: UserBase, login: str, password: str, name: str, roles: list[int], balance: int, *, db_sess: Session | None = None):
-        return super().new(creator, login, password, name, roles, db_sess=db_sess, balance=balance)
+    def new(
+        cls, creator: UserBase | None, login: str, password: str, name: str, roles: list[int], balance: int,
+        *, db_sess: Session | None = None, commit: bool = True,
+    ):
+        return super().new(creator, login, password, name, roles, db_sess=db_sess, commit=commit, balance=balance)
 
     @classmethod
     @override
@@ -35,6 +38,5 @@ class User(UserBase):
 
     @classmethod
     @override
-    def create_admin(cls, db_sess: Session):
-        fake_creator = User.get_fake_system()
-        return User.new(fake_creator, "admin", "admin", "Admin", [Roles.admin], 0, db_sess=db_sess)
+    def create_admin(cls, db_sess: Session, *, commit: bool = True):
+        return User.new(None, "admin", "admin", "Admin", [Roles.admin], 0, db_sess=db_sess, commit=commit)

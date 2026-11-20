@@ -1,330 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 	<meta charset="UTF-8">
-	<title>Dashboard</title>
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
-	<script src="https://unpkg.com/@sgratzl/chartjs-chart-boxplot@4.3.1/build/index.umd.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="color-scheme" content="light dark">
+	<title>Request dashboard</title>
 	<style>
-		body {
-			font-family: system-ui, -apple-system, sans-serif;
-			background: #f4f4f9;
-			padding: 20px;
+		:root {
+			font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+			color: #19243a; background: #f3f5fa; font-synthesis: none;
+			--card: #fff; --muted: #62718a; --line: #e3e8f0; --blue: #4766d5;
+			--red: #c73e56; --amber: #8d600c;
 		}
-
-		.grid {
-			display: grid;
-			grid-template-columns: 1fr;
-			gap: 20px;
+		* { box-sizing: border-box; }
+		body { margin: 0; }
+		main { max-width: 1440px; margin: auto; padding: 32px 24px 48px; }
+		h1 { margin: 4px 0 8px; font-size: clamp(1.7rem, 3vw, 2.3rem); letter-spacing: -.04em; }
+		h2 { margin: 0; font-size: 1.05rem; }
+		p { line-height: 1.5; }
+		.eyebrow { margin: 0; color: var(--blue); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+		.muted, .note { color: var(--muted); }
+		.subtitle { margin: 0 0 24px; font-size: .9rem; }
+		.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+		.filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+		label { display: grid; gap: 6px; font-size: .76rem; font-weight: 650; color: var(--muted); }
+		select, button {
+			font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line);
+			border-radius: 8px; min-height: 39px; padding: 8px 12px;
 		}
-
-		.card {
-			background: white;
-			padding: 20px;
-			border-radius: 10px;
-			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+		select { max-width: min(380px, 100%); }
+		button { cursor: pointer; font-weight: 650; }
+		button:hover { border-color: var(--blue); }
+		button:focus-visible, select:focus-visible, summary:focus-visible { outline: 3px solid #91a5f3; outline-offset: 2px; }
+		.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+		.stamp { margin: 12px 0 0; font-size: .75rem; color: var(--muted); }
+		.metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin: 18px 0; }
+		.metric-label { color: var(--muted); font-size: .75rem; margin: 0 0 10px; }
+		.metric-value { font-size: clamp(1.45rem, 2.5vw, 2rem); font-weight: 750; letter-spacing: -.04em; }
+		.unit { font-size: .72rem; font-weight: 500; letter-spacing: 0; color: var(--muted); }
+		.red { color: var(--red); }
+		.amber { color: var(--amber); }
+		.section { margin-top: 18px; }
+		.section-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
+		.section-head p { font-size: .78rem; margin: 0; color: var(--muted); }
+		.notice { padding: 12px 16px; border: 1px solid #e6c681; background: #fff8e7; border-radius: 10px; font-size: .84rem; }
+		.notice p { margin: 4px 0; }
+		.notice + .notice { margin-top: 10px; }
+		.legend { display: flex; gap: 18px; font-size: .76rem; color: var(--muted); }
+		.legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; background: var(--blue); }
+		.legend .errors::before { background: var(--red); }
+		.trend { display: flex; gap: 3px; height: 180px; align-items: end; margin: 22px 0 0; border-bottom: 1px solid var(--line); }
+		.bucket { flex: 1; min-width: 2px; height: 100%; display: flex; align-items: end; justify-content: center; gap: 1px; }
+		.bar { width: 43%; min-height: 0; background: var(--blue); border-radius: 3px 3px 0 0; }
+		.bar.errors { background: var(--red); }
+		.axis { display: flex; justify-content: space-between; margin-top: 7px; font-size: .72rem; color: var(--muted); }
+		.axis span { max-width: 48%; }
+		.axis span:last-child { text-align: right; }
+		.trend-values { overflow-x: auto; }
+		details { margin-top: 16px; font-size: .78rem; }
+		summary { cursor: pointer; color: var(--muted); }
+		.table-scroll { overflow-x: auto; margin: 16px -20px -20px; border-radius: 0 0 14px 14px; }
+		table { border-collapse: collapse; width: 100%; font-size: .83rem; }
+		th, td { padding: 12px 18px; text-align: right; border-top: 1px solid var(--line); }
+		th { font-size: .69rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
+		th:first-child, td:first-child { text-align: left; }
+		tbody tr:hover { background: #4766d506; }
+		th button { font-size: inherit; text-transform: inherit; letter-spacing: inherit; min-height: 0; border: 0; padding: 0; }
+		code { font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; overflow-wrap: anywhere; font-size: .8rem; }
+		.endpoint { max-width: 470px; min-width: 170px; }
+		.empty { text-align: center !important; padding: 35px 20px; color: var(--muted); }
+		.status { font-weight: 750; }
+		.quality { font-size: .78rem; line-height: 1.65; color: var(--muted); margin-bottom: 0; }
+		footer { padding: 22px 2px 0; font-size: .75rem; color: var(--muted); }
+		@media (max-width: 1050px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+		@media (max-width: 580px) {
+			main { padding: 22px 12px; }
+			.card { padding: 16px; }
+			.metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+			.filters label, .filters select { width: 100%; max-width: none; }
+			.filters button { flex: 1; }
+			.trend { gap: 1px; }
+			.bucket { min-width: 0; }
+			.table-scroll { margin: 16px -16px -16px; }
+			th, td { padding: 11px 13px; }
 		}
-
-		.summary-grid {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 20px;
-			margin-bottom: 25px;
-		}
-
-		table {
-			width: 100%;
-			border-collapse: collapse;
-			background: white;
-			border-radius: 8px;
-			overflow: hidden;
-		}
-
-		th {
-			text-align: left;
-			background: #f1f5f9;
-			color: #475569;
-			font-size: 0.75rem;
-			text-transform: uppercase;
-			padding: 10px;
-			border-bottom: 1px solid #e2e8f0;
-		}
-
-		td {
-			padding: 10px;
-			border-bottom: 1px solid #f1f5f9;
-			font-size: 0.9rem;
-		}
-
-		.badge-median {
-			background: #dcfce7;
-			color: #166534;
-			padding: 2px 6px;
-			border-radius: 4px;
-			font-weight: bold;
-		}
-
-		.badge-max {
-			background: #fee2e2;
-			color: #991b1b;
-			padding: 2px 6px;
-			border-radius: 4px;
-			font-weight: bold;
-		}
-
-		code {
-			background: #f8fafc;
-			padding: 2px 4px;
-			border-radius: 4px;
-			color: #334155;
-		}
-
-		@media (max-width: 1000px) {
-			.summary-grid {
-				grid-template-columns: 1fr;
-			}
-		}
-
-		/* Improved Controls Styling */
-		.controls-container {
-			display: flex;
-			flex-direction: column;
-			gap: 15px;
-		}
-
-		.slider-group {
-			display: flex;
-			align-items: center;
-			gap: 20px;
-		}
-
-		.button-group {
-			display: flex;
-			gap: 10px;
-		}
-
-		button {
-			padding: 6px 12px;
-			border-radius: 6px;
-			border: 1px solid #cbd5e1;
-			background: white;
-			cursor: pointer;
-			font-size: 0.85rem;
-			transition: all 0.2s;
-		}
-
-		button:hover {
-			background: #f1f5f9;
-			border-color: #94a3b8;
-		}
-
-		input[type="range"] {
-			flex-grow: 1;
-		}
-
-		#rangeLabel {
-			font-weight: 600;
-			color: #1e293b;
-			min-width: 200px;
+		@media (prefers-color-scheme: dark) {
+			:root { color: #e0e6f2; background: #111827; --card: #182235; --muted: #a6b3c9; --line: #2c3951; }
+			:root { --blue: #8ba3ff; --red: #ff8c9d; --amber: #e3ba6b; }
+			.primary { color: #101829; }
+			.notice { background: #30291a; border-color: #665128; }
 		}
 	</style>
 </head>
-
+{% macro ms(value) -%}
+	{{ "%.2f"|format(value) if value is not none else "—" }}
+{%- endmacro %}
 <body>
-	<div class="grid" id="dashboard">
-		<div class="card">
-			<div class="controls-container">
-				<div class="slider-group">
-					<input type="range" id="startRange" min="0" value="0">
-					<input type="range" id="endRange" min="0" value="0">
-					<span id="rangeLabel">Loading...</span>
-				</div>
-				<div class="button-group">
-					<button id="btnToday">📅 Show Today Only</button>
-					<button id="btnReset">🔄 Reset to All Time</button>
-				</div>
-			</div>
+<main>
+	<header>
+		<p class="eyebrow">APPLICATION HEALTH</p>
+		<h1>Request dashboard</h1>
+		<p class="subtitle muted">A bounded view of server requests and response times.</p>
+	</header>
+	<form method="get" class="card" aria-label="Dashboard filters">
+		<div class="filters">
+			<label>Period
+				<select name="hours">
+					{% for hours in dashboard.period_options %}
+					<option value="{{ hours }}"{% if hours == dashboard.filters.hours %} selected{% endif %}>Last {{ hours }} hours</option>
+					{% endfor %}
+				</select>
+			</label>
+			<label>Endpoint
+				<select name="endpoint">
+					<option value="">All endpoints</option>
+					{% for endpoint in dashboard.endpoint_options %}
+					<option value="{{ endpoint }}"{% if endpoint == dashboard.filters.endpoint %} selected{% endif %}>{{ endpoint }}</option>
+					{% endfor %}
+				</select>
+			</label>
+			<label>Status
+				<select name="status">
+					{% for value, label in [("all", "All statuses"), ("errors", "4xx and 5xx"), ("4xx", "4xx"), ("5xx", "5xx"),
+						("unknown", "Unknown / legacy")] %}
+					<option value="{{ value }}"{% if value == dashboard.filters.status %} selected{% endif %}>{{ label }}</option>
+					{% endfor %}
+					{% for value in dashboard.status_options %}
+					<option value="{{ value }}"{% if value == dashboard.filters.status %} selected{% endif %}>{{ value }}</option>
+					{% endfor %}
+				</select>
+			</label>
+			<button type="submit" class="primary">Apply filters</button>
+			<button type="submit" name="refresh" value="1">Refresh now</button>
 		</div>
+		<p class="stamp">{{ dashboard.window_start }} — {{ dashboard.window_end }} · {{ dashboard.timezone }} ·
+			Snapshot {{ dashboard.snapshot_age }}s old. Refresh is manual.</p>
+	</form>
+	<div class="metrics">
+		<div class="card"><p class="metric-label">Requests</p><div class="metric-value">{{ dashboard.stats.count }}</div></div>
+		<div class="card"><p class="metric-label">4xx responses</p><div class="metric-value amber">{{ dashboard.stats.client_errors }}</div></div>
+		<div class="card"><p class="metric-label">5xx responses</p><div class="metric-value red">{{ dashboard.stats.server_errors }}</div></div>
+		<div class="card"><p class="metric-label">Median · p50</p><div class="metric-value">{{ ms(dashboard.stats.p50) }} <span class="unit">ms</span></div></div>
+		<div class="card"><p class="metric-label">p95 latency</p><div class="metric-value">{{ ms(dashboard.stats.p95) }} <span class="unit">ms</span></div></div>
+		<div class="card"><p class="metric-label">Unknown status</p><div class="metric-value">{{ dashboard.stats.unknown_status }}</div></div>
 	</div>
-
-	<script type="text/template" id="backend_data">{{ endpoints|safe }}</script>
-
-	<script>
-		function initEl(tagName, classes, children, fn)
+	{% if dashboard.read.bytes_limited or dashboard.read.lines_limited or dashboard.read.files_limited %}
+	<div class="notice" role="status">
+		<strong>Limited sample</strong>
+		<p>Counts and percentiles cover retained rows, not necessarily the entire selected period.
+			Reached limits: {% if dashboard.read.bytes_limited %}bytes {% endif %}
+			{% if dashboard.read.lines_limited %}rows {% endif %}{% if dashboard.read.files_limited %}files{% endif %}.</p>
+	</div>
+	{% endif %}
+	{% if dashboard.read.read_errors %}
+	<div class="notice" role="status">{{ dashboard.read.read_errors }} log files could not be read. The sample may be incomplete.</div>
+	{% endif %}
+	{% if dashboard.read.partial_rows %}
+	<div class="notice" role="status">{{ dashboard.read.partial_rows }} unfinished trailing log rows were ignored. Refresh after writing completes.</div>
+	{% endif %}
+	{% if dashboard.stats.unknown_status %}
+	<div class="notice" role="status">Unknown statuses are included in request and latency totals, but are not counted as successful responses.</div>
+	{% endif %}
+	<section class="card section" aria-labelledby="traffic-title">
+		<div class="section-head">
+			<h2 id="traffic-title">Traffic and errors</h2>
+			<div class="legend"><span>Requests</span><span class="errors">4xx + 5xx</span></div>
+		</div>
+		<div class="trend" role="img" aria-label="Request and error counts over the selected period; exact values are below">
+			{% for bucket in dashboard.trend %}
+			<div class="bucket" title="{{ bucket.label }}: {{ bucket.count }} requests, {{ bucket.errors }} errors">
+				<div class="bar" style="height: {{ bucket.height }}%"></div>
+				<div class="bar errors" style="height: {{ bucket.error_height }}%"></div>
+			</div>
+			{% endfor %}
+		</div>
+		<div class="axis"><span>{{ dashboard.trend[0].label }}</span><span>{{ dashboard.trend[-1].label }}</span></div>
+		<details>
+			<summary>Exact trend values</summary>
+			<div class="trend-values"><table>
+			<thead><tr><th>Interval start · {{ dashboard.timezone }}</th><th>Requests</th><th>4xx + 5xx</th></tr></thead>
+			<tbody>{% for bucket in dashboard.trend %}
+				<tr><td>{{ bucket.label }}</td><td>{{ bucket.count }}</td><td>{{ bucket.errors }}</td></tr>
+			{% endfor %}</tbody></table></div>
+		</details>
+	</section>
+	<section class="card section" aria-labelledby="endpoints-title">
+		<div class="section-head"><h2 id="endpoints-title">Endpoints</h2><p>Click a column to sort · all times in ms</p></div>
+		<div class="table-scroll">
+			<table id="endpoints-table">
+				<thead><tr>
+					{% for key, label in [("endpoint", "Endpoint"), ("count", "Requests"), ("client_errors", "4xx"),
+						("server_errors", "5xx"), ("unknown_status", "Unknown"), ("p50", "p50"), ("p95", "p95"), ("max", "Max")] %}
+					<th scope="col"><button type="button" data-sort="{{ key }}">{{ label }}</button></th>
+					{% endfor %}
+				</tr></thead>
+				<tbody>{% for item in dashboard.endpoints %}
+					<tr data-endpoint="{{ item.endpoint }}" data-count="{{ item.count }}" data-client_errors="{{ item.client_errors }}"
+						data-server_errors="{{ item.server_errors }}" data-unknown_status="{{ item.unknown_status }}"
+						data-p50="{{ item.p50 }}" data-p95="{{ item.p95 }}" data-max="{{ item.max }}">
+						<td class="endpoint"><code>{{ item.endpoint }}</code></td>
+						<td>{{ item.count }}</td><td class="amber">{{ item.client_errors }}</td><td class="red">{{ item.server_errors }}</td>
+						<td>{{ item.unknown_status }}</td><td>{{ ms(item.p50) }}</td><td>{{ ms(item.p95) }}</td><td>{{ ms(item.max) }}</td>
+					</tr>
+				{% else %}<tr><td class="empty" colspan="8">No requests match these filters.</td></tr>{% endfor %}</tbody>
+			</table>
+		</div>
+	</section>
+	<section class="card section" aria-labelledby="recent-title">
+		<div class="section-head"><h2 id="recent-title">Recent unsuccessful requests</h2><p>Newest {{ dashboard.recent_limit }} · filtered 4xx and 5xx</p></div>
+		<div class="table-scroll"><table>
+			<thead><tr><th>Time · {{ dashboard.timezone }}</th><th>Endpoint</th><th>Status</th><th>Duration · ms</th><th>Request ID</th></tr></thead>
+			<tbody>{% for item in dashboard.recent %}
+				<tr><td>{{ item.time }}</td><td class="endpoint"><code>{{ item.endpoint }}</code></td>
+					<td class="status {{ 'red' if item.status >= 500 else 'amber' }}">{{ item.status }}</td>
+					<td>{{ ms(item.duration_ms) }}</td><td><code>{{ item.request_id or 'Unavailable' }}</code></td></tr>
+			{% else %}<tr><td class="empty" colspan="5">No 4xx or 5xx responses in this sample.</td></tr>{% endfor %}</tbody>
+		</table></div>
+	</section>
+	<section class="card section" aria-labelledby="sample-title">
+		<h2 id="sample-title">About this sample</h2>
+		<p class="quality">
+			Read {{ dashboard.read.lines_read }} complete rows / {{ dashboard.read.bytes_read }} bytes from {{ dashboard.read.files_read }} files.
+			Skipped {{ dashboard.invalid_rows }} malformed rows and {{ dashboard.future_rows }} future-dated rows.
+			Ignored {{ dashboard.read.partial_rows }} unfinished trailing rows.
+			Included {{ dashboard.legacy_rows }} legacy rows with incomplete fields in the retained time window.<br>
+			{% if dashboard.observed_start %}Observed matching rows: {{ dashboard.observed_start }} — {{ dashboard.observed_end }}.
+			{% else %}There are no matching rows to establish an observed range.{% endif %}
+		</p>
+	</section>
+	<footer>Latency measures server work until the response is recorded. It does not measure browser download or streaming completion.</footer>
+</main>
+<script>
+	document.querySelectorAll("[data-sort]").forEach(button =>
+	{
+		button.addEventListener("click", () =>
 		{
-			const el = document.createElement(tagName);
-			if (classes)
+			const key = button.dataset.sort;
+			const table = document.getElementById("endpoints-table");
+			const direction = button.dataset.direction === "desc" ? "asc" : "desc";
+			const rows = Array.from(table.tBodies[0].querySelectorAll("tr[data-endpoint]"));
+			rows.sort((left, right) =>
 			{
-				if (typeof classes == "string") el.classList.add(classes);
-				else classes.forEach(cs => cs && el.classList.add(cs));
-			}
-			if (children)
-			{
-				const appendChildren = (child) =>
-				{
-					if (child instanceof Array) child.forEach(appendChildren);
-					else if (child) el.append(child);
-				};
-				appendChildren(children);
-			}
-			fn?.(el);
-			return el;
-		}
-		const Div = (cls, child, fn) => initEl("div", cls, child, fn);
-
-		const raw = JSON.parse(document.getElementById("backend_data").innerText);
-		const timeLabels = Object.keys(raw.traffic).sort();
-		const routes = Object.keys(raw.box_stats);
-		const colors = routes.map((_, i) => `hsl(${(i * 360) / routes.length}, 70%, 50%)`);
-
-		const isHidden = (routeName) => raw.hidden_routes.includes(routeName);
-
-		const container = document.getElementById("dashboard");
-
-		// --- Traffic Line Chart ---
-		const lineCard = document.createElement('div');
-		lineCard.className = 'card';
-		lineCard.innerHTML = '<h3>Requests per Hour</h3><canvas id="lineChart"></canvas>';
-		container.appendChild(lineCard);
-
-		const myChart = new Chart(document.getElementById("lineChart"), {
-			type: 'line',
-			data: {
-				labels: timeLabels,
-				datasets: routes.map((r, i) => ({
-					label: r,
-					data: timeLabels.map(t => raw.traffic[t][r] || 0),
-					borderColor: colors[i],
-					tension: 0.2,
-					// hidden: isHidden(r),
-				}))
-			}
-		});
-
-		// --- Pre-calculated Box Plot ---
-		const boxCard = document.createElement('div');
-		boxCard.className = 'card';
-		boxCard.innerHTML = '<h3>Latency Distribution</h3><canvas id="boxChart"></canvas>';
-		container.appendChild(boxCard);
-
-		new Chart(document.getElementById("boxChart"), {
-			type: 'boxplot',
-			data: {
-				labels: ['Endpoints'],
-				datasets: routes.map((r, i) => ({
-					label: r,
-					backgroundColor: colors[i].replace('hsl', 'hsla').replace(')', ', 0.5)'),
-					borderColor: colors[i],
-					borderWidth: 1,
-					data: [raw.box_stats[r]],
-					// hidden: isHidden(r),
-				}))
-			},
-			options: {
-				responsive: true,
-				scales: { y: { title: { display: true, text: 'ms' } } }
-			}
-		});
-
-		function createTable(title, data, valueKey, badgeClass)
-		{
-			return Div("chart-card", [
-				initEl("h2", [], title),
-				initEl("table", [], [
-					initEl("thead", [], initEl("tr", [], [
-						initEl("th", [], "Route"),
-						initEl("th", [], "Hits"),
-						initEl("th", [], title.includes("Median") ? "Median" : "Max Spike")
-					])),
-					initEl("tbody", [], data.map(item =>
-						initEl("tr", [], [
-							initEl("td", [], initEl("code", [], item.route)),
-							initEl("td", [], item.count.toString()),
-							initEl("td", [], [
-								initEl("span", badgeClass, `${item[valueKey].toFixed(1)} ms`)
-							])
-						])
-					))
-				])
-			]);
-		}
-
-		// --- Add to UI ---
-		const summaryContainer = Div("summary-grid", [
-			createTable("Top 5 Slowest (Median)", raw.slowest_median, "median", "badge-median"),
-			createTable("Top 5 Slowest (Max)", raw.slowest_max, "max", "badge-max")
-		]);
-
-		// Insert before the main chart grid
-		container.insertBefore(summaryContainer, boxCard);
-
-		const startInput = document.getElementById('startRange');
-		const endInput = document.getElementById('endRange');
-		const rangeLabel = document.getElementById('rangeLabel');
-		const btnToday = document.getElementById('btnToday');
-		const btnReset = document.getElementById('btnReset');
-
-		startInput.max = timeLabels.length - 1;
-		endInput.max = timeLabels.length - 1;
-		endInput.value = timeLabels.length - 1;
-
-		// --- Helper: Update Chart Display ---
-		function updateChart()
-		{
-			let start = parseInt(startInput.value);
-			let end = parseInt(endInput.value);
-
-			// Ensure start doesn't cross end
-			if (start > end)
-			{
-				start = end;
-				startInput.value = start;
-			}
-
-			const filteredLabels = timeLabels.slice(start, end + 1);
-			myChart.data.labels = filteredLabels;
-
-			myChart.data.datasets.forEach(dataset =>
-			{
-				dataset.data = filteredLabels.map(t => raw.traffic[t][dataset.label] || 0);
+				const a = left.dataset[key];
+				const b = right.dataset[key];
+				const comparison = key === "endpoint" ? a.localeCompare(b) : Number(a) - Number(b);
+				return direction === "asc" ? comparison : -comparison;
 			});
-
-			rangeLabel.innerText = `${timeLabels[start]} — ${timeLabels[end]}`;
-			myChart.update('none');
-		}
-
-		// --- Button Logic: Today ---
-		btnToday.addEventListener('click', () =>
-		{
-			if (timeLabels.length === 0) return;
-
-			// Find the date of the very last entry (Today)
-			const lastEntry = timeLabels[timeLabels.length - 1];
-			const todayDate = lastEntry.split(' ')[0]; // Assumes format "YYYY-MM-DD HH:MM"
-
-			// Find the first index where this date appears
-			const firstIdx = timeLabels.findIndex(l => l.startsWith(todayDate));
-
-			startInput.value = firstIdx;
-			endInput.value = timeLabels.length - 1;
-			updateChart();
+			document.querySelectorAll("[data-sort]").forEach(item =>
+			{
+				delete item.dataset.direction;
+				item.closest("th").removeAttribute("aria-sort");
+			});
+			button.dataset.direction = direction;
+			button.closest("th").setAttribute("aria-sort", direction === "asc" ? "ascending" : "descending");
+			rows.forEach(row => table.tBodies[0].append(row));
 		});
-
-		// --- Button Logic: Reset ---
-		btnReset.addEventListener('click', () =>
-		{
-			startInput.value = 0;
-			endInput.value = timeLabels.length - 1;
-			updateChart();
-		});
-
-		startInput.addEventListener('input', updateChart);
-		endInput.addEventListener('input', updateChart);
-
-		// Initial run to set the label
-		updateChart();
-	</script>
+	});
+</script>
 </body>
-
 </html>

@@ -172,9 +172,9 @@ def type_to_json(otype: Any, types: dict[str, Any], verbose: bool = True, toplvl
             return [r]
         return type_name(otype, json=True)
     if torigin is tuple:
-        l = [type_to_json(t, types) for t in targs]
+        item_types = [type_to_json(t, types) for t in targs]
         if verbose:
-            return l
+            return item_types
         return type_name(otype, json=True)
     if torigin is dict:
         type_to_json(targs[1], types, False)

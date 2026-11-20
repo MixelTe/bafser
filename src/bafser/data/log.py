@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from sqlalchemy.orm.attributes import get_history
 
 from .. import IdMixin, SqlAlchemyBase, TruncateString, UserBase, get_datetime_now
+from ..undefined import Undefined
 
 FieldName = str
 NewValue = Any
@@ -25,7 +26,7 @@ class LogDict(TypedDict):
     id: int
     date: datetime
     actionCode: str
-    userId: int
+    userId: int | None
     userName: str
     tableName: str
     recordId: int
@@ -37,7 +38,7 @@ class Log(SqlAlchemyBase, IdMixin):
 
     date: Mapped[datetime]
     actionCode: Mapped[str] = mapped_column(String(16))
-    userId: Mapped[int]
+    userId: Mapped[int | None]
     userName: Mapped[str] = mapped_column(TruncateString(128))
     tableName: Mapped[str] = mapped_column(TruncateString(32))
     recordId: Mapped[int]
@@ -52,7 +53,7 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def added(
         record: SqlAlchemyBase,
-        actor: UserBase | None = None,
+        actor: UserBase | None | Undefined.T = Undefined,
         changes: list[tuple[FieldName, NewValue]] | None = None,
         now: datetime | None = None,
         commit: bool = True,
@@ -67,20 +68,17 @@ class Log(SqlAlchemyBase, IdMixin):
         log = Log._create(record, actor, _changes, now, False, db_sess, Actions.added)
         db_sess = log.db_sess
         db_sess.add(record)
-        if flush and isinstance(record, IdMixin) and record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
+        if (flush or commit) and isinstance(record, IdMixin) and record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
             db_sess.flush()
             log.recordId = record.id
         if commit:
-            if not flush and isinstance(record, IdMixin) and record.id is None:  # pyright: ignore[reportUnnecessaryComparison]
-                db_sess.commit()
-                log.recordId = record.id
             db_sess.commit()
         return log
 
     @staticmethod
     def updated(
         record: SqlAlchemyBase,
-        actor: UserBase | None = None,
+        actor: UserBase | None | Undefined.T = Undefined,
         changes: Changes | None = None,
         now: datetime | None = None,
         commit: bool = True,
@@ -91,7 +89,7 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def deleted(
         record: SqlAlchemyBase,
-        actor: UserBase | None = None,
+        actor: UserBase | None | Undefined.T = Undefined,
         changes: list[tuple[FieldName, OldValue]] | None = None,
         now: datetime | None = None,
         commit: bool = True,
@@ -105,7 +103,7 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def restored(
         record: SqlAlchemyBase,
-        actor: UserBase | None = None,
+        actor: UserBase | None | Undefined.T = Undefined,
         changes: Changes | None = None,
         now: datetime | None = None,
         commit: bool = True,
@@ -116,33 +114,34 @@ class Log(SqlAlchemyBase, IdMixin):
     @staticmethod
     def _create(
         record: SqlAlchemyBase,
-        actor: UserBase | None,
+        actor: UserBase | None | Undefined.T,
         changes: Changes | None,
         now: datetime | None,
         commit: bool,
         db_sess: Session | None,
         actionCode: str,
     ):
-        db_sess = db_sess if db_sess else record.get_session()
-        if actor is None:
+        if db_sess is None:
+            db_sess = record.get_session()
+        if db_sess is None and isinstance(actor, UserBase):
+            db_sess = actor.get_session()
+        if db_sess is None:
             from .. import get_db_session
 
-            db_sess = db_sess if db_sess else get_db_session()
+            db_sess = get_db_session()
+        db_sess = record._get_write_session(db_sess)
+        if Undefined.defined(actor):
+            resolved_actor = actor
+        else:
             with db_sess.no_autoflush:
-                actor = UserBase.get_current(lazyload=True)
-        if actor is None:
-            actor = UserBase.get_fake_system()
-            from .. import get_db_session
-
-            db_sess = db_sess if db_sess else get_db_session()
-        db_sess = db_sess if db_sess else actor.db_sess
+                resolved_actor = UserBase.get_current(lazyload=True)
         if now is None:
             now = get_datetime_now()
-        if changes is None:
-            changes = Log._get_obj_changes(record)
         with db_sess.no_autoflush:
-            userId = actor.id
-            userName = actor.name
+            if changes is None:
+                changes = Log._get_obj_changes(record)
+            userId = resolved_actor.id if resolved_actor is not None else None
+            userName = resolved_actor.name if resolved_actor is not None else "System"
         log = Log(
             date=now,
             actionCode=actionCode,

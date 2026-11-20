@@ -1,13 +1,16 @@
 import base64
+import io
+import logging
 from contextlib import ExitStack
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
 from flask import Flask, current_app
 from sqlalchemy import create_engine, event
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
 from sqlalchemy.orm import Session
 
 from bafser import ImageError, Log, PublicError, SqlAlchemyBase, track_created_file
@@ -177,11 +180,15 @@ class ImageTransactionsTests(unittest.TestCase):
         with patch.object(self.engine.dialect, "do_commit", side_effect=OSError("commit rejected")):
             with self.assertRaisesRegex(OSError, "commit rejected"):
                 self.session.commit()
-        with patch.object(self.engine, "connect", side_effect=OSError("database unavailable")):
+        with (
+            patch.object(self.engine, "connect", side_effect=OSError("database unavailable")),
+            patch("bafser.logger.log_error_details", return_value=False),
+        ):
             with self.assertLogs(level="ERROR") as logs:
                 self.session.rollback()
         self.assertTrue(path.is_file())
-        self.assertTrue(any("retaining file" in line and str(path) in line for line in logs.output))
+        self.assertTrue(any("retaining file" in line and "ref=" in line and "row=Img:" in line for line in logs.output))
+        self.assertTrue(all(str(path) not in line and "database unavailable" not in line for line in logs.output))
         with Session(self.engine) as other:
             self.assertEqual(other.query(Img).count(), 0)
 
@@ -221,16 +228,58 @@ class ImageTransactionsTests(unittest.TestCase):
             self.assertEqual(other.query(Img).count(), 0)
 
     def test_after_commit_callback_failure_keeps_committed_file_and_original_error(self):
-        def failed_callback(_session):
-            raise RuntimeError("injected after_commit failure")
+        self.assert_after_commit_recovery_log(dev=False)
 
+    def test_after_commit_recovery_keeps_full_exception_chain_in_dev_host_handler(self):
+        self.assert_after_commit_recovery_log(dev=True)
+
+    def test_after_commit_recovery_keeps_full_exception_chain_in_production_host_handler(self):
+        self.assert_after_commit_recovery_log(dev=False, details=True)
+
+    def test_after_commit_recovery_without_app_config_keeps_full_details(self):
+        self.assert_after_commit_recovery_log(dev=False, configured=False)
+
+    def assert_after_commit_recovery_log(self, *, dev, details=False, configured=True):
+        failure = RuntimeError("PRIVATE_CALLBACK_VALUE")
+
+        def failed_callback(_session):
+            raise failure
+
+        output = io.StringIO()
+        handler = logging.StreamHandler(output)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        root = logging.getLogger()
+        root.addHandler(handler)
+        config_context = (
+            patch.dict(current_app.extensions, {"bafser_config": SimpleNamespace(DEV_MODE=dev, LOG_ERROR_DETAILS=details)})
+            if configured else patch("bafser.app._config", None)
+        )
         event.listen(Session, "after_commit", failed_callback, insert=True)
         try:
-            with self.assertLogs(level="ERROR"):
-                with self.assertRaisesRegex(RuntimeError, "injected after_commit failure"):
+            with config_context, patch.object(handler, "emit", wraps=handler.emit) as emit:
+                with self.assertRaises(RuntimeError) as caught:
                     Img.new(self.actor, self.payload)
+                self.assertIs(caught.exception, failure)
+                self.assertEqual(emit.call_count, 1)
+                record = emit.call_args.args[0]
+                if dev or details or not configured:
+                    self.assertIs(record.exc_info[0], InvalidRequestError)
+                    self.assertIn("PRIVATE_CALLBACK_VALUE", output.getvalue())
+                    self.assertIn("InvalidRequestError", output.getvalue())
+                    self.assertIn("Traceback", output.getvalue())
+                else:
+                    self.assertEqual(record.msg, "Could not roll back failed image creation")
+                    self.assertEqual(record.args, ())
+                    self.assertIsNone(record.exc_info)
+                    self.assertIsNone(record.exc_text)
+                    self.assertIsNone(record.stack_info)
+                    self.assertNotIn("PRIVATE_CALLBACK_VALUE", repr(record.__dict__))
+                    self.assertNotIn(str(self.root), repr(record.__dict__))
+                    self.assertEqual(output.getvalue(), "Could not roll back failed image creation\n")
         finally:
             event.remove(Session, "after_commit", failed_callback)
+            root.removeHandler(handler)
+            handler.close()
         self.session.close()
         with Session(self.engine) as other:
             image = other.query(Img).one()

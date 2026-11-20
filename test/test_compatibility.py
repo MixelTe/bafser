@@ -99,8 +99,8 @@ class CompatibilityTests(unittest.TestCase):
                 self.assertEqual([item.type for item in fields[2].type.union_type], ["datetime", "null"])
 
     def test_sqlalchemy_serializer_with_project_model(self):
-        from test.data.apple import Apple  # type: ignore
-        from test.data.img import Img  # type: ignore
+        from test.data.apple import Apple  # type: ignore  # noqa: F401 - registers ORM tables
+        from test.data.img import Img  # type: ignore  # noqa: F401 - registers ORM tables
         from test.data.user import User
 
         user = User(login="example", name="Example", balance=0)
@@ -109,8 +109,8 @@ class CompatibilityTests(unittest.TestCase):
 
 class CurrentUserCompatibilityTests(unittest.TestCase):
     def test_current_resolves_user_from_base_subclass_and_instance(self):
-        from test.data.apple import Apple  # type: ignore
-        from test.data.img import Img  # type: ignore
+        from test.data.apple import Apple  # type: ignore  # noqa: F401 - registers ORM tables
+        from test.data.img import Img  # type: ignore  # noqa: F401 - registers ORM tables
         from test.data.user import User
 
         user = User(login="example", name="Example", balance=0)
@@ -122,8 +122,8 @@ class CurrentUserCompatibilityTests(unittest.TestCase):
         getter.assert_called_with(UserBase._get_current, False, False)
 
     def test_current_does_not_cache_user_across_contexts(self):
-        first = UserBase.get_fake_system()
-        second = UserBase.get_fake_system()
+        first = UserBase(name="First", login="first")
+        second = UserBase(name="Second", login="second")
         with patch("bafser.data.user._current_user_getter", side_effect=[first, second]):
             self.assertIs(UserBase.current, first)
             self.assertIs(UserBase.current, second)

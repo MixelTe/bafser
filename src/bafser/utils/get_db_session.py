@@ -17,7 +17,7 @@ def _get_db_session() -> Session:
 
 
 DefaultGetter = Callable[[], Session]
-_getter: Callable[[DefaultGetter], Session] = lambda get: get()
+_getter: Callable[[DefaultGetter], Session] = lambda get: get()  # noqa: E731
 
 
 def override_get_db_session(getter: Callable[[DefaultGetter], Session]):

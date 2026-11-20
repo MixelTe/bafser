@@ -12,6 +12,13 @@ if TYPE_CHECKING:
 
 
 class UserRole(SqlAlchemyBase):
+    """Low-level membership rows.
+
+    Concurrent standalone new/delete calls must first lock the parent User row,
+    as UserBase.add_role/remove_role/set_roles do. These primitives do not choose
+    a multi-row locking order or synchronize an already loaded User.roles cache.
+    """
+
     __tablename__ = TablesBase.UserRole
 
     userId: Mapped[int] = mapped_column(ForeignKey(f"{TablesBase.User}.id"), primary_key=True)
@@ -23,10 +30,11 @@ class UserRole(SqlAlchemyBase):
         return f"<UserRole> user: {self.userId} role: {self.roleId}"
 
     @staticmethod
-    def new(creator: "UserBase", userId: int, roleId: int, now: datetime | None = None, commit: bool = True, db_sess: Session | None = None):
-        from .. import Log
+    def new(creator: "UserBase | None", userId: int, roleId: int, now: datetime | None = None, commit: bool = True, db_sess: Session | None = None):
+        from .. import Log, get_db_session
 
-        db_sess = db_sess if db_sess else creator.db_sess
+        if db_sess is None:
+            db_sess = creator.db_sess if creator is not None else get_db_session()
 
         user_role = UserRole(userId=userId, roleId=roleId)
         db_sess.add(user_role)
@@ -39,19 +47,21 @@ class UserRole(SqlAlchemyBase):
                 ("roleId", user_role.roleId),
             ],
             now,
-            commit,
+            False,
             db_sess,
         )
+        if commit:
+            db_sess.commit()
         return user_role
 
     @staticmethod
     def get(db_sess: Session, userId: int, roleId: int) -> "UserRole | None":
         return db_sess.query(UserRole).filter(UserRole.userId == userId, UserRole.roleId == roleId).first()
 
-    def delete(self, actor: "UserBase"):
+    def delete(self, actor: "UserBase | None", *, now: datetime | None = None, commit: bool = True, db_sess: Session | None = None):
         from .. import Log
 
-        db_sess = actor.db_sess
+        db_sess = self._get_write_session(db_sess)
         db_sess.delete(self)
         Log.deleted(
             self,
@@ -60,4 +70,9 @@ class UserRole(SqlAlchemyBase):
                 ("userId", self.userId),
                 ("roleId", self.roleId),
             ],
+            now=now,
+            commit=False,
+            db_sess=db_sess,
         )
+        if commit:
+            db_sess.commit()
